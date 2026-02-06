@@ -2,73 +2,156 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriCactus - CONCENTRADOR</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: sans-serif; background: #e3f2fd; padding: 15px; }
-        .card-jefe { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn-upload { background: #1565c0; color: white; width: 100%; padding: 20px; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; margin-top: 20px; }
-        .lista-info { text-align: left; margin-top: 20px; font-size: 14px; }
+        :root { --p: #1565c0; --s: #e3f2fd; --danger: #c62828; --success: #2e7d32; }
+        body { font-family: sans-serif; background: var(--s); margin: 0; padding: 15px; padding-bottom: 100px; }
+        .card-jefe { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        #reader { width: 100%; border-radius: 10px; overflow: hidden; background: black; }
+        
+        .stats { display: flex; justify-content: space-around; margin: 15px 0; align-items: center; }
+        .stat-box { text-align: center; background: white; padding: 10px; border-radius: 10px; width: 45%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 24px; font-weight: bold; color: var(--p); display: block; }
+        
+        h3 { color: #333; border-bottom: 2px solid var(--p); padding-bottom: 5px; margin-top: 20px; font-size: 16px; }
+        
+        .tabla-contenedor { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; margin-top: 10px; }
+        .tabla-previa { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .tabla-previa th { background: #eceff1; padding: 10px; text-align: left; color: #546e7a; }
+        .tabla-previa td { padding: 10px; border-bottom: 1px solid #f5f5f5; }
+
+        .btn-upload { position: fixed; bottom: 15px; left: 15px; right: 15px; background: var(--p); color: white; padding: 18px; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; z-index: 100; box-shadow: 0 4px 15px rgba(21,101,192,0.4); }
+        .btn-clear { background: var(--danger); color: white; border: none; padding: 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="card-jefe">
-        <h2>📱 Concentrador de Datos</h2>
-        <p>Escanee los QR de los cuadrilleros aquí</p>
-        <div id="reader" style="width: 100%; background: black;"></div>
-        
-        <div class="lista-info">
-            <strong>Acumulado para subir:</strong> <span id="countJefe">0</span> registros.
-        </div>
+        <h2 style="margin:0 0 10px 0; font-size: 18px; color: var(--p); text-align: center;">📱 Concentrador de Datos</h2>
+        <div id="reader"></div>
     </div>
 
-    <button class="btn-upload" onclick="sincronizarConDrive()">☁️ SUBIR A DRIVE (EN OFICINA)</button>
+    <div class="stats">
+        <div class="stat-box">
+            <span class="stat-val" id="countJefe">0</span>
+            <small>Total Acumulado</small>
+        </div>
+        <button class="btn-clear" onclick="limpiarTodoJefe()">🗑️ BORRAR LOCAL</button>
+    </div>
+
+    <h3>📋 Vista Previa de Recibidos</h3>
+    <div class="tabla-contenedor">
+        <table class="tabla-previa">
+            <thead>
+                <tr>
+                    <th>Empleado</th>
+                    <th>Cuadro</th>
+                    <th>Actividad</th>
+                    <th>Sup.</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">Escanea un QR para ver los datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn-upload" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
 
     <script>
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
-        const URL_DRIVE = "TU_URL_DE_APPS_SCRIPT_AQUI";
+        // 1. REEMPLAZA ESTO CON TU URL DE APPS SCRIPT (LA QUE COPIASTE DEL EXCEL)
+        const URL_DRIVE = "AQUI_VA_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+        
         let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data')) || [];
 
         function alEscanear(codigo) {
             if(codigo.startsWith("AGRICACTUS_PACK|")) {
-                const jsonRaw = codigo.split("|")[1];
-                const nuevosRegs = JSON.parse(jsonRaw);
+                try {
+                    const jsonRaw = codigo.split("|")[1];
+                    const nuevosRegs = JSON.parse(jsonRaw);
+                    const supervisor = nuevosRegs[0].s || "Sin Nombre";
 
-                // PREVISUALIZACIÓN ANTES DE ACEPTAR
-                const supervisor = nuevosRegs[0].s || "Desconocido";
-                const total = nuevosRegs.length;
-                
-                if(confirm(`¿Recibir datos de: ${supervisor}?\nCantidad: ${total} registros.`)) {
-                    DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(nuevosRegs);
-                    localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
-                    document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
-                    alert("✅ Registros añadidos al acumulado.");
+                    if(confirm(`¿Deseas recibir la jornada de: ${supervisor}?\nCantidad: ${nuevosRegs.length} registros.`)) {
+                        DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(nuevosRegs);
+                        localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
+                        actualizarInterfaz();
+                        alert("✅ Datos agregados con éxito.");
+                    }
+                } catch(e) {
+                    alert("Error: El código QR no tiene el formato correcto.");
                 }
+            } else {
+                alert("⚠️ Este código QR no pertenece al sistema AgriCactus.");
             }
         }
 
+        function actualizarInterfaz() {
+            const contador = document.getElementById('countJefe');
+            const cuerpo = document.getElementById('cuerpoTabla');
+            
+            contador.innerText = DATOS_ACUMULADOS.length;
+            
+            if(DATOS_ACUMULADOS.length === 0) {
+                cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
+                return;
+            }
+
+            const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 15);
+            cuerpo.innerHTML = mostrar.map(r => `
+                <tr>
+                    <td><b>${r.e}</b></td>
+                    <td>${r.c}</td>
+                    <td>${r.a}</td>
+                    <td><small>${r.s}</small></td>
+                </tr>
+            `).join('');
+        }
+
         async function sincronizarConDrive() {
-            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para subir.");
-            if(!navigator.onLine) return alert("Sin internet. Conéctate al WiFi de la oficina.");
+            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para enviar.");
+            if(!navigator.onLine) return alert("🛑 No tienes conexión a Internet.");
+
+            if(!confirm(`¿Subir ${DATOS_ACUMULADOS.length} registros al Excel?`)) return;
 
             try {
-                const res = await fetch(URL_DRIVE, {
+                const response = await fetch(URL_DRIVE, {
                     method: 'POST',
+                    mode: 'no-cors',
                     body: JSON.stringify(DATOS_ACUMULADOS)
                 });
-                alert("¡ÉXITO! Datos guardados en el Excel.");
+                
+                alert("🚀 Envío procesado. Revisa tu Google Sheets.");
+                
+                if(confirm("¿Quieres limpiar los datos del teléfono ahora?")) {
+                    DATOS_ACUMULADOS = [];
+                    localStorage.setItem('jefe_data', '[]');
+                    actualizarInterfaz();
+                }
+            } catch(e) {
+                alert("❌ Error de red. Intenta de nuevo.");
+            }
+        }
+
+        function limpiarTodoJefe() {
+            if(confirm("⚠️ Se borrarán todos los datos acumulados. ¿Continuar?")) {
                 DATOS_ACUMULADOS = [];
                 localStorage.setItem('jefe_data', '[]');
-                document.getElementById('countJefe').innerText = "0";
-            } catch(e) {
-                alert("Error al conectar con Drive. Intente de nuevo.");
+                actualizarInterfaz();
             }
         }
 
         window.onload = () => {
-            document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
-            new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(alEscanear);
+            actualizarInterfaz();
+            const scanner = new Html5QrcodeScanner("reader", { 
+                fps: 15, 
+                qrbox: {width: 250, height: 250},
+                rememberLastUsedCamera: true
+            });
+            scanner.render(alEscanear);
         };
     </script>
 </body>
+</html>
 </html>
