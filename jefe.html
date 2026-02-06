@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>AgriCactus - CONCENTRADOR</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: sans-serif; background: #e3f2fd; padding: 15px; }
+        .card-jefe { background: white; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-upload { background: #1565c0; color: white; width: 100%; padding: 20px; border: none; border-radius: 10px; font-weight: bold; font-size: 18px; margin-top: 20px; }
+        .lista-info { text-align: left; margin-top: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card-jefe">
+        <h2>📱 Concentrador de Datos</h2>
+        <p>Escanee los QR de los cuadrilleros aquí</p>
+        <div id="reader" style="width: 100%; background: black;"></div>
+        
+        <div class="lista-info">
+            <strong>Acumulado para subir:</strong> <span id="countJefe">0</span> registros.
+        </div>
+    </div>
+
+    <button class="btn-upload" onclick="sincronizarConDrive()">☁️ SUBIR A DRIVE (EN OFICINA)</button>
+
+    <script>
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        const URL_DRIVE = "TU_URL_DE_APPS_SCRIPT_AQUI";
+        let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data')) || [];
+
+        function alEscanear(codigo) {
+            if(codigo.startsWith("AGRICACTUS_PACK|")) {
+                const jsonRaw = codigo.split("|")[1];
+                const nuevosRegs = JSON.parse(jsonRaw);
+
+                // PREVISUALIZACIÓN ANTES DE ACEPTAR
+                const supervisor = nuevosRegs[0].s || "Desconocido";
+                const total = nuevosRegs.length;
+                
+                if(confirm(`¿Recibir datos de: ${supervisor}?\nCantidad: ${total} registros.`)) {
+                    DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(nuevosRegs);
+                    localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
+                    document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
+                    alert("✅ Registros añadidos al acumulado.");
+                }
+            }
+        }
+
+        async function sincronizarConDrive() {
+            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para subir.");
+            if(!navigator.onLine) return alert("Sin internet. Conéctate al WiFi de la oficina.");
+
+            try {
+                const res = await fetch(URL_DRIVE, {
+                    method: 'POST',
+                    body: JSON.stringify(DATOS_ACUMULADOS)
+                });
+                alert("¡ÉXITO! Datos guardados en el Excel.");
+                DATOS_ACUMULADOS = [];
+                localStorage.setItem('jefe_data', '[]');
+                document.getElementById('countJefe').innerText = "0";
+            } catch(e) {
+                alert("Error al conectar con Drive. Intente de nuevo.");
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
+            new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(alEscanear);
+        };
+    </script>
+</body>
+</html>

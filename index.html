@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AgriCactus - Cuadrillero v2</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --p: #1b5e20; --s: #f4f7f6; --danger: #c62828; --info: #0277bd; --accent: #ff9800; }
+        body { font-family: sans-serif; background: var(--s); margin: 0; padding: 10px; padding-bottom: 80px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .counter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .counter-box { padding: 10px; border-radius: 8px; text-align: center; color: white; }
+        .c-total { background: var(--info); }
+        .c-temp { background: #2e7d32; }
+        .count-val { font-size: 24px; font-weight: bold; display: block; }
+        label { display: block; font-weight: bold; font-size: 11px; color: #555; margin-top: 10px; }
+        input, select { width: 100%; height: 50px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; padding: 0 10px; box-sizing: border-box; }
+        .nav-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-nav { padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; }
+        .btn-config { background: #607d8b; }
+        .btn-view { background: var(--info); }
+        #status { text-align: center; font-weight: bold; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; background: #eee; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .manual-container { display: flex; gap: 8px; margin-top: 15px; }
+        .btn-manual-add { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: bold; }
+        .division-box { background: #fff3e0; border: 2px dashed #ff9800; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .btn-transfer { width: 100%; background: #673ab7; color: white; padding: 20px; border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; font-size: 16px; }
+        /* Estilo para los items del listado */
+        .reg-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .btn-del-mini { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="nav-buttons">
+    <button class="btn-nav btn-config" onclick="abrirConfig()">⚙️ CONFIG</button>
+    <button class="btn-nav btn-view" onclick="abrirRegistros()">📋 VER LISTADO</button>
+</div>
+
+<div class="counter-grid">
+    <div class="counter-box c-total">
+        <span class="count-val" id="countTotal">0</span>
+        <span class="count-lab">Total Local</span>
+    </div>
+    <div class="counter-box c-temp">
+        <span class="count-val" id="countEspera">0</span>
+        <span class="count-lab">En Cola</span>
+    </div>
+</div>
+
+<div class="card">
+    <label>SUPERVISOR</label>
+    <input type="text" id="sup" oninput="localStorage.setItem('c_sup', this.value)">
+    <label>ACTIVIDAD</label>
+    <input type="text" id="busA" placeholder="Buscar..." oninput="filtrar()">
+    <select id="selA"></select>
+    <label>JORNADA</label>
+    <select id="selJ">
+        <option value="9">MATUTINA</option>
+        <option value="11">VESPERTINA</option>
+        <option value="14">NOCTURNA</option>
+        <option value="16">1 TAREA</option>
+    </select>
+</div>
+
+<div class="card">
+    <div id="reader" style="width: 100%; background: #000;"></div>
+    <div id="status">ESCANEANDO...</div>
+    <div class="manual-container">
+        <input type="text" id="manualCode" placeholder="Escribir ID...">
+        <button class="btn-manual-add" onclick="registrarManual()">AÑADIR</button>
+    </div>
+</div>
+
+<div class="division-box" id="areaDivision" style="display:none;">
+    <h4>DIVIDIR EN CUADROS</h4>
+    <input type="text" id="cuadrosParaDividir" placeholder="Ej: 101, 105">
+    <button onclick="confirmarDivision()" style="width:100%; background:#ef6c00; color:white; padding:15px; border:none; border-radius:8px; margin-top:10px; font-weight:bold;">✅ GUARDAR GRUPO</button>
+    <button onclick="cancelarCaptura()" style="width:100%; background:none; color:red; border:none; margin-top:10px;">Cancelar cola</button>
+</div>
+
+<button class="btn-transfer" onclick="prepararTransferencia()">📤 GENERAR QR PARA JEFE</button>
+
+<div id="config" class="modal">
+    <h3>Configuración</h3>
+    <label>MAPEO (Act, Emp, Cua)</label>
+    <textarea id="importPuestos" style="width:100%; height:100px;"></textarea>
+    <button onclick="guardarMapeo()" style="width:100%; padding:10px; background:var(--p); color:white; border:none; margin-top:5px;">GUARDAR MAPEO</button>
+    <hr>
+    <label>CATÁLOGOS (ID, Nombre, Var)</label>
+    <textarea id="importInput" style="width:100%; height:100px;"></textarea>
+    <button onclick="procesarCarga()" style="width:100%; padding:10px; background:black; color:white; border:none; margin-top:5px;">CARGAR CATÁLOGOS</button>
+    <button onclick="document.getElementById('config').style.display='none'" style="width:100%; padding:15px; margin-top:20px; background:#ddd; border:none;">CERRAR</button>
+</div>
+
+<div id="modalRegs" class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Registros Capturados</h3>
+        <button onclick="limpiarTodo()" style="background:var(--danger); color:white; border:none; padding:8px; border-radius:5px;">BORRAR TODO</button>
+    </div>
+    <div id="listaRegistros"></div>
+    <button onclick="document.getElementById('modalRegs').style.display='none'" style="width:100%; padding:15px; margin-top:20px; background:#ddd; border:none;">VOLVER</button>
+</div>
+
+<div id="modalQR" class="modal" style="text-align:center;">
+    <h3>Muestre este código al Jefe</h3>
+    <div id="qrcode" style="display:flex; justify-content:center; margin:20px;"></div>
+    <p>Registros detectados: <span id="cantQR">0</span></p>
+    <button onclick="document.getElementById('modalQR').style.display='none'" style="width:100%; padding:15px; background:#ddd; border:none;">CERRAR</button>
+</div>
+
+<script>
+let CUADROS = JSON.parse(localStorage.getItem('c_cuadros')) || [];
+let ACTS = JSON.parse(localStorage.getItem('c_acts')) || [];
+let MAPEO_COMPLETO = JSON.parse(localStorage.getItem('c_mapeo_v2')) || {}; 
+let REGS = JSON.parse(localStorage.getItem('c_regs')) || [];
+let COLA_ESPERA = [];
+
+function sonar(tipo) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        if(tipo === 'exito') {
+            osc.frequency.value = 880; gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            osc.start(); gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
+            osc.stop(ctx.currentTime + 0.2);
+        } else {
+            osc.frequency.value = 150; osc.type = 'square'; gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            osc.start(); gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
+            osc.stop(ctx.currentTime + 0.4);
+        }
+    } catch(e) {}
+}
+
+function filtrar() {
+    const fA = document.getElementById('busA').value.toLowerCase();
+    document.getElementById('selA').innerHTML = ACTS.filter(a => a.id.toLowerCase().includes(fA) || a.n.toLowerCase().includes(fA)).map(a => `<option value="${a.id}">${a.n} (${a.id})</option>`).join('');
+}
+
+function procesarRegistro(codigo) {
+    if(!codigo) return;
+    const codLimpio = codigo.toString().trim();
+    if(REGS.find(r => r.e === codLimpio) || COLA_ESPERA.find(c => c.e === codLimpio)) {
+        sonar('error');
+        document.getElementById('status').innerText = "❌ YA REGISTRADO: " + codLimpio;
+        return;
+    }
+    COLA_ESPERA.push({ e: codLimpio });
+    sonar('exito');
+    document.getElementById('countEspera').innerText = COLA_ESPERA.length;
+    document.getElementById('areaDivision').style.display = 'block';
+    document.getElementById('status').innerText = "👤 EN COLA: " + codLimpio;
+}
+
+function confirmarDivision() {
+    const inputCuadros = document.getElementById('cuadrosParaDividir').value;
+    if(!inputCuadros) { alert("Indica al menos un cuadro"); return; }
+    
+    const listaCuadros = inputCuadros.split(',').map(c => c.trim()).filter(c => c !== "");
+    const numCuadros = listaCuadros.length;
+    const jVal = document.getElementById('selJ').value;
+    const jTex = document.getElementById('selJ').options[document.getElementById('selJ').selectedIndex].text;
+    const supervisor = document.getElementById('sup').value;
+    const actGral = document.getElementById('selA').value;
+
+    COLA_ESPERA.forEach((persona, index) => {
+        const cuadroAsignado = listaCuadros[index % numCuadros];
+        let regla = MAPEO_COMPLETO[persona.e];
+        let actFinal = (regla && regla.act) ? regla.act : actGral;
+        let cObj = CUADROS.find(c => c.id == cuadroAsignado);
+
+        REGS.push({
+            id: Date.now() + index, // ID único para borrar
+            f: new Date().toLocaleDateString('en-GB'),
+            c: cuadroAsignado, a: actFinal, e: persona.e,
+            j: jVal, jt: jTex, s: supervisor, v: cObj ? cObj.v : ""
+        });
+    });
+
+    localStorage.setItem('c_regs', JSON.stringify(REGS));
+    COLA_ESPERA = [];
+    document.getElementById('countEspera').innerText = "0";
+    document.getElementById('countTotal').innerText = REGS.length;
+    document.getElementById('areaDivision').style.display = 'none';
+    document.getElementById('status').innerText = "✅ GRUPO GUARDADO";
+}
+
+// --- BORRADO INDIVIDUAL ---
+function borrarRegistro(id) {
+    if(confirm("¿Borrar este registro?")) {
+        REGS = REGS.filter(r => r.id !== id);
+        localStorage.setItem('c_regs', JSON.stringify(REGS));
+        document.getElementById('countTotal').innerText = REGS.length;
+        abrirRegistros(); // Refrescar lista
+    }
+}
+
+function limpiarTodo() {
+    if(confirm("¿Borrar TODOS los registros del teléfono?")) {
+        REGS = []; localStorage.setItem('c_regs', JSON.stringify(REGS));
+        document.getElementById('countTotal').innerText = "0";
+        abrirRegistros();
+    }
+}
+
+function abrirRegistros() {
+    const cont = document.getElementById('listaRegistros');
+    if(REGS.length === 0) {
+        cont.innerHTML = "<p>No hay registros</p>";
+    } else {
+        cont.innerHTML = REGS.slice().reverse().map(r => `
+            <div class="reg-item">
+                <div>
+                    <b>${r.e}</b><br>
+                    <small>Cuadro: ${r.c} | Act: ${r.a}</small>
+                </div>
+                <button class="btn-del-mini" onclick="borrarRegistro(${r.id})">Eliminar</button>
+            </div>
+        `).join('');
+    }
+    document.getElementById('modalRegs').style.display = 'block';
+}
+
+function registrarManual() {
+    const input = document.getElementById('manualCode');
+    if(input.value.trim() !== "") { procesarRegistro(input.value); input.value = ""; input.focus(); }
+}
+
+function cancelarCaptura() {
+    if(confirm("¿Limpiar gente en espera?")) {
+        COLA_ESPERA = [];
+        document.getElementById('countEspera').innerText = "0";
+        document.getElementById('areaDivision').style.display = 'none';
+    }
+}
+
+function abrirConfig() {
+    let texto = "";
+    for (const [emp, data] of Object.entries(MAPEO_COMPLETO)) { 
+        texto += `${data.act}, ${emp}${data.cua ? ', ' + data.cua : ''}\n`; 
+    }
+    document.getElementById('importPuestos').value = texto.trim();
+    document.getElementById('config').style.display = 'block';
+}
+
+function guardarMapeo() {
+    const lines = document.getElementById('importPuestos').value.trim().split('\n');
+    let nuevo = {};
+    lines.forEach(l => { 
+        const p = l.split(',').map(x => x.trim()); 
+        if(p.length >= 2) { nuevo[p[1]] = { act: p[0], cua: p[2] || "" }; } 
+    });
+    MAPEO_COMPLETO = nuevo;
+    localStorage.setItem('c_mapeo_v2', JSON.stringify(MAPEO_COMPLETO));
+    alert("Mapeos guardados");
+}
+
+function procesarCarga() {
+    const lines = document.getElementById('importInput').value.trim().split('\n');
+    let nC = [], nA = [];
+    lines.forEach(l => {
+        const p = l.split(',').map(x => x.trim());
+        if(p.length === 3) nC.push({id: p[0], n: p[1], v: p[2]});
+        else if(p.length === 2) nA.push({id: p[0], n: p[1]});
+    });
+    CUADROS = nC; ACTS = nA;
+    localStorage.setItem('c_cuadros', JSON.stringify(CUADROS));
+    localStorage.setItem('c_acts', JSON.stringify(ACTS));
+    alert("Catálogos cargados");
+    filtrar();
+}
+
+function prepararTransferencia() {
+    if(REGS.length === 0) return alert("No hay datos para enviar");
+    document.getElementById('qrcode').innerHTML = "";
+    document.getElementById('cantQR').innerText = REGS.length;
+    
+    // Marca especial para que el jefe reconozca el paquete
+    const paquete = "AGRICACTUS_PACK|" + JSON.stringify(REGS);
+
+    new QRCode(document.getElementById("qrcode"), {
+        text: paquete,
+        width: 300,
+        height: 300,
+        correctLevel : QRCode.CorrectLevel.L
+    });
+    document.getElementById('modalQR').style.display = 'block';
+}
+
+window.onload = () => {
+    document.getElementById('sup').value = localStorage.getItem('c_sup') || "";
+    document.getElementById('countTotal').innerText = REGS.length;
+    filtrar();
+    new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }).render(c => procesarRegistro(c));
+};
+</script>
+</body>
+</html>
