@@ -67,6 +67,7 @@
     <button class="btn-upload" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
 
     <script>
+        // REEMPLAZA CON TU URL DE APPS SCRIPT
         const URL_DRIVE = "https://script.google.com/macros/s/AKfycbw1ETzr__9DaNydJw-bUG_T6m77ra3zhhRxr2SIZEUkvUmsGiOyeNvc_9QNcKU8mQwW/exec";
         
         let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data')) || [];
@@ -84,7 +85,7 @@
                     let validos = [];
 
                     nuevosRegs.forEach(nuevo => {
-                        // Buscamos si el empleado (e) ya existe en el acumulado
+                        // Verificamos si la credencial (e) ya está en lo que ya tenemos guardado
                         const existe = DATOS_ACUMULADOS.find(existente => existente.e === nuevo.e);
                         if (existe) {
                             duplicados.push(nuevo.e);
@@ -93,18 +94,19 @@
                         }
                     });
 
+                    // Alerta si hay gente que ya estaba registrada
                     if (duplicados.length > 0) {
-                        alert(`⚠️ ¡ATENCIÓN!\nSe detectaron ${duplicados.length} duplicados que ya estaban en el sistema:\nIDs: ${duplicados.join(", ")}\n\nSolo se agregarán los registros nuevos.`);
+                        alert(`⚠️ ¡ATENCIÓN!\nSe detectaron ${duplicados.length} empleados que ya habías recibido antes.\nIDs duplicados: ${duplicados.join(", ")}\n\nSolo se añadirán los registros nuevos.`);
                     }
 
                     if (validos.length === 0) {
-                        alert("❌ No hay registros nuevos para agregar (todos están duplicados).");
+                        alert("❌ No se agregó nada: todos los empleados de este QR ya estaban en tu lista.");
                         return;
                     }
 
-                    if(confirm(`¿Deseas recibir ${validos.length} registros nuevos de: ${supervisor}?`)) {
+                    if(confirm(`¿Recibir ${validos.length} registros nuevos de: ${supervisor}?`)) {
                         DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
-                        ULTIMA_CARGA_CANTIDAD = validos.length; // Guardamos la cantidad del último escaneo
+                        ULTIMA_CARGA_CANTIDAD = validos.length; // Se actualiza solo con lo nuevo de este escaneo
                         
                         localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
                         actualizarInterfaz();
@@ -129,6 +131,7 @@
                 return;
             }
 
+            // Muestra los últimos 15 registros recibidos
             const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 15);
             cuerpo.innerHTML = mostrar.map(r => `
                 <tr>
@@ -155,7 +158,7 @@
                 
                 alert("🚀 Envío procesado. Revisa tu Google Sheets.");
                 
-                if(confirm("¿Quieres limpiar los datos del teléfono ahora?")) {
+                if(confirm("¿Quieres limpiar la memoria del teléfono ahora?")) {
                     DATOS_ACUMULADOS = [];
                     ULTIMA_CARGA_CANTIDAD = 0;
                     localStorage.setItem('jefe_data', '[]');
@@ -167,7 +170,7 @@
         }
 
         function limpiarTodoJefe() {
-            if(confirm("⚠️ Se borrarán todos los datos acumulados. ¿Continuar?")) {
+            if(confirm("⚠️ Se borrarán todos los datos acumulados en el teléfono. ¿Continuar?")) {
                 DATOS_ACUMULADOS = [];
                 ULTIMA_CARGA_CANTIDAD = 0;
                 localStorage.setItem('jefe_data', '[]');
