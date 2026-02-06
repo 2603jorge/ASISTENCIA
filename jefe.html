@@ -6,14 +6,16 @@
     <title>AgriCactus - CONCENTRADOR</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --p: #1565c0; --s: #e3f2fd; --danger: #c62828; --success: #2e7d32; }
+        :root { --p: #1565c0; --s: #e3f2fd; --danger: #c62828; --success: #2e7d32; --accent: #ff9800; }
         body { font-family: sans-serif; background: var(--s); margin: 0; padding: 15px; padding-bottom: 100px; }
         .card-jefe { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
         #reader { width: 100%; border-radius: 10px; overflow: hidden; background: black; }
         
-        .stats { display: flex; justify-content: space-around; margin: 15px 0; align-items: center; }
-        .stat-box { text-align: center; background: white; padding: 10px; border-radius: 10px; width: 45%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .stat-val { font-size: 24px; font-weight: bold; color: var(--p); display: block; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .stat-box { text-align: center; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 22px; font-weight: bold; display: block; }
+        .c-total { color: var(--p); }
+        .c-last { color: var(--accent); }
         
         h3 { color: #333; border-bottom: 2px solid var(--p); padding-bottom: 5px; margin-top: 20px; font-size: 16px; }
         
@@ -23,7 +25,7 @@
         .tabla-previa td { padding: 10px; border-bottom: 1px solid #f5f5f5; }
 
         .btn-upload { position: fixed; bottom: 15px; left: 15px; right: 15px; background: var(--p); color: white; padding: 18px; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; z-index: 100; box-shadow: 0 4px 15px rgba(21,101,192,0.4); }
-        .btn-clear { background: var(--danger); color: white; border: none; padding: 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        .btn-clear { width: 100%; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -35,10 +37,13 @@
 
     <div class="stats">
         <div class="stat-box">
-            <span class="stat-val" id="countJefe">0</span>
+            <span class="stat-val c-total" id="countJefe">0</span>
             <small>Total Acumulado</small>
         </div>
-        <button class="btn-clear" onclick="limpiarTodoJefe()">🗑️ BORRAR LOCAL</button>
+        <div class="stat-box">
+            <span class="stat-val c-last" id="countLast">0</span>
+            <small>Última Carga</small>
+        </div>
     </div>
 
     <h3>📋 Vista Previa de Recibidos</h3>
@@ -58,13 +63,14 @@
         </table>
     </div>
 
+    <button class="btn-clear" onclick="limpiarTodoJefe()">🗑️ BORRAR TODO EL LISTADO</button>
     <button class="btn-upload" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
 
     <script>
-        // 1. REEMPLAZA ESTO CON TU URL DE APPS SCRIPT (LA QUE COPIASTE DEL EXCEL)
         const URL_DRIVE = "https://script.google.com/macros/s/AKfycbw1ETzr__9DaNydJw-bUG_T6m77ra3zhhRxr2SIZEUkvUmsGiOyeNvc_9QNcKU8mQwW/exec";
         
         let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data')) || [];
+        let ULTIMA_CARGA_CANTIDAD = 0;
 
         function alEscanear(codigo) {
             if(codigo.startsWith("AGRICACTUS_PACK|")) {
@@ -73,11 +79,36 @@
                     const nuevosRegs = JSON.parse(jsonRaw);
                     const supervisor = nuevosRegs[0].s || "Sin Nombre";
 
-                    if(confirm(`¿Deseas recibir la jornada de: ${supervisor}?\nCantidad: ${nuevosRegs.length} registros.`)) {
-                        DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(nuevosRegs);
+                    // --- VALIDACIÓN DE DUPLICADOS ---
+                    let duplicados = [];
+                    let validos = [];
+
+                    nuevosRegs.forEach(nuevo => {
+                        // Buscamos si el empleado (e) ya existe en el acumulado
+                        const existe = DATOS_ACUMULADOS.find(existente => existente.e === nuevo.e);
+                        if (existe) {
+                            duplicados.push(nuevo.e);
+                        } else {
+                            validos.push(nuevo);
+                        }
+                    });
+
+                    if (duplicados.length > 0) {
+                        alert(`⚠️ ¡ATENCIÓN!\nSe detectaron ${duplicados.length} duplicados que ya estaban en el sistema:\nIDs: ${duplicados.join(", ")}\n\nSolo se agregarán los registros nuevos.`);
+                    }
+
+                    if (validos.length === 0) {
+                        alert("❌ No hay registros nuevos para agregar (todos están duplicados).");
+                        return;
+                    }
+
+                    if(confirm(`¿Deseas recibir ${validos.length} registros nuevos de: ${supervisor}?`)) {
+                        DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
+                        ULTIMA_CARGA_CANTIDAD = validos.length; // Guardamos la cantidad del último escaneo
+                        
                         localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
                         actualizarInterfaz();
-                        alert("✅ Datos agregados con éxito.");
+                        alert("✅ Datos integrados correctamente.");
                     }
                 } catch(e) {
                     alert("Error: El código QR no tiene el formato correcto.");
@@ -88,10 +119,10 @@
         }
 
         function actualizarInterfaz() {
-            const contador = document.getElementById('countJefe');
-            const cuerpo = document.getElementById('cuerpoTabla');
+            document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
+            document.getElementById('countLast').innerText = ULTIMA_CARGA_CANTIDAD;
             
-            contador.innerText = DATOS_ACUMULADOS.length;
+            const cuerpo = document.getElementById('cuerpoTabla');
             
             if(DATOS_ACUMULADOS.length === 0) {
                 cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
@@ -126,6 +157,7 @@
                 
                 if(confirm("¿Quieres limpiar los datos del teléfono ahora?")) {
                     DATOS_ACUMULADOS = [];
+                    ULTIMA_CARGA_CANTIDAD = 0;
                     localStorage.setItem('jefe_data', '[]');
                     actualizarInterfaz();
                 }
@@ -137,6 +169,7 @@
         function limpiarTodoJefe() {
             if(confirm("⚠️ Se borrarán todos los datos acumulados. ¿Continuar?")) {
                 DATOS_ACUMULADOS = [];
+                ULTIMA_CARGA_CANTIDAD = 0;
                 localStorage.setItem('jefe_data', '[]');
                 actualizarInterfaz();
             }
@@ -154,5 +187,3 @@
     </script>
 </body>
 </html>
-</html>
-
