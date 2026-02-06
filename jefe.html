@@ -20,7 +20,7 @@
         h3 { color: #333; border-bottom: 2px solid var(--p); padding-bottom: 5px; margin-top: 20px; font-size: 16px; }
         
         .tabla-contenedor { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; margin-top: 10px; }
-        .tabla-previa { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .tabla-previa { width: 100%; border-collapse: collapse; font-size: 11px; }
         .tabla-previa th { background: #eceff1; padding: 10px; text-align: left; color: #546e7a; }
         .tabla-previa td { padding: 10px; border-bottom: 1px solid #f5f5f5; }
 
@@ -52,13 +52,14 @@
             <thead>
                 <tr>
                     <th>Empleado</th>
+                    <th>Hora</th>
                     <th>Cuadro</th>
                     <th>Actividad</th>
                     <th>Sup.</th>
                 </tr>
             </thead>
             <tbody id="cuerpoTabla">
-                <tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">Escanea un QR para ver los datos...</td></tr>
+                <tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">Escanea un QR para ver los datos...</td></tr>
             </tbody>
         </table>
     </div>
@@ -67,7 +68,6 @@
     <button class="btn-upload" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
 
     <script>
-        // REEMPLAZA CON TU URL DE APPS SCRIPT
         const URL_DRIVE = "https://script.google.com/macros/s/AKfycbw1ETzr__9DaNydJw-bUG_T6m77ra3zhhRxr2SIZEUkvUmsGiOyeNvc_9QNcKU8mQwW/exec";
         
         let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data')) || [];
@@ -80,12 +80,10 @@
                     const nuevosRegs = JSON.parse(jsonRaw);
                     const supervisor = nuevosRegs[0].s || "Sin Nombre";
 
-                    // --- VALIDACIÓN DE DUPLICADOS ---
                     let duplicados = [];
                     let validos = [];
 
                     nuevosRegs.forEach(nuevo => {
-                        // Verificamos si la credencial (e) ya está en lo que ya tenemos guardado
                         const existe = DATOS_ACUMULADOS.find(existente => existente.e === nuevo.e);
                         if (existe) {
                             duplicados.push(nuevo.e);
@@ -94,29 +92,28 @@
                         }
                     });
 
-                    // Alerta si hay gente que ya estaba registrada
                     if (duplicados.length > 0) {
-                        alert(`⚠️ ¡ATENCIÓN!\nSe detectaron ${duplicados.length} empleados que ya habías recibido antes.\nIDs duplicados: ${duplicados.join(", ")}\n\nSolo se añadirán los registros nuevos.`);
+                        alert(`⚠️ ¡ATENCIÓN!\nSe detectaron ${duplicados.length} duplicados:\nIDs: ${duplicados.join(", ")}\n\nSolo se agregarán los nuevos.`);
                     }
 
                     if (validos.length === 0) {
-                        alert("❌ No se agregó nada: todos los empleados de este QR ya estaban en tu lista.");
+                        alert("❌ No hay registros nuevos (todos duplicados).");
                         return;
                     }
 
-                    if(confirm(`¿Recibir ${validos.length} registros nuevos de: ${supervisor}?`)) {
+                    if(confirm(`¿Recibir ${validos.length} registros de: ${supervisor}?`)) {
                         DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
-                        ULTIMA_CARGA_CANTIDAD = validos.length; // Se actualiza solo con lo nuevo de este escaneo
+                        ULTIMA_CARGA_CANTIDAD = validos.length;
                         
                         localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
                         actualizarInterfaz();
-                        alert("✅ Datos integrados correctamente.");
+                        alert("✅ Datos integrados.");
                     }
                 } catch(e) {
-                    alert("Error: El código QR no tiene el formato correcto.");
+                    alert("Error en el formato del código QR.");
                 }
             } else {
-                alert("⚠️ Este código QR no pertenece al sistema AgriCactus.");
+                alert("⚠️ QR no válido.");
             }
         }
 
@@ -127,15 +124,15 @@
             const cuerpo = document.getElementById('cuerpoTabla');
             
             if(DATOS_ACUMULADOS.length === 0) {
-                cuerpo.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
+                cuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
                 return;
             }
 
-            // Muestra los últimos 15 registros recibidos
             const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 15);
             cuerpo.innerHTML = mostrar.map(r => `
                 <tr>
                     <td><b>${r.e}</b></td>
+                    <td>${r.h || '--:--'}</td>
                     <td>${r.c}</td>
                     <td>${r.a}</td>
                     <td><small>${r.s}</small></td>
@@ -144,8 +141,8 @@
         }
 
         async function sincronizarConDrive() {
-            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para enviar.");
-            if(!navigator.onLine) return alert("🛑 No tienes conexión a Internet.");
+            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos.");
+            if(!navigator.onLine) return alert("🛑 Sin conexión a Internet.");
 
             if(!confirm(`¿Subir ${DATOS_ACUMULADOS.length} registros al Excel?`)) return;
 
@@ -156,21 +153,21 @@
                     body: JSON.stringify(DATOS_ACUMULADOS)
                 });
                 
-                alert("🚀 Envío procesado. Revisa tu Google Sheets.");
+                alert("🚀 Envío procesado.");
                 
-                if(confirm("¿Quieres limpiar la memoria del teléfono ahora?")) {
+                if(confirm("¿Limpiar memoria del teléfono?")) {
                     DATOS_ACUMULADOS = [];
                     ULTIMA_CARGA_CANTIDAD = 0;
                     localStorage.setItem('jefe_data', '[]');
                     actualizarInterfaz();
                 }
             } catch(e) {
-                alert("❌ Error de red. Intenta de nuevo.");
+                alert("❌ Error de red.");
             }
         }
 
         function limpiarTodoJefe() {
-            if(confirm("⚠️ Se borrarán todos los datos acumulados en el teléfono. ¿Continuar?")) {
+            if(confirm("⚠️ ¿Borrar todo?")) {
                 DATOS_ACUMULADOS = [];
                 ULTIMA_CARGA_CANTIDAD = 0;
                 localStorage.setItem('jefe_data', '[]');
