@@ -173,12 +173,19 @@ function confirmarDivision() {
         let actFinal = (regla && regla.act) ? regla.act : actGral;
         let cObj = CUADROS.find(c => c.id == cuadroAsignado);
 
-        REGS.push({
-            id: Date.now() + index, // ID único para borrar
-            f: new Date().toLocaleDateString('en-GB'),
-            c: cuadroAsignado, a: actFinal, e: persona.e,
-            j: jVal, jt: jTex, s: supervisor, v: cObj ? cObj.v : ""
-        });
+        // Dentro de la función confirmarDivision, actualiza el objeto que se envía al REGS.push:
+REGS.push({
+    id: Date.now() + index, 
+    f: new Date().toLocaleDateString('en-GB'), // Fecha
+    h: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }), // HORA AGREGADA
+    c: cuadroAsignado, 
+    a: actFinal, 
+    e: persona.e,
+    j: jVal, 
+    jt: jTex, 
+    s: supervisor, 
+    v: cObj ? cObj.v : ""
+});
     });
 
     localStorage.setItem('c_regs', JSON.stringify(REGS));
@@ -299,4 +306,5 @@ window.onload = () => {
 };
 </script>
 </body>
+
 </html>
