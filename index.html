@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus Pro - Cuadrillero</title>
+    <title>AgriCactus Pro - Cuadrillero V7</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -11,10 +11,9 @@
         body { font-family: sans-serif; background: var(--s); margin: 0; padding: 10px; padding-bottom: 80px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px; }
         
-        /* Monitor de Avance */
         .monitor-avance { background: #263238; color: #cfd8dc; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 12px; border-left: 5px solid var(--accent); }
         .monitor-avance b { color: white; font-size: 14px; }
-
+        
         .progress-container { background: #ddd; border-radius: 10px; height: 10px; width: 100%; margin: 8px 0; overflow: hidden; }
         #progressBar { background: var(--p); height: 100%; width: 0%; transition: 0.5s; }
         
@@ -24,9 +23,19 @@
         
         input, select { width: 100%; height: 48px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; padding: 0 10px; box-sizing: border-box; }
         #status { text-align: center; font-weight: bold; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; background: #eee; }
+        
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        .division-box { background: #fff3e0; border: 2px dashed #ff9800; padding: 15px; border-radius: 12px; margin-top: 15px; text-align: center; }
+        
+        /* Caja de Reparto y Gestión de Cola */
+        .division-box { background: #fff3e0; border: 2px dashed #ff9800; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .cola-list { max-height: 150px; overflow-y: auto; margin: 10px 0; background: rgba(255,255,255,0.5); border-radius: 8px; padding: 5px; }
+        .cola-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ffd180; font-size: 13px; }
+        .btn-remove-cola { background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        
+        .btn-reuse { background: var(--info); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; font-size: 12px; }
+        
         .emergencia-link { color: var(--danger); font-size: 11px; text-decoration: underline; display: block; margin-top: 10px; text-align: center; cursor: pointer; }
+        .reg-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -43,64 +52,59 @@
         <span id="labelHora" style="font-size:10px;">--:--</span>
     </div>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
-        <div>Líneas Totales: <b id="statLineas">0</b></div>
+        <div>Hileras: <b id="statLineas">0</b></div>
         <div>Personas: <b id="statGente">0</b></div>
         <div>Eficiencia: <b id="statEficiencia">0.0</b> <small>L/h</small></div>
-        <div>H. Trabajo: <b id="statHoras">0</b></div>
+        <div>Horas: <b id="statHoras">0</b></div>
     </div>
 </div>
 
 <div class="config-status">
-    📍 Cuadro: <b id="displayCuadro">--</b> (<b id="displayLado">--</b>) | 🧵 L: <b id="displayRango">-- al --</b>
+    📍 Cuadro: <b id="displayCuadro">--</b> (<b id="displayLado">--</b>)<br>
+    🌱 Variedad: <b id="displayVariedad">--</b> | 🧵 L: <b id="displayRango">-- al --</b>
     <div class="progress-container"><div id="progressBar"></div></div>
     <small id="displayCapacidad">Ocupación: 0/0 personas</small>
 </div>
 
 <div class="card">
-    <label>SUPERVISOR</label>
-    <input type="text" id="sup" oninput="localStorage.setItem('c_sup', this.value)">
+    <label>SUPERVISOR RESPONSABLE</label>
+    <input type="text" id="sup" readonly style="background:#f0f0f0;">
+    
+    <!-- Botón para reutilizar gente -->
+    <button id="btnCargarAnterior" class="btn-reuse" onclick="cargarGenteAnterior()" style="display:none;">
+        ♻️ CARGAR GENTE DEL CUADRO ANTERIOR
+    </button>
+
     <label>ACTIVIDAD</label>
     <input type="text" id="busA" placeholder="Filtrar..." oninput="filtrar()">
     <select id="selA"></select>
+    
     <div id="reader" style="width: 100%; background: #000; border-radius: 8px; margin-top: 15px;"></div>
     <div id="status">ESCANEANDO...</div>
-    <span class="emergencia-link" onclick="solicitarAccesoEmergencia()">🆘 No tengo QR del Supervisor</span>
+    <span class="emergencia-link" onclick="solicitarAccesoEmergencia()">🆘 Acceso de Emergencia (Sin QR)</span>
 </div>
 
 <div class="division-box" id="areaDivision" style="display:none;">
-    <h4>📦 REPARTO: 2 POR LÍNEA</h4>
+    <h4 style="margin:0">📦 GENTE EN COLA PARA ESTE CUADRO</h4>
+    <div class="cola-list" id="colaListaUI"></div>
     <p id="infoReparto" style="font-size:12px; color:#666;"></p>
-    <button onclick="confirmarDivision()" style="width:100%; background:var(--p); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold;">✅ ASIGNAR Y GUARDAR</button>
+    <button onclick="confirmarDivision()" style="width:100%; background:var(--p); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold;">✅ ASIGNAR Y GUARDAR GRUPO</button>
+    <button onclick="cancelarCola()" style="width:100%; background:none; color:red; border:none; margin-top:5px; font-size:11px;">Vaciar Cola</button>
 </div>
 
 <button onclick="prepararTransferencia()" style="width:100%; background:var(--sup); color:white; padding:20px; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">📤 PASAR REPORTE AL JEFE</button>
 
-<div id="config" class="modal">
-    <h3>⚙️ Configuración Sistema</h3>
-    <label>MAPEO RÁPIDO (Act, Emp)</label>
-    <textarea id="importPuestos" style="width:100%; height:80px;" placeholder="DESHIJE, 1023"></textarea>
-    <button onclick="guardarMapeo()" style="width:100%; padding:12px; background:var(--info); color:white; border:none; border-radius:8px;">GUARDAR MAPEO</button>
-    <hr>
-    <label>CATÁLOGO ACTIVIDADES (ID, Nombre)</label>
-    <textarea id="importInput" style="width:100%; height:80px;"></textarea>
-    <button onclick="procesarCarga()" style="width:100%; padding:12px; background:black; color:white; border:none; border-radius:8px;">CARGAR CATÁLOGO</button>
-    <button onclick="document.getElementById('config').style.display='none'" style="width:100%; padding:15px; margin-top:20px; border-radius:8px; width:100%;">CERRAR</button>
-</div>
-
+<!-- MODALES -->
 <div id="modalRegs" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>Registros de Hoy</h3>
-        <button onclick="limpiarTodo()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">Borrar Día</button>
-    </div>
+    <h3>Registros de Hoy</h3>
     <div id="listaRegistros"></div>
-    <button onclick="document.getElementById('modalRegs').style.display='none'" style="width:100%; padding:15px; margin-top:20px; border-radius:8px;">VOLVER</button>
+    <button onclick="document.getElementById('modalRegs').style.display='none'" style="width:100%; padding:15px; margin-top:20px;">VOLVER</button>
 </div>
 
 <div id="modalQR" class="modal" style="text-align:center;">
-    <h3>REPORTE PARA JEFE</h3>
-    <p style="font-size:12px;">El jefe debe escanear este código para recibir asistencia y rendimiento.</p>
+    <h3>REPORTE FINAL</h3>
     <div id="qrcode" style="display:flex; justify-content:center; margin:20px;"></div>
-    <button onclick="document.getElementById('modalQR').style.display='none'" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:8px;">CERRAR</button>
+    <button onclick="document.getElementById('modalQR').style.display='none'" style="width:100%; padding:15px; background:#ddd; border:none;">CERRAR</button>
 </div>
 
 <script>
@@ -108,46 +112,85 @@ let REGS = JSON.parse(localStorage.getItem('c_regs')) || [];
 let ACTS = JSON.parse(localStorage.getItem('c_acts')) || [];
 let MAPEO = JSON.parse(localStorage.getItem('c_mapeo_v2')) || {};
 let COLA = [];
-let CUR = JSON.parse(localStorage.getItem('cur_config')) || { c:"", li:0, lf:0, lado: "COMPLETA" };
+let CUR = JSON.parse(localStorage.getItem('cur_config')) || { c:"", li:0, lf:0, lado: "COMPLETA", v: "--", s: "" };
 let MODO_SUP = false;
 const TOKEN = "SECRET123";
 
-function activarEscaneoSup() { MODO_SUP = true; document.getElementById('status').innerText = "🛰️ ESCANEE QR SUPERVISOR"; }
+function activarEscaneoSup() { 
+    MODO_SUP = true; 
+    document.getElementById('status').innerText = "🛰️ ESCANEE QR SUPERVISOR"; 
+}
 
 function alEscanear(codigo) {
     if(MODO_SUP) {
         const p = codigo.split('|');
-        if(p[0] === "SUP_CONFIG" && p[5] === TOKEN) {
-            CUR = { c: p[1], li: parseInt(p[2]), lf: parseInt(p[3]), lado: p[6] || "COMPLETA" };
+        if(p[0] === "SUP_ORDEN" || p[0] === "SUP_CONFIG") { 
+            CUR = { c: p[1], lado: p[2], li: parseInt(p[3]), lf: parseInt(p[4]), v: p[5], s: p[6] };
             localStorage.setItem('cur_config', JSON.stringify(CUR));
+            document.getElementById('sup').value = CUR.s;
             actualizarInterfaz();
             MODO_SUP = false;
-            document.getElementById('status').innerText = "✅ TRAMO OK";
+            document.getElementById('status').innerText = "✅ TRAMO CONFIGURADO";
+            verificarBotonReuso();
         }
     } else {
-        if(!CUR.c) return alert("Falta Asignación de Cuadro");
-        const cod = codigo.trim();
-        if(REGS.find(r => r.e === cod && r.c === CUR.c) || COLA.find(c => c.e === cod)) return;
-        COLA.push({ e: cod });
-        document.getElementById('areaDivision').style.display = 'block';
-        document.getElementById('infoReparto').innerText = `Cola: ${COLA.length} personas`;
-        actualizarInterfaz();
+        if(!CUR.c) return alert("Falta Asignación");
+        agregarACola(codigo.trim());
     }
 }
 
-function solicitarAccesoEmergencia() {
-    if(confirm("¿Usar código de emergencia? Esto se reportará al Jefe.")){
-        const c = prompt("Número de Cuadro:");
-        const li = prompt("Línea Inicial:");
-        const lf = prompt("Línea Final:");
-        const lado = prompt("Lado (NORTE/SUR/COMPLETA):", "COMPLETA").toUpperCase();
-        if(c && li && lf) {
-            CUR = { c: c, li: parseInt(li), lf: parseInt(lf), lado: lado, emg: true };
-            localStorage.setItem('cur_config', JSON.stringify(CUR));
-            actualizarInterfaz();
-            alert("⚠️ Acceso Manual Activado.");
-        }
+function agregarACola(cod) {
+    if(REGS.find(r => r.e === cod && r.c === CUR.c && r.lado === CUR.lado)) {
+        document.getElementById('status').innerText = "❌ YA REGISTRADO: " + cod;
+        return;
     }
+    if(COLA.find(c => c.e === cod)) return;
+    COLA.push({ e: cod });
+    actualizarColaUI();
+}
+
+function actualizarColaUI() {
+    const cont = document.getElementById('colaListaUI');
+    if(COLA.length > 0) {
+        document.getElementById('areaDivision').style.display = 'block';
+        cont.innerHTML = COLA.map((item, index) => `
+            <div class="cola-item">
+                <span><b>${item.e}</b></span>
+                <button class="btn-remove-cola" onclick="removerDeCola(${index})">X</button>
+            </div>
+        `).join('');
+        document.getElementById('infoReparto').innerText = `Total en cola: ${COLA.length} personas`;
+    } else {
+        document.getElementById('areaDivision').style.display = 'none';
+    }
+    document.getElementById('countEspera').innerText = COLA.length; // Si existiera el contador
+}
+
+function removerDeCola(index) {
+    COLA.splice(index, 1);
+    actualizarColaUI();
+}
+
+function cargarGenteAnterior() {
+    if(REGS.length === 0) return;
+    // Buscamos el último cuadro trabajado (diferente al actual si es posible)
+    const ultimoCuadro = REGS[REGS.length - 1].c;
+    const ultimoLado = REGS[REGS.length - 1].lado;
+    
+    // Extraemos empleados únicos de ese último cuadro
+    const genteAnterior = REGS.filter(r => r.c === ultimoCuadro && r.lado === ultimoLado)
+                              .map(r => r.e);
+    
+    const unicos = [...new Set(genteAnterior)];
+    
+    COLA = unicos.map(e => ({ e: e }));
+    actualizarColaUI();
+    document.getElementById('status').innerText = "♻️ CUADRILLA CARGADA (" + COLA.length + ")";
+}
+
+function verificarBotonReuso() {
+    const btn = document.getElementById('btnCargarAnterior');
+    btn.style.display = (REGS.length > 0) ? 'block' : 'none';
 }
 
 function confirmarDivision() {
@@ -162,90 +205,73 @@ function confirmarDivision() {
 
         REGS.push({
             id: Date.now() + index, f: f, h: h, ts: ahora.getTime(),
-            c: CUR.c, l: linea, lado: CUR.lado,
+            c: CUR.c, l: linea, lado: CUR.lado, v: CUR.v,
             e: persona.e, a: (MAPEO[persona.e] ? MAPEO[persona.e].act : actGral),
-            s: document.getElementById('sup').value,
-            emg: CUR.emg || false
+            s: CUR.s
         });
     });
 
     localStorage.setItem('c_regs', JSON.stringify(REGS));
     COLA = [];
-    document.getElementById('areaDivision').style.display = 'none';
+    actualizarColaUI();
     actualizarInterfaz();
+    alert("✅ Cuadro guardado con éxito");
 }
 
 function actualizarInterfaz() {
     document.getElementById('displayCuadro').innerText = CUR.c || "--";
     document.getElementById('displayLado').innerText = CUR.lado || "--";
+    document.getElementById('displayVariedad').innerText = CUR.v || "--";
     document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
     
     let ocupado = REGS.filter(r => r.c === CUR.c && r.lado === CUR.lado).length;
     let capacidad = (CUR.lf - CUR.li + 1) * 2;
-    
-    document.getElementById('displayCapacidad').innerText = `${ocupado}/${capacidad} personas`;
     document.getElementById('progressBar').style.width = Math.min((ocupado/capacidad)*100, 100) + "%";
+    document.getElementById('displayCapacidad').innerText = `${ocupado}/${capacidad} ocupados`;
     
     actualizarMonitor();
 }
 
 function actualizarMonitor() {
     if (REGS.length === 0) return;
-    
-    // Líneas únicas trabajadas
     const lineasUnicas = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`));
-    
-    // Horas trabajadas (aproximadas por stamps de tiempo)
     const timestamps = REGS.map(r => r.ts);
-    const minTS = Math.min(...timestamps);
-    const maxTS = Math.max(...timestamps);
-    const diffHoras = Math.max(1, (maxTS - minTS) / (1000 * 60 * 60));
-
+    const diffHoras = Math.max(0.1, (Math.max(...timestamps) - Math.min(...timestamps)) / (1000 * 60 * 60));
     document.getElementById('statLineas').innerText = lineasUnicas.size;
-    document.getElementById('statGente').innerText = REGS.length;
-    document.getElementById('statHoras').innerText = diffHoras.toFixed(1);
+    document.getElementById('statGente').innerText = [...new Set(REGS.map(r=>r.e))].length;
     document.getElementById('statEficiencia').innerText = (lineasUnicas.size / diffHoras).toFixed(1);
+    document.getElementById('statHoras').innerText = diffHoras.toFixed(1);
     document.getElementById('labelHora').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
 
-// SOPORTE
-function abrirConfig() { document.getElementById('config').style.display='block'; }
-function filtrar() { const f = document.getElementById('busA').value.toLowerCase(); document.getElementById('selA').innerHTML = ACTS.filter(a => a.id.toLowerCase().includes(f) || a.n.toLowerCase().includes(f)).map(a => `<option value="${a.id}">${a.n}</option>`).join(''); }
-function procesarCarga() { 
-    const lines = document.getElementById('importInput').value.trim().split('\n');
-    ACTS = lines.map(l => { const p = l.split(','); return {id: p[0].trim(), n: p[1].trim()}; });
-    localStorage.setItem('c_acts', JSON.stringify(ACTS));
-    alert("Catálogo cargado"); filtrar(); 
-}
-function guardarMapeo() {
-    const lines = document.getElementById('importPuestos').value.trim().split('\n');
-    lines.forEach(l => { const p = l.split(','); MAPEO[p[1].trim()] = { act: p[0].trim() }; });
-    localStorage.setItem('c_mapeo_v2', JSON.stringify(MAPEO)); alert("Mapeo OK");
-}
 function abrirRegistros() { 
     document.getElementById('listaRegistros').innerHTML = REGS.slice().reverse().map(r => `
-        <div style="border-bottom:1px solid #eee; padding:5px; font-size:12px;">
-            <b>${r.e}</b> - C:${r.c} L:${r.l} (${r.lado}) - ${r.h} ${r.emg?'⚠️':''}
+        <div class="reg-item">
+            <span><b>${r.e}</b> - C:${r.c} L:${r.l} (${r.lado})</span>
+            <small>${r.h}</small>
         </div>
     `).join('') || "Sin registros";
     document.getElementById('modalRegs').style.display='block'; 
 }
+
 function prepararTransferencia() {
-    const paquete = {
-        resumen: { lineas: document.getElementById('statLineas').innerText, gente: REGS.length },
-        detalles: REGS
-    };
+    const paquete = { resumen: { lineas: document.getElementById('statLineas').innerText, gente: REGS.length }, detalles: REGS };
     document.getElementById('qrcode').innerHTML = ""; 
     new QRCode(document.getElementById("qrcode"), { text: "AGRI_REP|" + JSON.stringify(paquete), width: 250, height: 250 });
     document.getElementById('modalQR').style.display='block';
 }
-function limpiarTodo() { if(confirm("¿Borrar todos los datos del día?")) { REGS=[]; localStorage.setItem('c_regs', '[]'); actualizarInterfaz(); abrirRegistros(); } }
 
-window.onload = () => { 
-    document.getElementById('sup').value = localStorage.getItem('c_sup') || "";
-    actualizarInterfaz(); filtrar();
+function cancelarCola() { if(confirm("¿Vaciar la cola actual?")) { COLA = []; actualizarColaUI(); } }
+
+function abrirConfig() { alert("Use el catálogo para actividades."); } // Opcional: implementar modal de catálogo si se requiere
+
+window.onload = () => {
+    document.getElementById('sup').value = CUR.s || "";
+    actualizarInterfaz();
+    verificarBotonReuso();
     new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 }).render(alEscanear);
 };
 </script>
 </body>
 </html>
+
