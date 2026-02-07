@@ -11,71 +11,67 @@
         body { font-family: sans-serif; background: var(--s); margin: 0; padding: 10px; padding-bottom: 80px; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px; }
         
-        .monitor-avance { background: #263238; color: #cfd8dc; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 12px; border-left: 5px solid var(--accent); }
-        .monitor-avance b { color: white; font-size: 14px; }
+        .monitor-avance { background: #263238; color: #cfd8dc; padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 11px; border-left: 5px solid var(--accent); }
+        .monitor-avance b { color: white; font-size: 13px; }
         
         .progress-container { background: #ddd; border-radius: 10px; height: 10px; width: 100%; margin: 8px 0; overflow: hidden; }
         #progressBar { background: var(--p); height: 100%; width: 0%; transition: 0.5s; }
         
-        .config-status { background: #e8f5e9; border: 1px solid var(--p); padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+        .config-status { background: #e8f5e9; border: 1px solid var(--p); padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 12px; }
         .nav-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .btn-nav { padding: 12px 5px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; font-size: 10px; }
         
-        input, select, textarea { width: 100%; height: 48px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; padding: 0 10px; box-sizing: border-box; }
-        textarea { height: 80px; padding: 10px; }
-        #status { text-align: center; font-weight: bold; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; background: #eee; }
-        
-        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        label { display: block; font-weight: bold; font-size: 11px; color: #555; margin-top: 10px; text-transform: uppercase; }
+        input, select, textarea { width: 100%; height: 45px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; padding: 0 10px; box-sizing: border-box; }
+        textarea { height: 80px; padding: 10px; font-family: monospace; font-size: 12px; }
         
         .division-box { background: #fff3e0; border: 2px dashed #ff9800; padding: 15px; border-radius: 12px; margin-top: 15px; }
         .cola-list { max-height: 150px; overflow-y: auto; margin: 10px 0; background: rgba(255,255,255,0.5); border-radius: 8px; padding: 5px; }
         .cola-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ffd180; font-size: 13px; }
-        .btn-remove-cola { background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .btn-remove { background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; }
         
-        .btn-manual { background: var(--accent); color: white; border: none; border-radius: 8px; height: 48px; padding: 0 15px; font-weight: bold; margin-left: 5px; }
-        .btn-reuse { background: var(--info); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; font-size: 12px; }
-        
-        .reg-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+        #status { text-align: center; font-weight: bold; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; background: #eee; font-size: 13px; }
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .btn-manual { background: var(--accent); color: white; border: none; border-radius: 8px; height: 45px; padding: 0 15px; font-weight: bold; margin-left: 5px; }
     </style>
 </head>
 <body>
 
 <div class="nav-buttons">
-    <button class="btn-nav" style="background:#607d8b" onclick="abrirConfigModal()">⚙️ CONFIG / CATÁLOGOS</button>
+    <button class="btn-nav" style="background:#607d8b" onclick="abrirModal('modalConfig')">⚙️ CATALOGOS</button>
     <button class="btn-nav" style="background:var(--sup)" onclick="activarEscaneoSup()">🛰️ QR SUPERVISOR</button>
     <button class="btn-nav" style="background:var(--info)" onclick="abrirRegistros()">📋 LISTADO</button>
 </div>
 
 <div class="monitor-avance">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span>📊 RENDIMIENTO DEL DÍA</span>
-        <span id="labelHora" style="font-size:10px;">--:--</span>
+        <span>📊 AVANCE JORNADA</span>
+        <span id="labelHora">--:--</span>
     </div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
-        <div>Hileras: <b id="statLineas">0</b></div>
-        <div>Personas: <b id="statGente">0</b></div>
-        <div>Eficiencia: <b id="statEficiencia">0.0</b> <small>L/h</small></div>
-        <div>Horas: <b id="statHoras">0</b></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:5px; margin-top:8px; text-align:center;">
+        <div>Hileras<br><b id="statLineas">0</b></div>
+        <div>Gente<br><b id="statGente">0</b></div>
+        <div>Eficiencia<br><b id="statEficiencia">0</b> <small>L/h</small></div>
     </div>
 </div>
 
 <div class="config-status">
-    📍 Cuadro: <b id="displayCuadro">--</b> (<b id="displayLado">--</b>)<br>
-    🌱 Variedad: <b id="displayVariedad">--</b> | 🧵 L: <b id="displayRango">-- al --</b>
+    📍 Cuadro: <b id="displayCuadro">--</b> (<b id="displayLado">--</b>) | 🌱 <b id="displayVariedad">--</b><br>
+    🧵 Rango: <b id="displayRango">-- al --</b>
     <div class="progress-container"><div id="progressBar"></div></div>
     <small id="displayCapacidad">Ocupación: 0/0 personas</small>
 </div>
 
 <div class="card">
-    <label>SUPERVISOR RESPONSABLE</label>
-    <input type="text" id="sup" readonly style="background:#f0f0f0;">
+    <label>SUPERVISOR</label>
+    <input type="text" id="sup" readonly placeholder="Escanea al Supervisor..." style="background:#f5f5f5;">
     
-    <button id="btnCargarAnterior" class="btn-reuse" onclick="cargarGenteAnterior()" style="display:none;">
+    <button id="btnReuse" style="background:var(--info); color:white; border:none; padding:10px; border-radius:8px; font-weight:bold; width:100%; margin-top:10px; display:none;" onclick="reutilizarCuadrilla()">
         ♻️ CARGAR GENTE DEL CUADRO ANTERIOR
     </button>
 
     <label>TURNO / JORNADA</label>
-    <select id="selT" onchange="actualizarTurnoGlobal(this.value)">
+    <select id="selTurno">
         <option value="9">MATUTINO (9)</option>
         <option value="11">VESPERTINO (11)</option>
         <option value="16">1 TAREA (16)</option>
@@ -85,339 +81,272 @@
     </select>
 
     <label>ACTIVIDAD</label>
-    <input type="text" id="busA" placeholder="Filtrar actividad..." oninput="filtrar()">
-    <select id="selA"></select>
+    <input type="text" id="busA" placeholder="Filtrar por nombre o clave..." oninput="filtrarActividades()">
+    <select id="selActividad"></select>
     
-    <div id="reader" style="width: 100%; background: #000; border-radius: 8px; margin-top: 15px;"></div>
-    <div id="status">ESCANEANDO...</div>
+    <div id="reader" style="width: 100%; background: #000; border-radius: 12px; margin-top: 15px; overflow: hidden;"></div>
+    <div id="status">INICIANDO CÁMARA...</div>
 
     <div style="display:flex; margin-top:10px;">
         <input type="text" id="manualID" placeholder="ID Manual si no lee..." style="flex-grow:1;">
-        <button class="btn-manual" onclick="registrarManual()">AÑADIR</button>
+        <button class="btn-manual" onclick="agregarManual()">AÑADIR</button>
     </div>
 </div>
 
-<div class="division-box" id="areaDivision" style="display:none;">
-    <h4 style="margin:0">📦 GENTE EN COLA PARA ESTE CUADRO</h4>
-    <div class="cola-list" id="colaListaUI"></div>
-    <p id="infoReparto" style="font-size:12px; color:#666;"></p>
-    <button onclick="confirmarDivision()" style="width:100%; background:var(--p); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold;">✅ ASIGNAR Y GUARDAR GRUPO</button>
-    <button onclick="cancelarCola()" style="width:100%; background:none; color:red; border:none; margin-top:5px; font-size:11px;">Vaciar Cola</button>
+<div class="division-box" id="areaCola" style="display:none;">
+    <h4 style="margin:0">📦 GRUPO EN COLA</h4>
+    <div class="cola-list" id="colaUI"></div>
+    <button onclick="guardarGrupo()" style="width:100%; background:var(--p); color:white; padding:15px; border:none; border-radius:8px; font-weight:bold; font-size:16px;">✅ REGISTRAR ESTE GRUPO</button>
+    <button onclick="vaciarCola()" style="width:100%; background:none; color:red; border:none; margin-top:8px; font-size:11px;">Cancelar / Vaciar</button>
 </div>
 
-<button onclick="prepararTransferencia()" style="width:100%; background:var(--sup); color:white; padding:20px; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">📤 PASAR REPORTE AL JEFE</button>
+<button onclick="prepararReporte()" style="width:100%; background:var(--sup); color:white; padding:20px; border:none; border-radius:12px; font-weight:bold; margin-top:10px; margin-bottom:20px;">📤 PASAR REPORTE AL JEFE</button>
 
-<!-- MODAL CONFIGURACIÓN Y CATÁLOGOS -->
+<!-- MODAL CONFIG -->
 <div id="modalConfig" class="modal">
-    <h3>⚙️ Configuración y Catálogos</h3>
+    <h3 style="color:var(--p)">⚙️ Configuración del Sistema</h3>
     
-    <label>1. CATÁLOGO DE ACTIVIDADES (ID, Nombre)</label>
-    <textarea id="importInput" placeholder="EJ:&#10;DESHIJE, Deshije de parra&#10;PODA, Poda de formación"></textarea>
-    <button onclick="procesarCargaActividades()" style="width:100%; background:black; color:white; border:none; padding:10px; border-radius:8px; margin-top:5px;">CARGAR ACTIVIDADES</button>
+    <label>1. CATÁLOGO ACTIVIDADES (ID, Descripción, Clave)</label>
+    <textarea id="csvActividades" placeholder="Ejemplo:&#10;6, APOYO CAMPO AGUA, 1000&#10;11, APOYO CAMPO ASISTENCIA, 1005"></textarea>
+    <button onclick="cargarActividades()" style="width:100%; background:black; color:white; padding:12px; border:none; border-radius:8px; margin-top:5px;">ACTUALIZAR ACTIVIDADES</button>
     
-    <hr>
+    <hr style="margin:20px 0;">
     
-    <label>2. MAPEO RÁPIDO (Act, Empleado)</label>
-    <textarea id="importMapeo" placeholder="EJ:&#10;DESHIJE, 1025&#10;PODA, 2030"></textarea>
-    <button onclick="guardarMapeoRapido()" style="width:100%; background:var(--info); color:white; border:none; padding:10px; border-radius:8px; margin-top:5px;">GUARDAR MAPEO</button>
-
-    <hr>
-    
-    <label>3. AJUSTE MANUAL DE CUADRO (EMERGENCIA)</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-        <input type="text" id="cfg_cuadro" placeholder="Cuadro">
-        <input type="text" id="cfg_variedad" placeholder="Variedad">
-    </div>
-    <select id="cfg_lado">
+    <label>2. AJUSTE MANUAL (SÓLO SI NO HAY QR)</label>
+    <input type="text" id="m_cuadro" placeholder="Cuadro (Ej: 105)">
+    <input type="text" id="m_variedad" placeholder="Variedad (Ej: SWEET GLOBE)">
+    <select id="m_lado">
+        <option value="NORTE">NORTE</option><option value="SUR">SUR</option>
+        <option value="ORIENTE">ORIENTE</option><option value="PONIENTE">PONIENTE</option>
         <option value="COMPLETA">COMPLETA</option>
-        <option value="NORTE">NORTE</option>
-        <option value="SUR">SUR</option>
-        <option value="ORIENTE">ORIENTE</option>
-        <option value="PONIENTE">PONIENTE</option>
     </select>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-        <input type="number" id="cfg_ini" placeholder="L. Ini">
-        <input type="number" id="cfg_fin" placeholder="L. Fin">
+        <input type="number" id="m_ini" placeholder="L. Inicio">
+        <input type="number" id="m_fin" placeholder="L. Fin">
     </div>
-    <label>TURNO EN CONFIG</label>
-    <select id="cfg_turno">
-        <option value="9">MATUTINO (9)</option>
-        <option value="11">VESPERTINO (11)</option>
-        <option value="16">1 TAREA (16)</option>
-        <option value="17">2 TAREAS (17)</option>
-        <option value="18">MATUTINO VESPERTINO (18)</option>
-        <option value="0">SE DESCANSÓ (0)</option>
-    </select>
-    <input type="text" id="cfg_sup" placeholder="Supervisor">
-    <button onclick="guardarConfigManual()" style="width:100%; padding:15px; background:var(--p); color:white; border:none; border-radius:8px; margin-top:10px; font-weight:bold;">APLICAR AJUSTE</button>
+    <input type="text" id="m_sup" placeholder="Nombre Supervisor">
+    <button onclick="fijarManual()" style="width:100%; background:var(--p); color:white; padding:12px; border:none; border-radius:8px; margin-top:5px; font-weight:bold;">FIJAR ASIGNACIÓN MANUAL</button>
 
-    <button onclick="cerrarModal('modalConfig')" style="width:100%; padding:10px; background:none; color:red; border:none; margin-top:20px;">CERRAR</button>
+    <button onclick="cerrarModal('modalConfig')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:8px; margin-top:30px;">CERRAR</button>
 </div>
 
 <!-- MODAL LISTADO -->
-<div id="modalRegs" class="modal">
+<div id="modalListado" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>Registros de Hoy</h3>
-        <button onclick="limpiarTodo()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">BORRAR DÍA</button>
+        <h3>📋 Registros del Día</h3>
+        <button onclick="borrarTodo()" style="background:red; color:white; border:none; padding:8px; border-radius:5px; font-size:11px;">LIMPIAR DÍA</button>
     </div>
-    <div id="listaRegistros"></div>
-    <button onclick="cerrarModal('modalRegs')" style="width:100%; padding:15px; margin-top:20px; border-radius:8px;">VOLVER</button>
+    <div id="listaRegsUI"></div>
+    <button onclick="cerrarModal('modalListado')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:8px; margin-top:20px;">VOLVER</button>
 </div>
 
-<!-- MODAL TRANSFERENCIA -->
+<!-- MODAL QR REPORTE -->
 <div id="modalQR" class="modal" style="text-align:center;">
-    <h3>REPORTE FINAL PARA JEFE</h3>
+    <h3>REPORTE PARA JEFE</h3>
     <div id="qrcode" style="display:flex; justify-content:center; margin:20px;"></div>
     <button onclick="cerrarModal('modalQR')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:8px;">CERRAR</button>
 </div>
 
 <script>
-let REGS = JSON.parse(localStorage.getItem('c_regs')) || [];
-let ACTS = JSON.parse(localStorage.getItem('c_acts')) || [];
-let MAPEO = JSON.parse(localStorage.getItem('c_mapeo_v2')) || {};
+let REGS = JSON.parse(localStorage.getItem('c_regs_v7')) || [];
+let ACTS = JSON.parse(localStorage.getItem('c_acts_v7')) || [];
 let COLA = [];
-let CUR = JSON.parse(localStorage.getItem('cur_config')) || { c:"", li:0, lf:0, lado: "COMPLETA", v: "--", s: "", t: "9" };
+let CUR = JSON.parse(localStorage.getItem('c_cur_v7')) || { c:"", lado:"", li:0, lf:0, v:"", s:"" };
 let MODO_SUP = false;
-const TOKEN = "SECRET123";
 
-// --- INICIALIZACIÓN ---
 window.onload = () => {
     actualizarInterfaz();
-    filtrar();
-    verificarBotonReuso();
+    filtrarActividades();
+    verificarMemoria();
     const scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
     scanner.render(alEscanear);
 };
 
-// --- LÓGICA DE ESCANEO ---
+// --- ESCANEO ---
 function activarEscaneoSup() { 
     MODO_SUP = true; 
-    document.getElementById('status').innerText = "🛰️ ESCANEE QR SUPERVISOR"; 
+    document.getElementById('status').innerText = "🛰️ ESCANEE QR DEL SUPERVISOR..."; 
 }
 
 function alEscanear(codigo) {
     if(MODO_SUP) {
         const p = codigo.split('|');
-        if(p[0].startsWith("SUP_")) { 
+        // Soporta formatos SUP_ORDEN, SUP_CONFIG, SUP_V7
+        if(p[0].startsWith("SUP_")) {
             CUR = { 
-                c: p[1], 
-                lado: p[2], 
-                li: parseInt(p[3]), 
-                lf: parseInt(p[4]), 
-                v: p[5] || "--", 
-                s: p[6] || p[7] || "SIN NOMBRE",
-                t: document.getElementById('selT').value // Mantiene el turno seleccionado
+                c: p[1], lado: p[2], 
+                li: parseInt(p[3]), lf: parseInt(p[4]), 
+                v: p[5] || "--", s: p[6] || p[7] || "SIN NOMBRE" 
             };
-            localStorage.setItem('cur_config', JSON.stringify(CUR));
-            document.getElementById('sup').value = CUR.s;
+            localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
             actualizarInterfaz();
             MODO_SUP = false;
-            document.getElementById('status').innerText = "✅ ASIGNACIÓN RECIBIDA: " + CUR.c;
-            verificarBotonReuso();
+            document.getElementById('status').innerText = "✅ TRAMO OK: " + CUR.c;
+            verificarMemoria();
         }
     } else {
-        if(!CUR.c) return alert("Primero escanea al Supervisor o configura manualmente.");
+        if(!CUR.c) return alert("Primero recibe asignación del Supervisor");
         agregarACola(codigo.trim());
     }
 }
 
-// --- ENTRADA MANUAL ---
-function registrarManual() {
-    const input = document.getElementById('manualID');
-    const id = input.value.trim();
-    if(!id) return;
-    if(!CUR.c) return alert("Falta cuadro");
-    agregarACola(id);
-    input.value = "";
-    input.focus();
+// --- GESTIÓN DE PERSONAL ---
+function agregarManual() {
+    const id = document.getElementById('manualID').value.trim();
+    if(id) { agregarACola(id); document.getElementById('manualID').value = ""; }
 }
 
-function agregarACola(cod) {
-    if(REGS.find(r => r.e === cod && r.c === CUR.c && r.lado === CUR.lado)) {
-        document.getElementById('status').innerText = "❌ YA REGISTRADO: " + cod;
+function agregarACola(id) {
+    if(REGS.find(r => r.e === id && r.c === CUR.c && r.lado === CUR.lado)) {
+        document.getElementById('status').innerText = "❌ YA ESTÁ EN ESTE CUADRO: " + id;
         return;
     }
-    if(COLA.find(c => c.e === cod)) return;
-    COLA.push({ e: cod });
-    actualizarColaUI();
+    if(COLA.find(c => c.e === id)) return;
+    COLA.push({ e: id });
+    renderCola();
 }
 
-function actualizarTurnoGlobal(val) {
-    CUR.t = val;
-    localStorage.setItem('cur_config', JSON.stringify(CUR));
+function renderCola() {
+    const cont = document.getElementById('colaUI');
+    document.getElementById('areaCola').style.display = COLA.length > 0 ? 'block' : 'none';
+    cont.innerHTML = COLA.map((item, idx) => `
+        <div class="cola-item">
+            <span><b>${item.e}</b></span>
+            <button class="btn-remove" onclick="removerCola(${idx})">Eliminar</button>
+        </div>
+    `).join('');
 }
 
-// --- INTERFAZ DE COLA ---
-function actualizarColaUI() {
-    const cont = document.getElementById('colaListaUI');
-    if(COLA.length > 0) {
-        document.getElementById('areaDivision').style.display = 'block';
-        cont.innerHTML = COLA.map((item, index) => `
-            <div class="cola-item">
-                <span><b>${item.e}</b></span>
-                <button class="btn-remove-cola" onclick="removerDeCola(${index})">X</button>
-            </div>
-        `).join('');
-        document.getElementById('infoReparto').innerText = `Total en cola: ${COLA.length} personas`;
-    } else {
-        document.getElementById('areaDivision').style.display = 'none';
-    }
-}
+function removerCola(idx) { COLA.splice(idx, 1); renderCola(); }
 
-function removerDeCola(index) {
-    COLA.splice(index, 1);
-    actualizarColaUI();
-}
+function vaciarCola() { if(confirm("¿Vaciar cola?")) { COLA = []; renderCola(); } }
 
-function cargarGenteAnterior() {
+function reutilizarCuadrilla() {
     if(REGS.length === 0) return;
     const ult = REGS[REGS.length - 1];
     const genteAnterior = REGS.filter(r => r.c === ult.c && r.lado === ult.lado).map(r => r.e);
-    const unicos = [...new Set(genteAnterior)];
-    COLA = unicos.map(e => ({ e: e }));
-    actualizarColaUI();
-    document.getElementById('status').innerText = "♻️ CUADRILLA CARGADA (" + COLA.length + ")";
+    COLA = [...new Set(genteAnterior)].map(e => ({ e: e }));
+    renderCola();
+    document.getElementById('status').innerText = "♻️ CUADRILLA ANTERIOR CARGADA";
 }
 
-function confirmarDivision() {
+function guardarGrupo() {
     const ahora = new Date();
-    const h = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const h = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
     const f = ahora.toLocaleDateString('en-GB');
-    const actGral = document.getElementById('selA').value;
-    const turnoActual = document.getElementById('selT').value;
+    const turno = document.getElementById('selTurno').value;
+    const actID = document.getElementById('selActividad').value;
+    const actObj = ACTS.find(a => a.id === actID);
 
-    COLA.forEach((persona, index) => {
-        let linea = CUR.li + Math.floor(index / 2);
-        if(linea > CUR.lf) linea = CUR.lf;
+    COLA.forEach((p, i) => {
+        let hilera = CUR.li + Math.floor(i / 2); // 2 personas por hilera
+        if(hilera > CUR.lf) hilera = CUR.lf;
 
         REGS.push({
-            id: Date.now() + index, f: f, h: h, ts: ahora.getTime(),
-            c: CUR.c, l: linea, lado: CUR.lado, v: CUR.v,
-            e: persona.e, a: (MAPEO[persona.e] ? MAPEO[persona.e].act : actGral),
-            s: CUR.s, t: turnoActual, emg: CUR.emg || false
+            id: Date.now() + i, f: f, h: h, ts: ahora.getTime(),
+            c: CUR.c, l: hilera, lado: CUR.lado, v: CUR.v,
+            e: p.e, s: CUR.s, t: turno,
+            a: actObj ? actObj.n : "--", ak: actObj ? actObj.ak : "--"
         });
     });
 
-    localStorage.setItem('c_regs', JSON.stringify(REGS));
-    COLA = [];
-    actualizarColaUI();
-    actualizarInterfaz();
+    localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
+    COLA = []; renderCola(); actualizarInterfaz();
+    alert("✅ Registros guardados.");
 }
 
-// --- CATÁLOGOS Y CONFIG ---
-function abrirConfigModal() {
-    document.getElementById('cfg_cuadro').value = CUR.c;
-    document.getElementById('cfg_variedad').value = CUR.v === "--" ? "" : CUR.v;
-    document.getElementById('cfg_ini').value = CUR.li;
-    document.getElementById('cfg_fin').value = CUR.lf;
-    document.getElementById('cfg_sup').value = CUR.s;
-    document.getElementById('cfg_turno').value = CUR.t || "9";
-    document.getElementById('modalConfig').style.display = 'block';
-}
-
-function procesarCargaActividades() {
-    const raw = document.getElementById('importInput').value.trim();
+// --- CATALOGOS Y CONFIG ---
+function cargarActividades() {
+    const raw = document.getElementById('csvActividades').value.trim();
     if(!raw) return;
-    const lines = raw.split('\n');
-    ACTS = lines.map(l => {
+    const lineas = raw.split('\n');
+    ACTS = lineas.map(l => {
         const p = l.split(',');
-        return { id: p[0].trim(), n: (p[1] || p[0]).trim() };
-    });
-    localStorage.setItem('c_acts', JSON.stringify(ACTS));
-    alert("Catálogo cargado.");
-    filtrar();
+        return { 
+            id: p[0] ? p[0].trim() : "", 
+            n: p[1] ? p[1].trim() : "", 
+            ak: p[2] ? p[2].trim() : "" 
+        };
+    }).filter(a => a.id !== "");
+    localStorage.setItem('c_acts_v7', JSON.stringify(ACTS));
+    alert("Catálogo actualizado.");
+    filtrarActividades();
 }
 
-function guardarMapeoRapido() {
-    const raw = document.getElementById('importMapeo').value.trim();
-    if(!raw) return;
-    const lines = raw.split('\n');
-    lines.forEach(l => {
-        const p = l.split(',');
-        if(p.length >= 2) MAPEO[p[1].trim()] = { act: p[0].trim() };
-    });
-    localStorage.setItem('c_mapeo_v2', JSON.stringify(MAPEO));
-    alert("Mapeo guardado.");
-}
-
-function guardarConfigManual() {
-    CUR = {
-        c: document.getElementById('cfg_cuadro').value,
-        v: document.getElementById('cfg_variedad').value || "--",
-        lado: document.getElementById('cfg_lado').value,
-        li: parseInt(document.getElementById('cfg_ini').value) || 1,
-        lf: parseInt(document.getElementById('cfg_fin').value) || 50,
-        s: document.getElementById('cfg_sup').value || "Manual",
-        t: document.getElementById('cfg_turno').value,
-        emg: true
-    };
-    localStorage.setItem('cur_config', JSON.stringify(CUR));
-    document.getElementById('selT').value = CUR.t;
-    actualizarInterfaz();
-    cerrarModal('modalConfig');
-}
-
-function filtrar() {
+function filtrarActividades() {
     const bus = document.getElementById('busA').value.toLowerCase();
-    const sel = document.getElementById('selA');
-    const filtrados = ACTS.filter(a => a.id.toLowerCase().includes(bus) || a.n.toLowerCase().includes(bus));
-    sel.innerHTML = filtrados.map(a => `<option value="${a.id}">${a.n}</option>`).join('');
-    if(filtrados.length === 0) sel.innerHTML = "<option value=''>Sin resultados</option>";
+    const sel = document.getElementById('selActividad');
+    const filtrados = ACTS.filter(a => a.n.toLowerCase().includes(bus) || a.ak.toLowerCase().includes(bus));
+    sel.innerHTML = filtrados.map(a => `<option value="${a.id}">${a.n} (Clave: ${a.ak})</option>`).join('');
 }
 
-// --- REPORTES Y UI ---
+function fijarManual() {
+    CUR = {
+        c: document.getElementById('m_cuadro').value,
+        lado: document.getElementById('m_lado').value,
+        li: parseInt(document.getElementById('m_ini').value),
+        lf: parseInt(document.getElementById('m_fin').value),
+        v: document.getElementById('m_variedad').value || "--",
+        s: document.getElementById('m_sup').value || "MANUAL"
+    };
+    localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
+    actualizarInterfaz(); cerrarModal('modalConfig');
+    document.getElementById('status').innerText = "⚠️ CONFIGURACIÓN MANUAL ACTIVA";
+}
+
+// --- INTERFAZ ---
 function actualizarInterfaz() {
     document.getElementById('displayCuadro').innerText = CUR.c || "--";
     document.getElementById('displayLado').innerText = CUR.lado || "--";
     document.getElementById('displayVariedad').innerText = CUR.v || "--";
     document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
     document.getElementById('sup').value = CUR.s;
-    document.getElementById('selT').value = CUR.t || "9";
     
-    let ocupado = REGS.filter(r => r.c === CUR.c && r.lado === CUR.lado).length;
-    let capacidad = (CUR.lf - CUR.li + 1) * 2;
-    document.getElementById('progressBar').style.width = Math.min((ocupado/(capacidad || 1))*100, 100) + "%";
-    document.getElementById('displayCapacidad').innerText = `${ocupado}/${capacidad} ocupados`;
+    // Progreso
+    let ocupados = REGS.filter(r => r.c === CUR.c && r.lado === CUR.lado).length;
+    let totalCap = (CUR.lf - CUR.li + 1) * 2;
+    document.getElementById('progressBar').style.width = Math.min((ocupados / (totalCap || 1)) * 100, 100) + "%";
+    document.getElementById('displayCapacidad').innerText = `Ocupación: ${ocupados}/${totalCap} personas`;
+    
     actualizarMonitor();
 }
 
 function actualizarMonitor() {
-    if (REGS.length === 0) return;
-    const lineasUnicas = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`));
+    if(REGS.length === 0) return;
+    const hilerasUnicas = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`));
     const timestamps = REGS.map(r => r.ts);
     const diff = Math.max(0.1, (Math.max(...timestamps) - Math.min(...timestamps)) / (1000 * 60 * 60));
-    document.getElementById('statLineas').innerText = lineasUnicas.size;
+    document.getElementById('statLineas').innerText = hilerasUnicas.size;
     document.getElementById('statGente').innerText = [...new Set(REGS.map(r=>r.e))].length;
-    document.getElementById('statEficiencia').innerText = (lineasUnicas.size / diff).toFixed(1);
-    document.getElementById('statHoras').innerText = diff.toFixed(1);
+    document.getElementById('statEficiencia').innerText = (hilerasUnicas.size / diff).toFixed(1);
     document.getElementById('labelHora').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
 
-function abrirRegistros() { 
-    document.getElementById('listaRegistros').innerHTML = REGS.slice().reverse().map(r => `
-        <div class="reg-item">
-            <span><b>${r.e}</b> - C:${r.c} L:${r.l} (${r.lado}) - T:${r.t}</span>
-            <small>${r.h} ${r.emg ? '⚠️' : ''}</small>
+function abrirRegistros() {
+    const cont = document.getElementById('listaRegsUI');
+    cont.innerHTML = REGS.slice().reverse().map(r => `
+        <div class="reg-item" style="border-bottom:1px solid #eee; padding:8px; font-size:12px;">
+            <b>${r.e}</b> - C:${r.c} L:${r.l} - ${r.a} (${r.ak})<br>
+            <small>Turno: ${r.t} | ${r.h}</small>
         </div>
-    `).join('') || "Sin registros";
-    document.getElementById('modalRegs').style.display='block'; 
+    `).join('') || "No hay registros";
+    abrirModal('modalListado');
 }
 
-function prepararTransferencia() {
+function prepararReporte() {
     const paquete = { 
         resumen: { lineas: document.getElementById('statLineas').innerText, gente: REGS.length }, 
         detalles: REGS 
     };
-    document.getElementById('qrcode').innerHTML = ""; 
+    document.getElementById('qrcode').innerHTML = "";
     new QRCode(document.getElementById("qrcode"), { text: "AGRI_REP|" + JSON.stringify(paquete), width: 250, height: 250 });
-    document.getElementById('modalQR').style.display='block';
+    abrirModal('modalQR');
 }
 
+function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
 function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-function cancelarCola() { if(confirm("¿Vaciar cola?")) { COLA = []; actualizarColaUI(); } }
-function verificarBotonReuso() { document.getElementById('btnCargarAnterior').style.display = REGS.length > 0 ? 'block' : 'none'; }
-function limpiarTodo() { if(confirm("¿Borrar todo el día?")) { REGS=[]; localStorage.setItem('c_regs', '[]'); actualizarInterfaz(); cerrarModal('modalRegs'); } }
+function verificarMemoria() { document.getElementById('btnReuse').style.display = REGS.length > 0 ? 'block' : 'none'; }
+function borrarTodo() { if(confirm("¿Borrar todo?")) { REGS = []; localStorage.setItem('c_regs_v7', '[]'); actualizarInterfaz(); cerrarModal('modalListado'); } }
 </script>
 </body>
 </html>
-
