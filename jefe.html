@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriCactus - CONCENTRADOR</title>
+    <title>AgriCactus - CONCENTRADOR V7</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --p: #1565c0; --s: #e3f2fd; --danger: #c62828; --success: #2e7d32; --accent: #ff9800; }
@@ -12,54 +12,59 @@
         #reader { width: 100%; border-radius: 10px; overflow: hidden; background: black; }
         
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .stat-box { text-align: center; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-box { text-align: center; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid var(--p); }
         .stat-val { font-size: 22px; font-weight: bold; display: block; }
         .c-total { color: var(--p); }
         .c-last { color: var(--accent); }
         
         h3 { color: #333; border-bottom: 2px solid var(--p); padding-bottom: 5px; margin-top: 20px; font-size: 16px; }
         
-        .tabla-contenedor { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; margin-top: 10px; }
-        .tabla-previa { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .tabla-contenedor { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; margin-top: 10px; }
+        .tabla-previa { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 600px; }
         .tabla-previa th { background: #eceff1; padding: 10px; text-align: left; color: #546e7a; }
         .tabla-previa td { padding: 10px; border-bottom: 1px solid #f5f5f5; }
 
         .btn-upload { position: fixed; bottom: 15px; left: 15px; right: 15px; background: var(--p); color: white; padding: 18px; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; z-index: 100; box-shadow: 0 4px 15px rgba(21,101,192,0.4); }
         .btn-clear { width: 100%; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-top: 10px; }
+        
+        .badge-emg { background: #fff3e0; color: #e65100; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
+        .badge-turno { background: #e8eaf6; color: #3f51b5; padding: 2px 4px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div class="card-jefe">
-        <h2 style="margin:0 0 10px 0; font-size: 18px; color: var(--p); text-align: center;">📱 Concentrador de Datos</h2>
+        <h2 style="margin:0 0 10px 0; font-size: 18px; color: var(--p); text-align: center;">📱 Concentrador V7 - Jefe</h2>
         <div id="reader"></div>
     </div>
 
     <div class="stats">
         <div class="stat-box">
             <span class="stat-val c-total" id="countJefe">0</span>
-            <small>Total Acumulado</small>
+            <small>Total Personas</small>
         </div>
         <div class="stat-box">
-            <span class="stat-val c-last" id="countLast">0</span>
-            <small>Última Carga</small>
+            <span class="stat-val c-last" id="countHileras">0</span>
+            <small>Hileras Únicas</small>
         </div>
     </div>
 
-    <h3>📋 Vista Previa de Recibidos</h3>
+    <h3>📋 Vista Previa (Últimos 20 registros)</h3>
     <div class="tabla-contenedor">
         <table class="tabla-previa">
             <thead>
                 <tr>
                     <th>Empleado</th>
-                    <th>Hora</th>
                     <th>Cuadro</th>
+                    <th>Variedad</th>
+                    <th>Hilera</th>
+                    <th>Turno</th>
                     <th>Actividad</th>
-                    <th>Sup.</th>
+                    <th>Supervisor</th>
                 </tr>
             </thead>
             <tbody id="cuerpoTabla">
-                <tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">Escanea un QR para ver los datos...</td></tr>
+                <tr><td colspan="7" style="text-align:center; color:#999; padding:20px;">Esperando reporte del Cuadrillero...</td></tr>
             </tbody>
         </table>
     </div>
@@ -70,70 +75,70 @@
     <script>
         const URL_DRIVE = "https://script.google.com/macros/s/AKfycbw1ETzr__9DaNydJw-bUG_T6m77ra3zhhRxr2SIZEUkvUmsGiOyeNvc_9QNcKU8mQwW/exec";
         
-        let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data')) || [];
-        let ULTIMA_CARGA_CANTIDAD = 0;
+        let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data_v7')) || [];
+
+        const TURNOS = {
+            "9": "Matutino",
+            "11": "Vespertino",
+            "16": "1 Tarea",
+            "17": "2 Tareas",
+            "18": "Mat/Vesp",
+            "0": "Descanso"
+        };
 
         function alEscanear(codigo) {
-            if(codigo.startsWith("AGRICACTUS_PACK|")) {
+            // Nueva validación para el reporte V7
+            if(codigo.startsWith("AGRI_REP|")) {
                 try {
-                    const jsonRaw = codigo.split("|")[1];
-                    const nuevosRegs = JSON.parse(jsonRaw);
-                    const supervisor = nuevosRegs[0].s || "Sin Nombre";
+                    const data = JSON.parse(codigo.split("|")[1]);
+                    const nuevosRegs = data.detalles;
+                    const resumen = data.resumen;
 
-                    let duplicados = [];
-                    let validos = [];
-
-                    nuevosRegs.forEach(nuevo => {
-                        const existe = DATOS_ACUMULADOS.find(existente => existente.e === nuevo.e);
-                        if (existe) {
-                            duplicados.push(nuevo.e);
-                        } else {
-                            validos.push(nuevo);
-                        }
-                    });
-
-                    if (duplicados.length > 0) {
-                        alert(`⚠️ ¡ATENCIÓN!\nSe detectaron ${duplicados.length} duplicados:\nIDs: ${duplicados.join(", ")}\n\nSolo se agregarán los nuevos.`);
-                    }
+                    // Evitar duplicados por el ID único del registro
+                    const existentes = new Set(DATOS_ACUMULADOS.map(d => d.id));
+                    const validos = nuevosRegs.filter(n => !existentes.has(n.id));
 
                     if (validos.length === 0) {
-                        alert("❌ No hay registros nuevos (todos duplicados).");
+                        alert("❌ Estos registros ya fueron recibidos anteriormente.");
                         return;
                     }
 
-                    if(confirm(`¿Recibir ${validos.length} registros de: ${supervisor}?`)) {
+                    if(confirm(`¿Recibir reporte de ${resumen.gente} personas y ${resumen.lineas} líneas?`)) {
                         DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
-                        ULTIMA_CARGA_CANTIDAD = validos.length;
-                        
-                        localStorage.setItem('jefe_data', JSON.stringify(DATOS_ACUMULADOS));
+                        localStorage.setItem('jefe_data_v7', JSON.stringify(DATOS_ACUMULADOS));
                         actualizarInterfaz();
-                        alert("✅ Datos integrados.");
+                        alert("✅ Datos integrados con éxito.");
                     }
                 } catch(e) {
-                    alert("Error en el formato del código QR.");
+                    alert("Error al procesar el JSON del reporte.");
                 }
             } else {
-                alert("⚠️ QR no válido.");
+                alert("⚠️ Este código QR no es un reporte de AgriCactus V7.");
             }
         }
 
         function actualizarInterfaz() {
             document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
-            document.getElementById('countLast').innerText = ULTIMA_CARGA_CANTIDAD;
+            
+            // Calcular hileras únicas (por cuadro, hilera y lado)
+            const hilerasUnicas = new Set(DATOS_ACUMULADOS.map(d => `${d.c}-${d.l}-${d.lado}`));
+            document.getElementById('countHileras').innerText = hilerasUnicas.size;
             
             const cuerpo = document.getElementById('cuerpoTabla');
             
             if(DATOS_ACUMULADOS.length === 0) {
-                cuerpo.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
+                cuerpo.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
                 return;
             }
 
-            const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 15);
+            const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 20);
             cuerpo.innerHTML = mostrar.map(r => `
-                <tr>
-                    <td><b>${r.e}</b></td>
-                    <td>${r.h || '--:--'}</td>
-                    <td>${r.c}</td>
+                <tr style="${r.emg ? 'background:#fff3e0' : ''}">
+                    <td><b>${r.e}</b> ${r.emg ? '<span class="badge-emg">⚠️</span>' : ''}</td>
+                    <td>${r.c} (${r.lado})</td>
+                    <td style="color:var(--success)"><b>${r.v || '--'}</b></td>
+                    <td>${r.l}</td>
+                    <td><span class="badge-turno">${TURNOS[r.t] || r.t}</span></td>
                     <td>${r.a}</td>
                     <td><small>${r.s}</small></td>
                 </tr>
@@ -141,10 +146,10 @@
         }
 
         async function sincronizarConDrive() {
-            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos.");
+            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para enviar.");
             if(!navigator.onLine) return alert("🛑 Sin conexión a Internet.");
 
-            if(!confirm(`¿Subir ${DATOS_ACUMULADOS.length} registros al Excel?`)) return;
+            if(!confirm(`¿Subir ${DATOS_ACUMULADOS.length} registros al servidor?`)) return;
 
             try {
                 const response = await fetch(URL_DRIVE, {
@@ -153,24 +158,22 @@
                     body: JSON.stringify(DATOS_ACUMULADOS)
                 });
                 
-                alert("🚀 Envío procesado.");
+                alert("🚀 Sincronización completada.");
                 
-                if(confirm("¿Limpiar memoria del teléfono?")) {
+                if(confirm("¿Deseas limpiar la memoria del dispositivo?")) {
                     DATOS_ACUMULADOS = [];
-                    ULTIMA_CARGA_CANTIDAD = 0;
-                    localStorage.setItem('jefe_data', '[]');
+                    localStorage.setItem('jefe_data_v7', '[]');
                     actualizarInterfaz();
                 }
             } catch(e) {
-                alert("❌ Error de red.");
+                alert("❌ Error de red al intentar sincronizar.");
             }
         }
 
         function limpiarTodoJefe() {
-            if(confirm("⚠️ ¿Borrar todo?")) {
+            if(confirm("⚠️ ¿Estás seguro de borrar todos los datos acumulados? Esta acción no se puede deshacer.")) {
                 DATOS_ACUMULADOS = [];
-                ULTIMA_CARGA_CANTIDAD = 0;
-                localStorage.setItem('jefe_data', '[]');
+                localStorage.setItem('jefe_data_v7', '[]');
                 actualizarInterfaz();
             }
         }
