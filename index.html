@@ -21,27 +21,27 @@
         .nav-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         .btn-nav { padding: 12px 5px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; font-size: 10px; }
         
-        input, select { width: 100%; height: 48px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; padding: 0 10px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; height: 48px; margin-top: 5px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; padding: 0 10px; box-sizing: border-box; }
+        textarea { height: 80px; padding: 10px; }
         #status { text-align: center; font-weight: bold; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #ddd; background: #eee; }
         
         .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         
-        /* Caja de Reparto y Gestión de Cola */
         .division-box { background: #fff3e0; border: 2px dashed #ff9800; padding: 15px; border-radius: 12px; margin-top: 15px; }
         .cola-list { max-height: 150px; overflow-y: auto; margin: 10px 0; background: rgba(255,255,255,0.5); border-radius: 8px; padding: 5px; }
         .cola-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ffd180; font-size: 13px; }
         .btn-remove-cola { background: var(--danger); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
         
+        .btn-manual { background: var(--accent); color: white; border: none; border-radius: 8px; height: 48px; padding: 0 15px; font-weight: bold; margin-left: 5px; }
         .btn-reuse { background: var(--info); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; width: 100%; margin-top: 5px; font-size: 12px; }
         
-        .emergencia-link { color: var(--danger); font-size: 11px; text-decoration: underline; display: block; margin-top: 10px; text-align: center; cursor: pointer; }
         .reg-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="nav-buttons">
-    <button class="btn-nav" style="background:#607d8b" onclick="abrirConfig()">⚙️ CONFIG</button>
+    <button class="btn-nav" style="background:#607d8b" onclick="abrirConfigModal()">⚙️ CONFIG / CATÁLOGOS</button>
     <button class="btn-nav" style="background:var(--sup)" onclick="activarEscaneoSup()">🛰️ QR SUPERVISOR</button>
     <button class="btn-nav" style="background:var(--info)" onclick="abrirRegistros()">📋 LISTADO</button>
 </div>
@@ -70,18 +70,31 @@
     <label>SUPERVISOR RESPONSABLE</label>
     <input type="text" id="sup" readonly style="background:#f0f0f0;">
     
-    <!-- Botón para reutilizar gente -->
     <button id="btnCargarAnterior" class="btn-reuse" onclick="cargarGenteAnterior()" style="display:none;">
         ♻️ CARGAR GENTE DEL CUADRO ANTERIOR
     </button>
 
+    <label>TURNO / JORNADA</label>
+    <select id="selT" onchange="actualizarTurnoGlobal(this.value)">
+        <option value="9">MATUTINO (9)</option>
+        <option value="11">VESPERTINO (11)</option>
+        <option value="16">1 TAREA (16)</option>
+        <option value="17">2 TAREAS (17)</option>
+        <option value="18">MATUTINO VESPERTINO (18)</option>
+        <option value="0">SE DESCANSÓ (0)</option>
+    </select>
+
     <label>ACTIVIDAD</label>
-    <input type="text" id="busA" placeholder="Filtrar..." oninput="filtrar()">
+    <input type="text" id="busA" placeholder="Filtrar actividad..." oninput="filtrar()">
     <select id="selA"></select>
     
     <div id="reader" style="width: 100%; background: #000; border-radius: 8px; margin-top: 15px;"></div>
     <div id="status">ESCANEANDO...</div>
-    <span class="emergencia-link" onclick="solicitarAccesoEmergencia()">🆘 Acceso de Emergencia (Sin QR)</span>
+
+    <div style="display:flex; margin-top:10px;">
+        <input type="text" id="manualID" placeholder="ID Manual si no lee..." style="flex-grow:1;">
+        <button class="btn-manual" onclick="registrarManual()">AÑADIR</button>
+    </div>
 </div>
 
 <div class="division-box" id="areaDivision" style="display:none;">
@@ -94,17 +107,68 @@
 
 <button onclick="prepararTransferencia()" style="width:100%; background:var(--sup); color:white; padding:20px; border:none; border-radius:12px; font-weight:bold; margin-top:10px;">📤 PASAR REPORTE AL JEFE</button>
 
-<!-- MODALES -->
-<div id="modalRegs" class="modal">
-    <h3>Registros de Hoy</h3>
-    <div id="listaRegistros"></div>
-    <button onclick="document.getElementById('modalRegs').style.display='none'" style="width:100%; padding:15px; margin-top:20px;">VOLVER</button>
+<!-- MODAL CONFIGURACIÓN Y CATÁLOGOS -->
+<div id="modalConfig" class="modal">
+    <h3>⚙️ Configuración y Catálogos</h3>
+    
+    <label>1. CATÁLOGO DE ACTIVIDADES (ID, Nombre)</label>
+    <textarea id="importInput" placeholder="EJ:&#10;DESHIJE, Deshije de parra&#10;PODA, Poda de formación"></textarea>
+    <button onclick="procesarCargaActividades()" style="width:100%; background:black; color:white; border:none; padding:10px; border-radius:8px; margin-top:5px;">CARGAR ACTIVIDADES</button>
+    
+    <hr>
+    
+    <label>2. MAPEO RÁPIDO (Act, Empleado)</label>
+    <textarea id="importMapeo" placeholder="EJ:&#10;DESHIJE, 1025&#10;PODA, 2030"></textarea>
+    <button onclick="guardarMapeoRapido()" style="width:100%; background:var(--info); color:white; border:none; padding:10px; border-radius:8px; margin-top:5px;">GUARDAR MAPEO</button>
+
+    <hr>
+    
+    <label>3. AJUSTE MANUAL DE CUADRO (EMERGENCIA)</label>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+        <input type="text" id="cfg_cuadro" placeholder="Cuadro">
+        <input type="text" id="cfg_variedad" placeholder="Variedad">
+    </div>
+    <select id="cfg_lado">
+        <option value="COMPLETA">COMPLETA</option>
+        <option value="NORTE">NORTE</option>
+        <option value="SUR">SUR</option>
+        <option value="ORIENTE">ORIENTE</option>
+        <option value="PONIENTE">PONIENTE</option>
+    </select>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+        <input type="number" id="cfg_ini" placeholder="L. Ini">
+        <input type="number" id="cfg_fin" placeholder="L. Fin">
+    </div>
+    <label>TURNO EN CONFIG</label>
+    <select id="cfg_turno">
+        <option value="9">MATUTINO (9)</option>
+        <option value="11">VESPERTINO (11)</option>
+        <option value="16">1 TAREA (16)</option>
+        <option value="17">2 TAREAS (17)</option>
+        <option value="18">MATUTINO VESPERTINO (18)</option>
+        <option value="0">SE DESCANSÓ (0)</option>
+    </select>
+    <input type="text" id="cfg_sup" placeholder="Supervisor">
+    <button onclick="guardarConfigManual()" style="width:100%; padding:15px; background:var(--p); color:white; border:none; border-radius:8px; margin-top:10px; font-weight:bold;">APLICAR AJUSTE</button>
+
+    <button onclick="cerrarModal('modalConfig')" style="width:100%; padding:10px; background:none; color:red; border:none; margin-top:20px;">CERRAR</button>
 </div>
 
+<!-- MODAL LISTADO -->
+<div id="modalRegs" class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Registros de Hoy</h3>
+        <button onclick="limpiarTodo()" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">BORRAR DÍA</button>
+    </div>
+    <div id="listaRegistros"></div>
+    <button onclick="cerrarModal('modalRegs')" style="width:100%; padding:15px; margin-top:20px; border-radius:8px;">VOLVER</button>
+</div>
+
+<!-- MODAL TRANSFERENCIA -->
 <div id="modalQR" class="modal" style="text-align:center;">
-    <h3>REPORTE FINAL</h3>
+    <h3>REPORTE FINAL PARA JEFE</h3>
     <div id="qrcode" style="display:flex; justify-content:center; margin:20px;"></div>
-    <button onclick="document.getElementById('modalQR').style.display='none'" style="width:100%; padding:15px; background:#ddd; border:none;">CERRAR</button>
+    <button onclick="cerrarModal('modalQR')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:8px;">CERRAR</button>
 </div>
 
 <script>
@@ -112,10 +176,20 @@ let REGS = JSON.parse(localStorage.getItem('c_regs')) || [];
 let ACTS = JSON.parse(localStorage.getItem('c_acts')) || [];
 let MAPEO = JSON.parse(localStorage.getItem('c_mapeo_v2')) || {};
 let COLA = [];
-let CUR = JSON.parse(localStorage.getItem('cur_config')) || { c:"", li:0, lf:0, lado: "COMPLETA", v: "--", s: "" };
+let CUR = JSON.parse(localStorage.getItem('cur_config')) || { c:"", li:0, lf:0, lado: "COMPLETA", v: "--", s: "", t: "9" };
 let MODO_SUP = false;
 const TOKEN = "SECRET123";
 
+// --- INICIALIZACIÓN ---
+window.onload = () => {
+    actualizarInterfaz();
+    filtrar();
+    verificarBotonReuso();
+    const scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
+    scanner.render(alEscanear);
+};
+
+// --- LÓGICA DE ESCANEO ---
 function activarEscaneoSup() { 
     MODO_SUP = true; 
     document.getElementById('status').innerText = "🛰️ ESCANEE QR SUPERVISOR"; 
@@ -124,19 +198,38 @@ function activarEscaneoSup() {
 function alEscanear(codigo) {
     if(MODO_SUP) {
         const p = codigo.split('|');
-        if(p[0] === "SUP_ORDEN" || p[0] === "SUP_CONFIG") { 
-            CUR = { c: p[1], lado: p[2], li: parseInt(p[3]), lf: parseInt(p[4]), v: p[5], s: p[6] };
+        if(p[0].startsWith("SUP_")) { 
+            CUR = { 
+                c: p[1], 
+                lado: p[2], 
+                li: parseInt(p[3]), 
+                lf: parseInt(p[4]), 
+                v: p[5] || "--", 
+                s: p[6] || p[7] || "SIN NOMBRE",
+                t: document.getElementById('selT').value // Mantiene el turno seleccionado
+            };
             localStorage.setItem('cur_config', JSON.stringify(CUR));
             document.getElementById('sup').value = CUR.s;
             actualizarInterfaz();
             MODO_SUP = false;
-            document.getElementById('status').innerText = "✅ TRAMO CONFIGURADO";
+            document.getElementById('status').innerText = "✅ ASIGNACIÓN RECIBIDA: " + CUR.c;
             verificarBotonReuso();
         }
     } else {
-        if(!CUR.c) return alert("Falta Asignación");
+        if(!CUR.c) return alert("Primero escanea al Supervisor o configura manualmente.");
         agregarACola(codigo.trim());
     }
+}
+
+// --- ENTRADA MANUAL ---
+function registrarManual() {
+    const input = document.getElementById('manualID');
+    const id = input.value.trim();
+    if(!id) return;
+    if(!CUR.c) return alert("Falta cuadro");
+    agregarACola(id);
+    input.value = "";
+    input.focus();
 }
 
 function agregarACola(cod) {
@@ -149,6 +242,12 @@ function agregarACola(cod) {
     actualizarColaUI();
 }
 
+function actualizarTurnoGlobal(val) {
+    CUR.t = val;
+    localStorage.setItem('cur_config', JSON.stringify(CUR));
+}
+
+// --- INTERFAZ DE COLA ---
 function actualizarColaUI() {
     const cont = document.getElementById('colaListaUI');
     if(COLA.length > 0) {
@@ -163,7 +262,6 @@ function actualizarColaUI() {
     } else {
         document.getElementById('areaDivision').style.display = 'none';
     }
-    document.getElementById('countEspera').innerText = COLA.length; // Si existiera el contador
 }
 
 function removerDeCola(index) {
@@ -173,24 +271,12 @@ function removerDeCola(index) {
 
 function cargarGenteAnterior() {
     if(REGS.length === 0) return;
-    // Buscamos el último cuadro trabajado (diferente al actual si es posible)
-    const ultimoCuadro = REGS[REGS.length - 1].c;
-    const ultimoLado = REGS[REGS.length - 1].lado;
-    
-    // Extraemos empleados únicos de ese último cuadro
-    const genteAnterior = REGS.filter(r => r.c === ultimoCuadro && r.lado === ultimoLado)
-                              .map(r => r.e);
-    
+    const ult = REGS[REGS.length - 1];
+    const genteAnterior = REGS.filter(r => r.c === ult.c && r.lado === ult.lado).map(r => r.e);
     const unicos = [...new Set(genteAnterior)];
-    
     COLA = unicos.map(e => ({ e: e }));
     actualizarColaUI();
     document.getElementById('status').innerText = "♻️ CUADRILLA CARGADA (" + COLA.length + ")";
-}
-
-function verificarBotonReuso() {
-    const btn = document.getElementById('btnCargarAnterior');
-    btn.style.display = (REGS.length > 0) ? 'block' : 'none';
 }
 
 function confirmarDivision() {
@@ -198,6 +284,7 @@ function confirmarDivision() {
     const h = ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false });
     const f = ahora.toLocaleDateString('en-GB');
     const actGral = document.getElementById('selA').value;
+    const turnoActual = document.getElementById('selT').value;
 
     COLA.forEach((persona, index) => {
         let linea = CUR.li + Math.floor(index / 2);
@@ -207,7 +294,7 @@ function confirmarDivision() {
             id: Date.now() + index, f: f, h: h, ts: ahora.getTime(),
             c: CUR.c, l: linea, lado: CUR.lado, v: CUR.v,
             e: persona.e, a: (MAPEO[persona.e] ? MAPEO[persona.e].act : actGral),
-            s: CUR.s
+            s: CUR.s, t: turnoActual, emg: CUR.emg || false
         });
     });
 
@@ -215,20 +302,82 @@ function confirmarDivision() {
     COLA = [];
     actualizarColaUI();
     actualizarInterfaz();
-    alert("✅ Cuadro guardado con éxito");
 }
 
+// --- CATÁLOGOS Y CONFIG ---
+function abrirConfigModal() {
+    document.getElementById('cfg_cuadro').value = CUR.c;
+    document.getElementById('cfg_variedad').value = CUR.v === "--" ? "" : CUR.v;
+    document.getElementById('cfg_ini').value = CUR.li;
+    document.getElementById('cfg_fin').value = CUR.lf;
+    document.getElementById('cfg_sup').value = CUR.s;
+    document.getElementById('cfg_turno').value = CUR.t || "9";
+    document.getElementById('modalConfig').style.display = 'block';
+}
+
+function procesarCargaActividades() {
+    const raw = document.getElementById('importInput').value.trim();
+    if(!raw) return;
+    const lines = raw.split('\n');
+    ACTS = lines.map(l => {
+        const p = l.split(',');
+        return { id: p[0].trim(), n: (p[1] || p[0]).trim() };
+    });
+    localStorage.setItem('c_acts', JSON.stringify(ACTS));
+    alert("Catálogo cargado.");
+    filtrar();
+}
+
+function guardarMapeoRapido() {
+    const raw = document.getElementById('importMapeo').value.trim();
+    if(!raw) return;
+    const lines = raw.split('\n');
+    lines.forEach(l => {
+        const p = l.split(',');
+        if(p.length >= 2) MAPEO[p[1].trim()] = { act: p[0].trim() };
+    });
+    localStorage.setItem('c_mapeo_v2', JSON.stringify(MAPEO));
+    alert("Mapeo guardado.");
+}
+
+function guardarConfigManual() {
+    CUR = {
+        c: document.getElementById('cfg_cuadro').value,
+        v: document.getElementById('cfg_variedad').value || "--",
+        lado: document.getElementById('cfg_lado').value,
+        li: parseInt(document.getElementById('cfg_ini').value) || 1,
+        lf: parseInt(document.getElementById('cfg_fin').value) || 50,
+        s: document.getElementById('cfg_sup').value || "Manual",
+        t: document.getElementById('cfg_turno').value,
+        emg: true
+    };
+    localStorage.setItem('cur_config', JSON.stringify(CUR));
+    document.getElementById('selT').value = CUR.t;
+    actualizarInterfaz();
+    cerrarModal('modalConfig');
+}
+
+function filtrar() {
+    const bus = document.getElementById('busA').value.toLowerCase();
+    const sel = document.getElementById('selA');
+    const filtrados = ACTS.filter(a => a.id.toLowerCase().includes(bus) || a.n.toLowerCase().includes(bus));
+    sel.innerHTML = filtrados.map(a => `<option value="${a.id}">${a.n}</option>`).join('');
+    if(filtrados.length === 0) sel.innerHTML = "<option value=''>Sin resultados</option>";
+}
+
+// --- REPORTES Y UI ---
 function actualizarInterfaz() {
     document.getElementById('displayCuadro').innerText = CUR.c || "--";
     document.getElementById('displayLado').innerText = CUR.lado || "--";
     document.getElementById('displayVariedad').innerText = CUR.v || "--";
     document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
+    document.getElementById('sup').value = CUR.s;
+    document.getElementById('selT').value = CUR.t || "9";
     
     let ocupado = REGS.filter(r => r.c === CUR.c && r.lado === CUR.lado).length;
     let capacidad = (CUR.lf - CUR.li + 1) * 2;
-    document.getElementById('progressBar').style.width = Math.min((ocupado/capacidad)*100, 100) + "%";
+    document.getElementById('progressBar').style.width = Math.min((ocupado/(capacidad || 1))*100, 100) + "%";
     document.getElementById('displayCapacidad').innerText = `${ocupado}/${capacidad} ocupados`;
-    
     actualizarMonitor();
 }
 
@@ -236,41 +385,38 @@ function actualizarMonitor() {
     if (REGS.length === 0) return;
     const lineasUnicas = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`));
     const timestamps = REGS.map(r => r.ts);
-    const diffHoras = Math.max(0.1, (Math.max(...timestamps) - Math.min(...timestamps)) / (1000 * 60 * 60));
+    const diff = Math.max(0.1, (Math.max(...timestamps) - Math.min(...timestamps)) / (1000 * 60 * 60));
     document.getElementById('statLineas').innerText = lineasUnicas.size;
     document.getElementById('statGente').innerText = [...new Set(REGS.map(r=>r.e))].length;
-    document.getElementById('statEficiencia').innerText = (lineasUnicas.size / diffHoras).toFixed(1);
-    document.getElementById('statHoras').innerText = diffHoras.toFixed(1);
+    document.getElementById('statEficiencia').innerText = (lineasUnicas.size / diff).toFixed(1);
+    document.getElementById('statHoras').innerText = diff.toFixed(1);
     document.getElementById('labelHora').innerText = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
 
 function abrirRegistros() { 
     document.getElementById('listaRegistros').innerHTML = REGS.slice().reverse().map(r => `
         <div class="reg-item">
-            <span><b>${r.e}</b> - C:${r.c} L:${r.l} (${r.lado})</span>
-            <small>${r.h}</small>
+            <span><b>${r.e}</b> - C:${r.c} L:${r.l} (${r.lado}) - T:${r.t}</span>
+            <small>${r.h} ${r.emg ? '⚠️' : ''}</small>
         </div>
     `).join('') || "Sin registros";
     document.getElementById('modalRegs').style.display='block'; 
 }
 
 function prepararTransferencia() {
-    const paquete = { resumen: { lineas: document.getElementById('statLineas').innerText, gente: REGS.length }, detalles: REGS };
+    const paquete = { 
+        resumen: { lineas: document.getElementById('statLineas').innerText, gente: REGS.length }, 
+        detalles: REGS 
+    };
     document.getElementById('qrcode').innerHTML = ""; 
     new QRCode(document.getElementById("qrcode"), { text: "AGRI_REP|" + JSON.stringify(paquete), width: 250, height: 250 });
     document.getElementById('modalQR').style.display='block';
 }
 
-function cancelarCola() { if(confirm("¿Vaciar la cola actual?")) { COLA = []; actualizarColaUI(); } }
-
-function abrirConfig() { alert("Use el catálogo para actividades."); } // Opcional: implementar modal de catálogo si se requiere
-
-window.onload = () => {
-    document.getElementById('sup').value = CUR.s || "";
-    actualizarInterfaz();
-    verificarBotonReuso();
-    new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 }).render(alEscanear);
-};
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+function cancelarCola() { if(confirm("¿Vaciar cola?")) { COLA = []; actualizarColaUI(); } }
+function verificarBotonReuso() { document.getElementById('btnCargarAnterior').style.display = REGS.length > 0 ? 'block' : 'none'; }
+function limpiarTodo() { if(confirm("¿Borrar todo el día?")) { REGS=[]; localStorage.setItem('c_regs', '[]'); actualizarInterfaz(); cerrarModal('modalRegs'); } }
 </script>
 </body>
 </html>
