@@ -2,191 +2,269 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AgriCactus - CONCENTRADOR V7</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --p: #1565c0; --s: #e3f2fd; --danger: #c62828; --success: #2e7d32; --accent: #ff9800; }
-        body { font-family: sans-serif; background: var(--s); margin: 0; padding: 15px; padding-bottom: 100px; }
+        :root { 
+            --p: #1565c0; --s: #e3f2fd; --danger: #c62828; 
+            --success: #2e7d32; --accent: #ff9800; --dark: #263238;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--s); margin: 0; padding: 15px; padding-bottom: 120px; }
+        
         .card-jefe { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        #reader { width: 100%; border-radius: 10px; overflow: hidden; background: black; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; background: black; border: 4px solid white; }
         
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .stat-box { text-align: center; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid var(--p); }
-        .stat-val { font-size: 22px; font-weight: bold; display: block; }
+        .stat-box { text-align: center; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid var(--p); }
+        .stat-val { font-size: 24px; font-weight: bold; display: block; }
         .c-total { color: var(--p); }
-        .c-last { color: var(--accent); }
+        .c-last { color: var(--success); }
         
-        h3 { color: #333; border-bottom: 2px solid var(--p); padding-bottom: 5px; margin-top: 20px; font-size: 16px; }
+        h3 { color: var(--dark); border-left: 5px solid var(--p); padding-left: 10px; margin-top: 20px; font-size: 16px; text-transform: uppercase; }
         
-        .tabla-contenedor { background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; margin-top: 10px; }
-        .tabla-previa { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 600px; }
-        .tabla-previa th { background: #eceff1; padding: 10px; text-align: left; color: #546e7a; }
-        .tabla-previa td { padding: 10px; border-bottom: 1px solid #f5f5f5; }
+        .tabla-contenedor { background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
+        th { background: #f1f5f9; padding: 12px; text-align: left; color: #475569; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
 
-        .btn-upload { position: fixed; bottom: 15px; left: 15px; right: 15px; background: var(--p); color: white; padding: 18px; border: none; border-radius: 12px; font-weight: bold; font-size: 16px; z-index: 100; box-shadow: 0 4px 15px rgba(21,101,192,0.4); }
-        .btn-clear { width: 100%; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-top: 10px; }
+        .btn-main { background: var(--p); color: white; padding: 18px; border: none; border-radius: 15px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(21,101,192,0.3); cursor: pointer; width: 100%; }
+        .btn-file-input { background: var(--dark); color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; text-align: center; }
         
-        .badge-emg { background: #fff3e0; color: #e65100; padding: 2px 4px; border-radius: 4px; font-weight: bold; }
-        .badge-turno { background: #e8eaf6; color: #3f51b5; padding: 2px 4px; border-radius: 4px; }
+        .badge-pend { background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; }
+        .badge-vld { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; }
+
+        .footer-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; }
+        
+        #status-camera { padding: 12px; text-align: center; font-size: 13px; font-weight: bold; border-radius: 10px; margin-bottom: 10px; background: #eee; }
     </style>
 </head>
 <body>
 
     <div class="card-jefe">
-        <h2 style="margin:0 0 10px 0; font-size: 18px; color: var(--p); text-align: center;">📱 Concentrador V7 - Jefe</h2>
+        <h2 style="margin:0 0 15px 0; font-size: 18px; color: var(--p); text-align: center;">📱 Concentrador V7 - Jefe</h2>
+        
+        <!-- Opción para Reportes Masivos (2500+ registros) -->
+        <label class="btn-file-input">
+            📂 CARGAR REPORTE JSON (MASIVO)
+            <input type="file" id="fileReporte" accept=".json" style="display:none;" onchange="procesarArchivo(this)">
+        </label>
+
+        <div id="status-camera">INICIANDO CÁMARA...</div>
         <div id="reader"></div>
     </div>
 
     <div class="stats">
         <div class="stat-box">
-            <span class="stat-val c-total" id="countJefe">0</span>
-            <small>Total Personas</small>
+            <span class="stat-val c-total" id="countTotal">0</span>
+            <small>Personal Recibido</small>
         </div>
         <div class="stat-box">
             <span class="stat-val c-last" id="countHileras">0</span>
-            <small>Hileras Únicas</small>
+            <small>Líneas Totales</small>
         </div>
     </div>
 
-    <h3>📋 Vista Previa (Últimos 20 registros)</h3>
+    <h3>📋 Vista Previa (Últimos 50)</h3>
     <div class="tabla-contenedor">
-        <table class="tabla-previa">
+        <table>
             <thead>
                 <tr>
                     <th>Empleado</th>
                     <th>Cuadro</th>
-                    <th>Variedad</th>
-                    <th>Hilera</th>
-                    <th>Turno</th>
+                    <th>Línea</th>
                     <th>Actividad</th>
-                    <th>Supervisor</th>
+                    <th>Turno</th>
+                    <th>Estado</th>
                 </tr>
             </thead>
             <tbody id="cuerpoTabla">
-                <tr><td colspan="7" style="text-align:center; color:#999; padding:20px;">Esperando reporte del Cuadrillero...</td></tr>
+                <tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Escanea un QR o carga un archivo JSON...</td></tr>
             </tbody>
         </table>
     </div>
 
-    <button class="btn-clear" onclick="limpiarTodoJefe()">🗑️ BORRAR TODO EL LISTADO</button>
-    <button class="btn-upload" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
+    <div style="margin-top: 20px; padding-bottom: 20px;">
+        <button class="btn-file-input" style="background:var(--danger); margin-bottom: 0;" onclick="limpiarTodoJefe()">🗑️ BORRAR TODO EL LISTADO</button>
+    </div>
+
+    <div class="footer-nav">
+        <button class="btn-main" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
+    </div>
 
     <script>
         const URL_DRIVE = "https://script.google.com/macros/s/AKfycbw1ETzr__9DaNydJw-bUG_T6m77ra3zhhRxr2SIZEUkvUmsGiOyeNvc_9QNcKU8mQwW/exec";
-        
         let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data_v7')) || [];
 
-        const TURNOS = {
-            "9": "Matutino",
-            "11": "Vespertino",
-            "16": "1 Tarea",
-            "17": "2 Tareas",
-            "18": "Mat/Vesp",
-            "0": "Descanso"
+        const TURNOS = { "9": "Mat.", "11": "Vesp.", "16": "1 Tar.", "17": "2 Tar.", "18": "M/V", "0": "Desc." };
+
+        window.onload = () => {
+            actualizarInterfaz();
+            iniciarEscaneo();
         };
 
+        function iniciarEscaneo() {
+            // Validación de seguridad para la cámara
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                document.getElementById('status-camera').innerText = "⚠️ ERROR: SE REQUIERE CONEXIÓN SEGURA (HTTPS)";
+                document.getElementById('status-camera').style.background = "#ffcdd2";
+                document.getElementById('status-camera').style.color = "#b71c1c";
+                return;
+            }
+
+            try {
+                const scanner = new Html5QrcodeScanner("reader", { 
+                    fps: 15, 
+                    qrbox: { width: 250, height: 250 },
+                    rememberLastUsedCamera: true,
+                    aspectRatio: 1.0
+                });
+                
+                scanner.render(alEscanear, (err) => {
+                    // Manejo silencioso
+                });
+                
+                document.getElementById('status-camera').innerText = "📷 CÁMARA ACTIVA - LISTO PARA LEER";
+                document.getElementById('status-camera').style.background = "#e8f5e9";
+                document.getElementById('status-camera').style.color = "#2e7d32";
+            } catch(e) {
+                document.getElementById('status-camera').innerText = "❌ ERROR AL INICIAR CÁMARA";
+                console.error(e);
+            }
+        }
+
         function alEscanear(codigo) {
-            // Nueva validación para el reporte V7
             if(codigo.startsWith("AGRI_REP|")) {
                 try {
                     const data = JSON.parse(codigo.split("|")[1]);
-                    const nuevosRegs = data.detalles;
-                    const resumen = data.resumen;
-
-                    // Evitar duplicados por el ID único del registro
-                    const existentes = new Set(DATOS_ACUMULADOS.map(d => d.id));
-                    const validos = nuevosRegs.filter(n => !existentes.has(n.id));
-
-                    if (validos.length === 0) {
-                        alert("❌ Estos registros ya fueron recibidos anteriormente.");
-                        return;
-                    }
-
-                    if(confirm(`¿Recibir reporte de ${resumen.gente} personas y ${resumen.lineas} líneas?`)) {
-                        DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
-                        localStorage.setItem('jefe_data_v7', JSON.stringify(DATOS_ACUMULADOS));
-                        actualizarInterfaz();
-                        alert("✅ Datos integrados con éxito.");
-                    }
+                    integrarDatos(data.detalles);
                 } catch(e) {
-                    alert("Error al procesar el JSON del reporte.");
+                    alert("Error: El código QR contiene datos dañados.");
                 }
             } else {
-                alert("⚠️ Este código QR no es un reporte de AgriCactus V7.");
+                // Si no tiene el prefijo, avisar al usuario
+                alert("⚠️ Este código no es un reporte válido de AgriCactus V7.");
+            }
+        }
+
+        function procesarArchivo(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // El archivo puede venir como objeto {detalles: [...]} o directamente como array [...]
+                    const registros = data.detalles || data;
+                    
+                    if(Array.isArray(registros)) {
+                        integrarDatos(registros);
+                        input.value = ""; // Limpiar para permitir volver a cargar el mismo archivo si se limpia
+                    } else {
+                        alert("El archivo no tiene el formato de AgriCactus esperado.");
+                    }
+                } catch(err) {
+                    alert("Error al leer el archivo. Asegúrate que sea un archivo .json válido.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function integrarDatos(nuevosRegs) {
+            // Usamos el ID único para no duplicar gente si escanean el mismo QR dos veces
+            const existentes = new Set(DATOS_ACUMULADOS.map(d => d.id));
+            const validos = nuevosRegs.filter(n => !existentes.has(n.id));
+
+            if (validos.length === 0) {
+                alert("ℹ️ Estos registros ya se encontraban en el listado.");
+                return;
+            }
+
+            if(confirm(`Se han detectado ${validos.length} registros nuevos. ¿Deseas agregarlos al listado total?`)) {
+                DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
+                localStorage.setItem('jefe_data_v7', JSON.stringify(DATOS_ACUMULADOS));
+                actualizarInterfaz();
+                alert("✅ Registros integrados con éxito.");
             }
         }
 
         function actualizarInterfaz() {
-            document.getElementById('countJefe').innerText = DATOS_ACUMULADOS.length;
+            document.getElementById('countTotal').innerText = DATOS_ACUMULADOS.length;
             
-            // Calcular hileras únicas (por cuadro, hilera y lado)
+            // Contar hileras únicas (combinación de cuadro, línea y lado)
             const hilerasUnicas = new Set(DATOS_ACUMULADOS.map(d => `${d.c}-${d.l}-${d.lado}`));
             document.getElementById('countHileras').innerText = hilerasUnicas.size;
             
             const cuerpo = document.getElementById('cuerpoTabla');
-            
             if(DATOS_ACUMULADOS.length === 0) {
-                cuerpo.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999; padding:20px;">No hay datos locales.</td></tr>';
+                cuerpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Sin datos acumulados.</td></tr>';
                 return;
             }
 
-            const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 20);
-            cuerpo.innerHTML = mostrar.map(r => `
-                <tr style="${r.emg ? 'background:#fff3e0' : ''}">
-                    <td><b>${r.e}</b> ${r.emg ? '<span class="badge-emg">⚠️</span>' : ''}</td>
-                    <td>${r.c} (${r.lado})</td>
-                    <td style="color:var(--success)"><b>${r.v || '--'}</b></td>
-                    <td>${r.l}</td>
-                    <td><span class="badge-turno">${TURNOS[r.t] || r.t}</span></td>
-                    <td>${r.a}</td>
-                    <td><small>${r.s}</small></td>
-                </tr>
-            `).join('');
+            // Para no ralentizar el navegador, mostramos solo los últimos 50
+            const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 50);
+            cuerpo.innerHTML = mostrar.map(r => {
+                // Identificar si el registro está validado
+                const isValidated = r.v === 1 || r.vld === true;
+                return `
+                    <tr>
+                        <td><b>${r.e}</b></td>
+                        <td>${r.c}</td>
+                        <td>${r.l}</td>
+                        <td>${r.ak || r.a}</td>
+                        <td>${TURNOS[r.t] || r.t}</td>
+                        <td>
+                            <span class="${isValidated ? 'badge-vld' : 'badge-pend'}">
+                                ${isValidated ? 'VALIDADO' : 'MANUAL'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         async function sincronizarConDrive() {
             if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para enviar.");
-            if(!navigator.onLine) return alert("🛑 Sin conexión a Internet.");
+            if(!navigator.onLine) return alert("🛑 No tienes conexión a Internet en este momento.");
 
-            if(!confirm(`¿Subir ${DATOS_ACUMULADOS.length} registros al servidor?`)) return;
+            if(!confirm(`¿Deseas enviar los ${DATOS_ACUMULADOS.length} registros a la base de datos central?`)) return;
+
+            const btn = document.querySelector('.btn-main');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ ENVIANDO DATOS...";
+            btn.disabled = true;
 
             try {
-                const response = await fetch(URL_DRIVE, {
+                // Usamos fetch con modo 'no-cors' para Apps Script
+                await fetch(URL_DRIVE, {
                     method: 'POST',
                     mode: 'no-cors',
                     body: JSON.stringify(DATOS_ACUMULADOS)
                 });
                 
-                alert("🚀 Sincronización completada.");
-                
-                if(confirm("¿Deseas limpiar la memoria del dispositivo?")) {
+                alert("🚀 Envío completado con éxito.");
+                if(confirm("¿Deseas borrar la memoria local del Jefe para empezar un nuevo reporte?")) {
                     DATOS_ACUMULADOS = [];
                     localStorage.setItem('jefe_data_v7', '[]');
                     actualizarInterfaz();
                 }
             } catch(e) {
-                alert("❌ Error de red al intentar sincronizar.");
+                alert("❌ Error de conexión al intentar subir los datos.");
+                console.error(e);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
 
         function limpiarTodoJefe() {
-            if(confirm("⚠️ ¿Estás seguro de borrar todos los datos acumulados? Esta acción no se puede deshacer.")) {
+            if(confirm("⚠️ ¿Estás totalmente seguro de borrar TODOS los datos? Esta acción es irreversible.")) {
                 DATOS_ACUMULADOS = [];
                 localStorage.setItem('jefe_data_v7', '[]');
                 actualizarInterfaz();
             }
         }
-
-        window.onload = () => {
-            actualizarInterfaz();
-            const scanner = new Html5QrcodeScanner("reader", { 
-                fps: 15, 
-                qrbox: {width: 250, height: 250},
-                rememberLastUsedCamera: true
-            });
-            scanner.render(alEscanear);
-        };
     </script>
 </body>
 </html>
