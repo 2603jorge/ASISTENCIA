@@ -207,6 +207,8 @@
     </div>
     <input type="text" id="m_sup" placeholder="Supervisor">
     <button onclick="fijarManual()" style="width:100%; padding:15px; background:var(--warn); color:white; border:none; border-radius:10px; margin-top:10px;">FIJAR MANUAL</button>
+    <hr>
+    <button onclick="limpiarCuadroActual()" style="width:100%; padding:15px; background:var(--danger); color:white; border:none; border-radius:10px; margin-top:10px; font-weight:bold;">❌ BORRAR CUADRO ACTUAL</button>
 </div>
 
 <div id="modalQR" class="modal" style="text-align:center;">
@@ -257,7 +259,25 @@ function alEscanear(codigo) {
     if(MODO_SUP) {
         const p = codigo.split('|');
         if(p[0].startsWith("SUP_") || p[0].startsWith("AGRICACTUS_PACK") || p[0].startsWith("AGRI_REP")) {
-            CUR = { c: p[1] || "--", lado: p[2] || "--", li: parseInt(p[3]) || 0, lf: parseInt(p[4]) || 0, v: p[5] || "--", s: p[6] || p[7] || "SIN NOMBRE", vld: true };
+            const nuevoC = p[1] || "--";
+            
+            // Si ya hay un cuadro asignado y el nuevo es diferente, preguntar para CORREGIR
+            if(CUR.c && CUR.c !== nuevoC && CUR.c !== "--") {
+                if(!confirm(`⚠️ ATENCIÓN: Ya tienes el Cuadro ${CUR.c}. ¿Deseas CORREGIRLO y cambiar al Cuadro ${nuevoC}?`)) {
+                    cancelarEscaneoSup();
+                    return;
+                }
+                
+                // Si acepta corregir, preguntar si quiere actualizar los registros de este bloque
+                if(REGS.some(r => r.c === CUR.c)) {
+                    if(confirm(`¿Quieres cambiar los registros anteriores del Cuadro ${CUR.c} para que ahora digan Cuadro ${nuevoC}?`)) {
+                        REGS.forEach(r => { if(r.c === CUR.c) { r.c = nuevoC; r.vld = true; } });
+                        localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
+                    }
+                }
+            }
+
+            CUR = { c: nuevoC, lado: p[2] || "--", li: parseInt(p[3]) || 0, lf: parseInt(p[4]) || 0, v: p[5] || "--", s: p[6] || p[7] || "SIN NOMBRE", vld: true };
             localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
             document.getElementById('mainBody').style.background = "#c8e6c9";
             setTimeout(()=>document.getElementById('mainBody').style.background = "#e0e0e0", 500);
@@ -291,7 +311,7 @@ function vaciarCola() { if(confirm("¿Borrar todo este grupo?")) { COLA = []; re
 function guardarGrupo() {
     const hilera = parseInt(document.getElementById('inputHileraTarea').value);
     if(isNaN(hilera) || hilera === 0) return alert("Escribe el número de hilera.");
-    if(hilera < CUR.li || hilera > CUR.lf) {
+    if(CUR.li > 0 && (hilera < CUR.li || hilera > CUR.lf)) {
         document.getElementById('errorHilera').style.display = 'block';
         setTimeout(() => document.getElementById('errorHilera').style.display = 'none', 3000);
         return;
@@ -350,15 +370,27 @@ function actualizarInterfaz() {
     document.getElementById('displayLado').innerText = CUR.lado || "--";
     document.getElementById('displayVariedad').innerText = CUR.v || "--";
     document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
-    if(CUR.vld) { card.classList.remove('pending'); badge.innerText = "REVISADO ✅"; badge.className = "valid-badge"; }
-    else { card.classList.add('pending'); badge.innerText = "PENDIENTE ⚠️"; badge.className = "pending-badge"; }
+    
+    if(CUR.c === "" || CUR.c === "--") {
+        badge.innerText = "ESPERANDO ASIGNACIÓN 🛰️";
+        badge.className = "pending-badge";
+        card.classList.add('pending');
+    } else if(CUR.vld) {
+        card.classList.remove('pending');
+        badge.innerText = "REVISADO ✅";
+        badge.className = "valid-badge";
+    } else {
+        card.classList.add('pending');
+        badge.innerText = "PENDIENTE ⚠️";
+        badge.className = "pending-badge";
+    }
 
     const hUnicasCuadro = new Set(REGS.filter(r => r.c === CUR.c).map(r => r.l)).size;
-    const totalRango = (CUR.lf - CUR.li + 1);
+    const totalRango = (CUR.lf - CUR.li + 1) || 1;
     const resto = Math.max(0, totalRango - hUnicasCuadro);
     document.getElementById('conteoRestante').innerText = resto;
     document.getElementById('circuloConteo').style.background = resto === 0 ? 'var(--danger)' : (resto < 10 ? 'var(--accent)' : 'var(--p)');
-    document.getElementById('progressBar').style.width = Math.min((hUnicasCuadro / (totalRango || 1)) * 100, 100) + "%";
+    document.getElementById('progressBar').style.width = Math.min((hUnicasCuadro / totalRango) * 100, 100) + "%";
     actualizarMonitor();
 }
 
@@ -377,9 +409,19 @@ function fijarManual() {
     localStorage.setItem('c_cur_v7', JSON.stringify(CUR)); actualizarInterfaz(); cerrarModal('modalConfig'); verificarBotones();
 }
 
+function limpiarCuadroActual() {
+    if(confirm("¿Seguro que quieres borrar el cuadro actual? Los trabajadores ya guardados NO se borrarán de la lista del día, pero podrás asignar un nuevo cuadro.")) {
+        CUR = { c:"", lado:"", li:0, lf:0, v:"", s:"", vld: false };
+        localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
+        actualizarInterfaz();
+        cerrarModal('modalConfig');
+        document.getElementById('status').innerText = "CUADRO BORRADO - LISTO PARA NUEVO QR";
+    }
+}
+
 function abrirRegistros() {
     const cont = document.getElementById('listaRegsUI');
-    cont.innerHTML = REGS.slice(-50).reverse().map(r => `<div style="border-bottom:1px solid #ddd; padding:10px; background:#f9f9f9; margin-bottom:5px; border-radius:10px;"><b>${r.e}</b> - HILERA: ${r.l}<br><small>${r.a} | ${r.h}</small></div>`).join('') || "Sin registros.";
+    cont.innerHTML = REGS.slice(-50).reverse().map(r => `<div style="border-bottom:1px solid #ddd; padding:10px; background:#f9f9f9; margin-bottom:5px; border-radius:10px;"><b>${r.e}</b> - HILERA: ${r.l} (${r.c})<br><small>${r.a} | ${r.h}</small></div>`).join('') || "Sin registros.";
     abrirModal('modalListado');
 }
 
