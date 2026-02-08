@@ -21,11 +21,9 @@
         .monitor-avance b { font-size: 18px; display: block; color: var(--accent); }
         .monitor-avance span { font-size: 10px; text-transform: uppercase; opacity: 0.8; }
 
-        /* Tarjeta de Estado con Colores de Validación */
         .config-status { 
             background: white; border: 4px solid var(--p); padding: 15px; border-radius: 15px; 
             margin-bottom: 10px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: 0.3s;
         }
         .config-status.pending { border-color: var(--warn); background: #fffde7; }
         
@@ -52,7 +50,6 @@
             color: white; font-size: 14px; text-transform: uppercase; cursor: pointer;
             box-shadow: 0 4px 0 rgba(0,0,0,0.2);
         }
-        .btn-accion:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
 
         .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
@@ -88,11 +85,14 @@
             font-size: 18px; box-shadow: 0 6px 20px rgba(103, 58, 183, 0.4); z-index: 1000;
         }
 
-        .success-flash { animation: flashGreen 0.5s; }
-        @keyframes flashGreen { from { background: var(--p); } to { background: white; } }
-        
-        textarea { width: 100%; border: 2px solid #ccc; border-radius: 10px; padding: 10px; font-family: monospace; }
-        .reg-badge-pend { background: var(--warn); color: white; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: bold; }
+        .input-hilera-grande {
+            background: #fffde7;
+            border: 3px solid var(--accent);
+            font-size: 30px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--dark);
+        }
     </style>
 </head>
 <body id="mainBody">
@@ -103,7 +103,6 @@
     <div><span>L/Hora</span><b id="statEficiencia">0.0</b></div>
 </div>
 
-<!-- Tarjeta de Estado con Validación -->
 <div id="cardStatus" class="config-status">
     <div id="badgeStatus" class="valid-badge">CUADRO REVISADO ✅</div>
     <div class="conteo-grande" id="circuloConteo">
@@ -130,9 +129,7 @@
         <label>ACTIVIDAD / TRABAJO</label>
         <button onclick="abrirModal('modalConfig')" style="border:none; background:none; color:var(--info); font-weight:bold; font-size:12px;">⚙️ CONFIGURACIÓN</button>
     </div>
-    <select id="selActividad">
-        <option value="">Cargue actividades en Ajustes</option>
-    </select>
+    <select id="selActividad"></select>
 
     <label>TURNO</label>
     <select id="selTurno">
@@ -161,64 +158,62 @@
 </div>
 
 <div class="division-box" id="areaCola" style="display:none;">
-    <h3 style="margin:0; text-align:center;">👥 GENTE EN FILA (<span id="colaCount">0</span>)</h3>
+    <h3 style="margin:0; text-align:center;">👥 GRUPO SELECCIONADO (<span id="colaCount">0</span>)</h3>
     <div class="cola-list" id="colaUI"></div>
-    <button onclick="guardarGrupo()" style="width:100%; background:var(--p); color:white; padding:20px; border:none; border-radius:15px; font-weight:bold; font-size:20px; box-shadow: 0 6px 0 #1b5e20;">✅ GUARDAR ESTE GRUPO</button>
-    <button onclick="vaciarCola()" style="width:100%; background:none; color:red; border:none; margin-top:12px; font-weight:bold; font-size:13px;">X CANCELAR Y BORRAR FILA</button>
+    
+    <label style="text-align:center; color:var(--accent)">¿EN QUÉ HILERA VAN A TRABAJAR TODOS?</label>
+    <input type="number" id="inputHileraTarea" class="input-hilera-grande" placeholder="0">
+    <p id="errorHilera" style="color:red; font-size:10px; text-align:center; display:none; margin:5px 0;">¡Esta hilera está fuera del rango asignado!</p>
+
+    <button onclick="guardarGrupo()" style="width:100%; background:var(--p); color:white; padding:20px; border:none; border-radius:15px; font-weight:bold; font-size:20px; box-shadow: 0 6px 0 #1b5e20; margin-top:10px;">✅ GUARDAR HILERA</button>
+    <button onclick="vaciarCola()" style="width:100%; background:none; color:red; border:none; margin-top:12px; font-weight:bold; font-size:13px;">X CANCELAR Y BORRAR GRUPO</button>
 </div>
 
 <button class="btn-enviar" id="btnReporteFinal" onclick="prepararReporte()">📤 ENTREGAR TRABAJO AL JEFE</button>
 
-<!-- VENTANA: LISTADO -->
+<!-- VENTANAS MODALES -->
 <div id="modalListado" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2 style="color:var(--dark)">📋 Lista de Hoy</h2>
         <button onclick="cerrarModal('modalListado')" style="padding:12px 20px; background:var(--danger); color:white; border:none; border-radius:10px; font-weight:bold;">VOLVER</button>
     </div>
+    
+    <div id="resumenParejas" style="background:var(--s); padding:10px; border-radius:10px; margin-bottom:15px; font-size:11px;">
+        <b>🤝 Resumen de Trabajo en Equipo:</b><br>
+        <div id="listaParejasStats">Cargando...</div>
+    </div>
+
     <div id="listaRegsUI" style="margin-top:20px;"></div>
     <hr>
     <button onclick="borrarTodo()" style="width:100%; padding:15px; background:white; color:var(--danger); border: 2px solid var(--danger); border-radius:12px; font-weight:bold;">🗑️ BORRAR TODOS LOS REGISTROS</button>
 </div>
 
-<!-- VENTANA: CONFIGURACIÓN -->
 <div id="modalConfig" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="color:var(--p)">⚙️ Catálogos y Ajustes</h2>
+        <h2 style="color:var(--p)">⚙️ Ajustes</h2>
         <button onclick="cerrarModal('modalConfig')" style="padding:12px 20px; background:#666; color:white; border:none; border-radius:10px; font-weight:bold;">CERRAR</button>
     </div>
-
-    <div style="background:var(--s); padding:15px; border-radius:10px; margin-top:15px;">
-        <label style="color:var(--p)">PASO 1: CARGAR ACTIVIDADES</label>
-        <p style="font-size:11px; color:#555; margin-top:0;">Formato: ID, NOMBRE, CLAVE (Ej: 6, APOYO AGUA, 1000)</p>
-        <textarea id="csvActividades" style="height:120px;" placeholder="Pega aquí tu lista de Excel..."></textarea>
-        <button onclick="cargarActividades()" style="width:100%; padding:15px; background:var(--dark); color:white; border:none; border-radius:10px; margin-top:10px; font-weight:bold;">✅ ACTUALIZAR ACTIVIDADES</button>
-    </div>
-
+    <textarea id="csvActividades" style="height:120px; margin-top:10px;" placeholder="ID, NOMBRE, CLAVE"></textarea>
+    <button onclick="cargarActividades()" style="width:100%; padding:15px; background:var(--dark); color:white; border:none; border-radius:10px; margin-top:10px;">ACTUALIZAR ACTIVIDADES</button>
     <hr>
-    
-    <label style="color:var(--warn)">⚠️ ASIGNACIÓN MANUAL (EMERGENCIA)</label>
-    <p style="font-size:11px; color:#777;">Usa esto si el jefe no está. Se marcará como "Pendiente de Revisión".</p>
-    <input type="text" id="m_cuadro" placeholder="Número de Cuadro">
+    <input type="text" id="m_cuadro" placeholder="Cuadro">
     <input type="text" id="m_variedad" placeholder="Variedad">
     <select id="m_lado">
-        <option value="NORTE">NORTE</option><option value="SUR">SUR</option>
-        <option value="ORIENTE">ORIENTE</option><option value="PONIENTE">PONIENTE</option>
-        <option value="COMPLETA">COMPLETA</option>
+        <option value="NORTE">NORTE</option><option value="SUR">SUR</option><option value="ORIENTE">ORIENTE</option><option value="PONIENTE">PONIENTE</option><option value="COMPLETA">COMPLETA</option>
     </select>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <input type="number" id="m_ini" placeholder="Hilera Inicio">
-        <input type="number" id="m_fin" placeholder="Hilera Fin">
+        <input type="number" id="m_ini" placeholder="Inicio">
+        <input type="number" id="m_fin" placeholder="Fin">
     </div>
-    <input type="text" id="m_sup" placeholder="Supervisor Responsable">
-    <button onclick="fijarManual()" style="width:100%; padding:15px; background:var(--warn); color:white; border:none; border-radius:10px; margin-top:10px; font-weight:bold;">FIJAR MANUAL (PENDIENTE DE JEFE)</button>
+    <input type="text" id="m_sup" placeholder="Supervisor">
+    <button onclick="fijarManual()" style="width:100%; padding:15px; background:var(--warn); color:white; border:none; border-radius:10px; margin-top:10px;">FIJAR MANUAL</button>
 </div>
 
-<!-- VENTANA: REPORTE QR -->
 <div id="modalQR" class="modal" style="text-align:center;">
-    <h2 style="color:var(--sup)">TRABAJO TERMINADO</h2>
-    <div id="qrcode" style="display:flex; justify-content:center; margin:20px; border:10px solid white; border-radius:15px; background:white;"></div>
-    <button class="btn-accion" style="background:var(--p); width:100%;" onclick="descargarReporteFile()">💾 DESCARGAR ARCHIVO (.JSON)</button>
-    <button onclick="cerrarModal('modalQR')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:10px; margin-top:20px; font-weight:bold;">VOLVER</button>
+    <h2 style="color:var(--sup)">REPORTE</h2>
+    <div id="qrcode" style="display:flex; justify-content:center; margin:20px; background:white; padding:10px;"></div>
+    <button class="btn-accion" style="background:var(--p); width:100%;" onclick="descargarReporteFile()">💾 BAJAR ARCHIVO .JSON</button>
+    <button onclick="cerrarModal('modalQR')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:10px; margin-top:20px;">VOLVER</button>
 </div>
 
 <script>
@@ -238,7 +233,10 @@ window.onload = () => {
     } catch(e) { document.getElementById('status').innerText = "CÁMARA NO DISPONIBLE"; }
 };
 
-function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
+function abrirModal(id) { 
+    if(id === 'modalListado') calcularEstadisticasParejas();
+    document.getElementById(id).style.display = 'block'; 
+}
 function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
 function activarEscaneoSup() { 
@@ -259,49 +257,25 @@ function alEscanear(codigo) {
     if(MODO_SUP) {
         const p = codigo.split('|');
         if(p[0].startsWith("SUP_") || p[0].startsWith("AGRICACTUS_PACK") || p[0].startsWith("AGRI_REP")) {
-            // Validar si el jefe está validando lo que el cuadrillero hizo manualmente
-            let eraManual = !CUR.vld;
-            CUR = { 
-                c: p[1] || "--", lado: p[2] || "--", 
-                li: parseInt(p[3]) || 0, lf: parseInt(p[4]) || 0, 
-                v: p[5] || "--", s: p[6] || p[7] || "SIN NOMBRE",
-                vld: true // Siempre validado si viene de QR de Jefe
-            };
-            
-            // Si el jefe escanea y es un cuadro diferente al manual, avisar
-            if(eraManual && REGS.some(r => r.c !== CUR.c && r.vld === false)) {
-                if(!confirm("⚠️ El Jefe asignó un CUADRO DIFERENTE al que tú pusiste manual. ¿Quieres actualizar todos los registros anteriores a este nuevo cuadro?")) {
-                    // No actualizar anteriores, solo los nuevos
-                } else {
-                    REGS.forEach(r => { if(!r.vld) { r.c = CUR.c; r.vld = true; } });
-                }
-            }
-
+            CUR = { c: p[1] || "--", lado: p[2] || "--", li: parseInt(p[3]) || 0, lf: parseInt(p[4]) || 0, v: p[5] || "--", s: p[6] || p[7] || "SIN NOMBRE", vld: true };
             localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
-            document.getElementById('mainBody').classList.add('success-flash');
-            setTimeout(()=>document.getElementById('mainBody').classList.remove('success-flash'), 500);
+            document.getElementById('mainBody').style.background = "#c8e6c9";
+            setTimeout(()=>document.getElementById('mainBody').style.background = "#e0e0e0", 500);
             cancelarEscaneoSup();
             actualizarInterfaz(); 
             verificarBotones();
-        } else {
-            document.getElementById('status').innerText = "❌ QR NO ES DE JEFE";
         }
     } else {
-        if(!CUR.c) { alert("¡Atención! Primero escanea el código del Jefe o Supervisor."); return; }
+        if(!CUR.c) { alert("¡Primero escanea el QR del Supervisor!"); return; }
         agregarACola(codigo.trim());
     }
 }
 
 function agregarACola(id) {
-    if(REGS.find(r => r.e === id && r.c === CUR.c && r.lado === CUR.lado)) {
-        document.getElementById('status').innerText = "⚠️ "+id+" YA REGISTRADO";
-        return;
-    }
     if(COLA.find(c => c.e === id)) return;
     COLA.push({ e: id });
-    document.getElementById('status').innerText = "👤 "+id+" EN FILA";
+    document.getElementById('status').innerText = "👤 "+id+" AÑADIDO";
     renderCola();
-    actualizarInterfaz();
 }
 
 function renderCola() {
@@ -311,145 +285,140 @@ function renderCola() {
     cont.innerHTML = COLA.map((item, idx) => `<div class="cola-item"><span><b>${item.e}</b></span><button onclick="removerCola(${idx})" style="background:none; border:none; color:red; font-weight:bold;">QUITAR</button></div>`).join('');
 }
 
-function removerCola(idx) { COLA.splice(idx, 1); renderCola(); actualizarInterfaz(); }
-function vaciarCola() { if(confirm("¿Borrar toda la fila?")) { COLA = []; renderCola(); actualizarInterfaz(); } }
+function removerCola(idx) { COLA.splice(idx, 1); renderCola(); }
+function vaciarCola() { if(confirm("¿Borrar todo este grupo?")) { COLA = []; renderCola(); } }
 
 function guardarGrupo() {
-    if(COLA.length === 0) return;
+    const hilera = parseInt(document.getElementById('inputHileraTarea').value);
+    if(isNaN(hilera) || hilera === 0) return alert("Escribe el número de hilera.");
+    if(hilera < CUR.li || hilera > CUR.lf) {
+        document.getElementById('errorHilera').style.display = 'block';
+        setTimeout(() => document.getElementById('errorHilera').style.display = 'none', 3000);
+        return;
+    }
+
     const ahora = new Date();
     const h = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
     const f = ahora.toLocaleDateString('en-GB');
     const turno = document.getElementById('selTurno').value;
     const actID = document.getElementById('selActividad').value;
     const actObj = ACTS.find(a => a.id === actID);
+    const groupId = Date.now();
 
     COLA.forEach((p, i) => {
-        let ocupadosActualmente = REGS.filter(r => r.c === CUR.c && r.lado === CUR.lado).length;
-        let hilera = CUR.li + Math.floor((ocupadosActualmente + i) / 2); 
-        if(hilera > CUR.lf) hilera = CUR.lf;
-
         REGS.push({
-            id: Date.now() + i, f: f, h: h, ts: ahora.getTime(),
+            id: groupId + i, 
+            groupId: groupId, 
+            f: f, h: h, ts: ahora.getTime(),
             c: CUR.c, l: hilera, lado: CUR.lado, v: CUR.v,
             e: p.e, s: CUR.s, t: turno, 
             a: actObj ? actObj.n : "--", ak: actObj ? actObj.ak : "--",
-            vld: CUR.vld // Se guarda con el estado de validación actual
+            vld: CUR.vld 
         });
     });
 
     localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
-    COLA = []; renderCola(); actualizarInterfaz();
-    document.getElementById('status').innerText = "✅ GRUPO GUARDADO";
+    COLA = []; 
+    document.getElementById('inputHileraTarea').value = "";
+    renderCola(); 
+    actualizarInterfaz();
+    document.getElementById('status').innerText = "✅ HILERA "+hilera+" GUARDADA";
+}
+
+function calcularEstadisticasParejas() {
+    const stats = {};
+    const grupos = {};
+    REGS.forEach(r => {
+        if(!grupos[r.groupId]) grupos[r.groupId] = [];
+        grupos[r.groupId].push(r.e);
+    });
+    Object.values(grupos).forEach(nombres => {
+        if(nombres.length >= 2) {
+            const grupoTxt = nombres.sort().join(" + ");
+            stats[grupoTxt] = (stats[grupoTxt] || 0) + 1;
+        }
+    });
+    const cont = document.getElementById('listaParejasStats');
+    const entries = Object.entries(stats);
+    cont.innerHTML = entries.length === 0 ? "Sin datos de grupos aún." : entries.map(([grupo, count]) => `<div>👥 ${grupo}: <b>${count} hileras</b></div>`).join('');
 }
 
 function actualizarInterfaz() {
     const card = document.getElementById('cardStatus');
     const badge = document.getElementById('badgeStatus');
-    
     document.getElementById('displayCuadro').innerText = CUR.c || "--";
     document.getElementById('displayLado').innerText = CUR.lado || "--";
     document.getElementById('displayVariedad').innerText = CUR.v || "--";
     document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
-    
-    if(CUR.vld) {
-        card.classList.remove('pending');
-        badge.innerText = "CUADRO REVISADO ✅";
-        badge.className = "valid-badge";
-    } else {
-        card.classList.add('pending');
-        badge.innerText = "ESPERANDO REVISIÓN JEFE ⚠️";
-        badge.className = "pending-badge";
-    }
+    if(CUR.vld) { card.classList.remove('pending'); badge.innerText = "REVISADO ✅"; badge.className = "valid-badge"; }
+    else { card.classList.add('pending'); badge.innerText = "PENDIENTE ⚠️"; badge.className = "pending-badge"; }
 
-    let totalCap = (CUR.lf - CUR.li + 1) * 2;
-    let ocupados = REGS.filter(r => r.c === CUR.c && r.lado === CUR.lado).length;
-    let enCola = COLA.length;
-    let resto = Math.max(0, totalCap - ocupados - enCola);
-
+    const hUnicasCuadro = new Set(REGS.filter(r => r.c === CUR.c).map(r => r.l)).size;
+    const totalRango = (CUR.lf - CUR.li + 1);
+    const resto = Math.max(0, totalRango - hUnicasCuadro);
     document.getElementById('conteoRestante').innerText = resto;
-    document.getElementById('circuloConteo').style.background = resto === 0 ? 'var(--danger)' : (resto < 5 ? 'var(--accent)' : 'var(--p)');
-    document.getElementById('progressBar').style.width = Math.min(((ocupados + enCola) / (totalCap || 1)) * 100, 100) + "%";
+    document.getElementById('circuloConteo').style.background = resto === 0 ? 'var(--danger)' : (resto < 10 ? 'var(--accent)' : 'var(--p)');
+    document.getElementById('progressBar').style.width = Math.min((hUnicasCuadro / (totalRango || 1)) * 100, 100) + "%";
     actualizarMonitor();
 }
 
 function actualizarMonitor() {
     if(REGS.length === 0) return;
-    const hUnicas = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`)).size;
+    const hUnicasTotal = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`)).size;
     const ts = REGS.map(r => r.ts);
     const diff = Math.max(0.1, (Math.max(...ts) - Math.min(...ts)) / (3600000));
-    document.getElementById('statLineas').innerText = hUnicas;
+    document.getElementById('statLineas').innerText = hUnicasTotal;
     document.getElementById('statGente').innerText = [...new Set(REGS.map(r=>r.e))].length;
-    document.getElementById('statEficiencia').innerText = (hUnicas / diff).toFixed(1);
+    document.getElementById('statEficiencia').innerText = (hUnicasTotal / diff).toFixed(1);
 }
 
 function fijarManual() {
-    CUR = { 
-        c: document.getElementById('m_cuadro').value, lado: document.getElementById('m_lado').value, 
-        li: parseInt(document.getElementById('m_ini').value), lf: parseInt(document.getElementById('m_fin').value), 
-        v: document.getElementById('m_variedad').value || "--", s: document.getElementById('m_sup').value || "MANUAL",
-        vld: false // No está validado porque fue manual
-    };
-    if(!CUR.c || isNaN(CUR.li)) return alert("Completa los datos básicos");
-    localStorage.setItem('c_cur_v7', JSON.stringify(CUR)); 
-    actualizarInterfaz(); cerrarModal('modalConfig'); verificarBotones();
+    CUR = { c: document.getElementById('m_cuadro').value, lado: document.getElementById('m_lado').value, li: parseInt(document.getElementById('m_ini').value), lf: parseInt(document.getElementById('m_fin').value), v: document.getElementById('m_variedad').value || "--", s: document.getElementById('m_sup').value || "MANUAL", vld: false };
+    localStorage.setItem('c_cur_v7', JSON.stringify(CUR)); actualizarInterfaz(); cerrarModal('modalConfig'); verificarBotones();
 }
 
 function abrirRegistros() {
     const cont = document.getElementById('listaRegsUI');
-    cont.innerHTML = REGS.slice(-50).reverse().map(r => `
-        <div style="border-bottom:1px solid #ddd; padding:12px; background:#f9f9f9; margin-bottom:8px; border-radius:10px; position:relative;">
-            <b style="font-size:16px;">${r.e}</b> - Cuadro ${r.c} ${r.vld ? '' : '<span class="reg-badge-pend">NO REVISADO</span>'}<br>
-            <small>${r.a} (Clave: ${r.ak}) | ${r.h}</small>
-        </div>
-    `).join('') || "No hay registros.";
+    cont.innerHTML = REGS.slice(-50).reverse().map(r => `<div style="border-bottom:1px solid #ddd; padding:10px; background:#f9f9f9; margin-bottom:5px; border-radius:10px;"><b>${r.e}</b> - HILERA: ${r.l}<br><small>${r.a} | ${r.h}</small></div>`).join('') || "Sin registros.";
     abrirModal('modalListado');
 }
 
 function cargarActividades() {
     const raw = document.getElementById('csvActividades').value.trim();
     try {
-        const lineas = raw.split('\n');
-        ACTS = lineas.map(l => { const p = l.split(','); return { id: p[0].trim(), n: p[1] ? p[1].trim() : p[0].trim(), ak: p[2] ? p[2].trim() : "" }; }).filter(a => a.id !== "");
-        localStorage.setItem('c_acts_v7', JSON.stringify(ACTS));
-        alert("✅ Catálogo de Actividades Actualizado");
-        filtrarActividades(); cerrarModal('modalConfig');
-    } catch(e) { alert("Error en el formato."); }
+        ACTS = raw.split('\n').map(l => { const p = l.split(','); return { id: p[0].trim(), n: p[1] ? p[1].trim() : p[0].trim(), ak: p[2] ? p[2].trim() : "" }; }).filter(a => a.id !== "");
+        localStorage.setItem('c_acts_v7', JSON.stringify(ACTS)); alert("✅ OK"); filtrarActividades(); cerrarModal('modalConfig');
+    } catch(e) { alert("Error"); }
 }
 
 function filtrarActividades() {
     const sel = document.getElementById('selActividad');
-    if(ACTS.length === 0) { sel.innerHTML = '<option value="">Cargue actividades en Ajustes</option>'; return; }
-    sel.innerHTML = ACTS.map(a => `<option value="${a.id}">${a.n} (Clave: ${a.ak})</option>`).join('');
+    if(ACTS.length === 0) { sel.innerHTML = '<option value="">Sin actividades</option>'; return; }
+    sel.innerHTML = ACTS.map(a => `<option value="${a.id}">${a.n} (${a.ak})</option>`).join('');
 }
 
 function prepararReporte() {
-    if(REGS.length === 0) return alert("No hay registros.");
-    const qrCont = document.getElementById("qrcode");
-    qrCont.innerHTML = "";
+    if(REGS.length === 0) return alert("Sin datos.");
+    const qrCont = document.getElementById("qrcode"); qrCont.innerHTML = "";
     const pSmall = { res: { l: document.getElementById('statLineas').innerText, g: REGS.length }, det: REGS.slice(-60).map(r => ({ e: r.e, c: r.c, l: r.l, a: r.ak, t: r.t, h: r.h, v: r.vld ? 1 : 0 })) };
     new QRCode(qrCont, { text: "AGRI_REP|" + JSON.stringify(pSmall), width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
     abrirModal('modalQR');
 }
 
 function descargarReporteFile() {
-    const p = { detalles: REGS };
-    const blob = new Blob([JSON.stringify(p, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `Corte_AgriCactus_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
+    const blob = new Blob([JSON.stringify({ detalles: REGS }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `Corte_${new Date().toISOString().slice(0,10)}.json`; a.click();
 }
 
 function reutilizarCuadrilla() {
     if(REGS.length === 0) return;
     const ult = REGS[REGS.length - 1];
     const g = REGS.filter(r => r.c === ult.c && r.lado === ult.lado).map(r => r.e);
-    COLA = [...new Set(g)].map(e => ({ e: e }));
-    renderCola(); actualizarInterfaz();
+    COLA = [...new Set(g)].map(e => ({ e: e })); renderCola(); actualizarInterfaz();
 }
 
 function verificarBotones() { document.getElementById('btnReuse').style.display = REGS.length > 0 ? 'block' : 'none'; }
-function borrarTodo() { if(confirm("⚠️ ¿Estás seguro?")) { REGS = []; localStorage.setItem('c_regs_v7', '[]'); actualizarInterfaz(); cerrarModal('modalListado'); } }
+function borrarTodo() { if(confirm("⚠️ ¿Borrar todo?")) { REGS = []; localStorage.setItem('c_regs_v7', '[]'); actualizarInterfaz(); cerrarModal('modalListado'); } }
 function agregarManual() { const id = document.getElementById('manualID').value.trim(); if(id) { agregarACola(id); document.getElementById('manualID').value = ""; } }
 </script>
 </body>
