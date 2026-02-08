@@ -85,13 +85,23 @@
             font-size: 18px; box-shadow: 0 6px 20px rgba(103, 58, 183, 0.4); z-index: 1000;
         }
 
-        .input-hilera-grande {
-            background: #fffde7;
-            border: 3px solid var(--accent);
-            font-size: 30px;
+        .input-hilera-actual {
+            background: #e3f2fd;
+            border: 3px solid var(--info);
+            font-size: 24px;
             text-align: center;
             font-weight: bold;
-            color: var(--dark);
+            color: var(--info);
+        }
+
+        .reg-item-edit {
+            border-bottom: 1px solid #ddd; padding: 12px; background: #f9f9f9; 
+            margin-bottom: 8px; border-radius: 10px; position: relative;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn-mini-edit {
+            background: var(--info); color: white; border: none; padding: 8px 12px;
+            border-radius: 8px; font-weight: bold; font-size: 12px;
         }
     </style>
 </head>
@@ -116,6 +126,14 @@
     </div>
     <div style="background:#ddd; height:8px; border-radius:4px; margin-top:10px; overflow:hidden;">
         <div id="progressBar" style="background:var(--p); height:100%; width:0%; transition:0.5s;"></div>
+    </div>
+</div>
+
+<div class="card" style="border-top: 5px solid var(--info); background: #e3f2fd;">
+    <label style="color: var(--info); margin-top: 0;">🧵 HILERA EN TRABAJO ACTUAL</label>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <input type="number" id="globalHilera" class="input-hilera-actual" placeholder="0" oninput="actualizarInterfaz()">
+        <div style="font-size: 10px; color: #555; line-height: 1.1;">Todos los escaneos se guardarán en esta línea.</div>
     </div>
 </div>
 
@@ -161,11 +179,7 @@
     <h3 style="margin:0; text-align:center;">👥 GRUPO SELECCIONADO (<span id="colaCount">0</span>)</h3>
     <div class="cola-list" id="colaUI"></div>
     
-    <label style="text-align:center; color:var(--accent)">¿EN QUÉ HILERA VAN A TRABAJAR TODOS?</label>
-    <input type="number" id="inputHileraTarea" class="input-hilera-grande" placeholder="0">
-    <p id="errorHilera" style="color:red; font-size:10px; text-align:center; display:none; margin:5px 0;">¡Esta hilera está fuera del rango asignado!</p>
-
-    <button onclick="guardarGrupo()" style="width:100%; background:var(--p); color:white; padding:20px; border:none; border-radius:15px; font-weight:bold; font-size:20px; box-shadow: 0 6px 0 #1b5e20; margin-top:10px;">✅ GUARDAR HILERA</button>
+    <button onclick="guardarGrupo()" style="width:100%; background:var(--p); color:white; padding:20px; border:none; border-radius:15px; font-weight:bold; font-size:20px; box-shadow: 0 6px 0 #1b5e20; margin-top:10px;">✅ GUARDAR EN HILERA <span id="labelHileraBoton">0</span></button>
     <button onclick="vaciarCola()" style="width:100%; background:none; color:red; border:none; margin-top:12px; font-weight:bold; font-size:13px;">X CANCELAR Y BORRAR GRUPO</button>
 </div>
 
@@ -236,7 +250,10 @@ window.onload = () => {
 };
 
 function abrirModal(id) { 
-    if(id === 'modalListado') calcularEstadisticasParejas();
+    if(id === 'modalListado') {
+        calcularEstadisticasParejas();
+        renderizarListaHoy();
+    }
     document.getElementById(id).style.display = 'block'; 
 }
 function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -261,14 +278,11 @@ function alEscanear(codigo) {
         if(p[0].startsWith("SUP_") || p[0].startsWith("AGRICACTUS_PACK") || p[0].startsWith("AGRI_REP")) {
             const nuevoC = p[1] || "--";
             
-            // Si ya hay un cuadro asignado y el nuevo es diferente, preguntar para CORREGIR
             if(CUR.c && CUR.c !== nuevoC && CUR.c !== "--") {
                 if(!confirm(`⚠️ ATENCIÓN: Ya tienes el Cuadro ${CUR.c}. ¿Deseas CORREGIRLO y cambiar al Cuadro ${nuevoC}?`)) {
                     cancelarEscaneoSup();
                     return;
                 }
-                
-                // Si acepta corregir, preguntar si quiere actualizar los registros de este bloque
                 if(REGS.some(r => r.c === CUR.c)) {
                     if(confirm(`¿Quieres cambiar los registros anteriores del Cuadro ${CUR.c} para que ahora digan Cuadro ${nuevoC}?`)) {
                         REGS.forEach(r => { if(r.c === CUR.c) { r.c = nuevoC; r.vld = true; } });
@@ -309,12 +323,14 @@ function removerCola(idx) { COLA.splice(idx, 1); renderCola(); }
 function vaciarCola() { if(confirm("¿Borrar todo este grupo?")) { COLA = []; renderCola(); } }
 
 function guardarGrupo() {
-    const hilera = parseInt(document.getElementById('inputHileraTarea').value);
-    if(isNaN(hilera) || hilera === 0) return alert("Escribe el número de hilera.");
-    if(CUR.li > 0 && (hilera < CUR.li || hilera > CUR.lf)) {
-        document.getElementById('errorHilera').style.display = 'block';
-        setTimeout(() => document.getElementById('errorHilera').style.display = 'none', 3000);
-        return;
+    let hilera = parseInt(document.getElementById('globalHilera').value);
+    
+    // Si no han puesto hilera, pedirla la primera vez
+    if(isNaN(hilera) || hilera === 0) {
+        hilera = prompt("⚠️ No has puesto hilera. ¿En qué hilera están trabajando?");
+        if(!hilera) return;
+        document.getElementById('globalHilera').value = hilera;
+        actualizarInterfaz();
     }
 
     const ahora = new Date();
@@ -330,7 +346,7 @@ function guardarGrupo() {
             id: groupId + i, 
             groupId: groupId, 
             f: f, h: h, ts: ahora.getTime(),
-            c: CUR.c, l: hilera, lado: CUR.lado, v: CUR.v,
+            c: CUR.c, l: parseInt(hilera), lado: CUR.lado, v: CUR.v,
             e: p.e, s: CUR.s, t: turno, 
             a: actObj ? actObj.n : "--", ak: actObj ? actObj.ak : "--",
             vld: CUR.vld 
@@ -339,33 +355,17 @@ function guardarGrupo() {
 
     localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
     COLA = []; 
-    document.getElementById('inputHileraTarea').value = "";
     renderCola(); 
     actualizarInterfaz();
-    document.getElementById('status').innerText = "✅ HILERA "+hilera+" GUARDADA";
-}
-
-function calcularEstadisticasParejas() {
-    const stats = {};
-    const grupos = {};
-    REGS.forEach(r => {
-        if(!grupos[r.groupId]) grupos[r.groupId] = [];
-        grupos[r.groupId].push(r.e);
-    });
-    Object.values(grupos).forEach(nombres => {
-        if(nombres.length >= 2) {
-            const grupoTxt = nombres.sort().join(" + ");
-            stats[grupoTxt] = (stats[grupoTxt] || 0) + 1;
-        }
-    });
-    const cont = document.getElementById('listaParejasStats');
-    const entries = Object.entries(stats);
-    cont.innerHTML = entries.length === 0 ? "Sin datos de grupos aún." : entries.map(([grupo, count]) => `<div>👥 ${grupo}: <b>${count} hileras</b></div>`).join('');
+    document.getElementById('status').innerText = "✅ GRUPO GUARDADO EN LÍNEA "+hilera;
 }
 
 function actualizarInterfaz() {
     const card = document.getElementById('cardStatus');
     const badge = document.getElementById('badgeStatus');
+    const hileraActual = document.getElementById('globalHilera').value || "0";
+    
+    document.getElementById('labelHileraBoton').innerText = hileraActual;
     document.getElementById('displayCuadro').innerText = CUR.c || "--";
     document.getElementById('displayLado').innerText = CUR.lado || "--";
     document.getElementById('displayVariedad').innerText = CUR.v || "--";
@@ -394,6 +394,50 @@ function actualizarInterfaz() {
     actualizarMonitor();
 }
 
+function calcularEstadisticasParejas() {
+    const stats = {};
+    const grupos = {};
+    REGS.forEach(r => {
+        if(!grupos[r.groupId]) grupos[r.groupId] = [];
+        grupos[r.groupId].push(r.e);
+    });
+    Object.values(grupos).forEach(nombres => {
+        if(nombres.length >= 2) {
+            const grupoTxt = nombres.sort().join(" + ");
+            stats[grupoTxt] = (stats[grupoTxt] || 0) + 1;
+        }
+    });
+    const cont = document.getElementById('listaParejasStats');
+    const entries = Object.entries(stats);
+    cont.innerHTML = entries.length === 0 ? "Sin datos de grupos aún." : entries.map(([grupo, count]) => `<div>👥 ${grupo}: <b>${count} hileras</b></div>`).join('');
+}
+
+function renderizarListaHoy() {
+    const cont = document.getElementById('listaRegsUI');
+    cont.innerHTML = REGS.slice(-50).reverse().map(r => `
+        <div class="reg-item-edit">
+            <div>
+                <b style="font-size:16px;">${r.e}</b><br>
+                <small>HILERA: <span id="valH-${r.id}">${r.l}</span> (${r.c})</small>
+            </div>
+            <button class="btn-mini-edit" onclick="editarHileraIndividual(${r.id}, ${r.l})">CAMBIAR LÍNEA</button>
+        </div>
+    `).join('') || "Sin registros.";
+}
+
+function editarHileraIndividual(id, valorActual) {
+    const nueva = prompt(`Cambiar número de hilera para este registro:`, valorActual);
+    if(nueva !== null && nueva !== "") {
+        const idx = REGS.findIndex(x => x.id === id);
+        if(idx !== -1) {
+            REGS[idx].l = parseInt(nueva);
+            localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
+            renderizarListaHoy();
+            actualizarInterfaz();
+        }
+    }
+}
+
 function actualizarMonitor() {
     if(REGS.length === 0) return;
     const hUnicasTotal = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`)).size;
@@ -410,19 +454,11 @@ function fijarManual() {
 }
 
 function limpiarCuadroActual() {
-    if(confirm("¿Seguro que quieres borrar el cuadro actual? Los trabajadores ya guardados NO se borrarán de la lista del día, pero podrás asignar un nuevo cuadro.")) {
+    if(confirm("¿Seguro que quieres borrar el cuadro actual?")) {
         CUR = { c:"", lado:"", li:0, lf:0, v:"", s:"", vld: false };
         localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
-        actualizarInterfaz();
-        cerrarModal('modalConfig');
-        document.getElementById('status').innerText = "CUADRO BORRADO - LISTO PARA NUEVO QR";
+        actualizarInterfaz(); cerrarModal('modalConfig');
     }
-}
-
-function abrirRegistros() {
-    const cont = document.getElementById('listaRegsUI');
-    cont.innerHTML = REGS.slice(-50).reverse().map(r => `<div style="border-bottom:1px solid #ddd; padding:10px; background:#f9f9f9; margin-bottom:5px; border-radius:10px;"><b>${r.e}</b> - HILERA: ${r.l} (${r.c})<br><small>${r.a} | ${r.h}</small></div>`).join('') || "Sin registros.";
-    abrirModal('modalListado');
 }
 
 function cargarActividades() {
