@@ -185,7 +185,6 @@
 
 <button class="btn-enviar" id="btnReporteFinal" onclick="prepararReporte()">📤 ENTREGAR TRABAJO AL JEFE</button>
 
-<!-- VENTANAS MODALES -->
 <div id="modalListado" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2 style="color:var(--dark)">📋 Lista de Hoy</h2>
@@ -226,8 +225,9 @@
 </div>
 
 <div id="modalQR" class="modal" style="text-align:center;">
-    <h2 style="color:var(--sup)">REPORTE</h2>
+    <h2 style="color:var(--sup)">REPORTE PARA ASISTENCIA</h2>
     <div id="qrcode" style="display:flex; justify-content:center; margin:20px; background:white; padding:10px;"></div>
+    <div id="reporteTxt" style="font-size: 14px; margin-bottom: 20px; color: #444;"></div>
     <button class="btn-accion" style="background:var(--p); width:100%;" onclick="descargarReporteFile()">💾 BAJAR ARCHIVO .JSON</button>
     <button onclick="cerrarModal('modalQR')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:10px; margin-top:20px;">VOLVER</button>
 </div>
@@ -300,7 +300,13 @@ function alEscanear(codigo) {
             verificarBotones();
         }
     } else {
-        if(!CUR.c) { alert("¡Primero escanea el QR del Supervisor!"); return; }
+        // Lógica independiente: Si no hay cuadro, pedir configuración
+        if(!CUR.c || CUR.c === "") { 
+            if(confirm("⚠️ No has configurado un cuadro. ¿Quieres ir a AJUSTES para poner uno manualmente?")) {
+                abrirModal('modalConfig');
+            }
+            return; 
+        }
         agregarACola(codigo.trim());
     }
 }
@@ -325,7 +331,6 @@ function vaciarCola() { if(confirm("¿Borrar todo este grupo?")) { COLA = []; re
 function guardarGrupo() {
     let hilera = parseInt(document.getElementById('globalHilera').value);
     
-    // Si no han puesto hilera, pedirla la primera vez
     if(isNaN(hilera) || hilera === 0) {
         hilera = prompt("⚠️ No has puesto hilera. ¿En qué hilera están trabajando?");
         if(!hilera) return;
@@ -372,7 +377,7 @@ function actualizarInterfaz() {
     document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
     
     if(CUR.c === "" || CUR.c === "--") {
-        badge.innerText = "ESPERANDO ASIGNACIÓN 🛰️";
+        badge.innerText = "ESPERANDO CONFIGURACIÓN ⚠️";
         badge.className = "pending-badge";
         card.classList.add('pending');
     } else if(CUR.vld) {
@@ -381,7 +386,7 @@ function actualizarInterfaz() {
         badge.className = "valid-badge";
     } else {
         card.classList.add('pending');
-        badge.innerText = "PENDIENTE ⚠️";
+        badge.innerText = "PENDIENTE (MANUAL) ⚠️";
         badge.className = "pending-badge";
     }
 
@@ -441,10 +446,11 @@ function editarHileraIndividual(id, valorActual) {
 function actualizarMonitor() {
     if(REGS.length === 0) return;
     const hUnicasTotal = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`)).size;
+    const genteTotal = [...new Set(REGS.map(r=>r.e))].length;
     const ts = REGS.map(r => r.ts);
     const diff = Math.max(0.1, (Math.max(...ts) - Math.min(...ts)) / (3600000));
     document.getElementById('statLineas').innerText = hUnicasTotal;
-    document.getElementById('statGente').innerText = [...new Set(REGS.map(r=>r.e))].length;
+    document.getElementById('statGente').innerText = genteTotal;
     document.getElementById('statEficiencia').innerText = (hUnicasTotal / diff).toFixed(1);
 }
 
@@ -477,9 +483,30 @@ function filtrarActividades() {
 
 function prepararReporte() {
     if(REGS.length === 0) return alert("Sin datos.");
-    const qrCont = document.getElementById("qrcode"); qrCont.innerHTML = "";
-    const pSmall = { res: { l: document.getElementById('statLineas').innerText, g: REGS.length }, det: REGS.slice(-60).map(r => ({ e: r.e, c: r.c, l: r.l, a: r.ak, t: r.t, h: r.h, v: r.vld ? 1 : 0 })) };
+    
+    const qrCont = document.getElementById("qrcode"); 
+    qrCont.innerHTML = "";
+    
+    // Resumen para el Supervisor
+    const lineasTotales = new Set(REGS.map(r => `${r.c}-${r.l}`)).size;
+    const personasTotales = [...new Set(REGS.map(r => r.e))].length;
+    const actividades = [...new Set(REGS.map(r => r.a))].join(", ");
+
+    // Paquete de datos estructurado
+    const pSmall = { 
+        res: { 
+            l: lineasTotales, 
+            g: personasTotales,
+            act: actividades 
+        }, 
+        detalles: REGS.slice(-60).map(r => ({ 
+            e: r.e, c: r.c, l: r.l, a: r.ak, t: r.t, h: r.h, v: r.vld ? 1 : 0 
+        })) 
+    };
+    
     new QRCode(qrCont, { text: "AGRI_REP|" + JSON.stringify(pSmall), width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
+    
+    document.getElementById('reporteTxt').innerHTML = `<b>Resumen:</b> ${lineasTotales} Hileras | ${personasTotales} Personas<br><small>${actividades}</small>`;
     abrirModal('modalQR');
 }
 
