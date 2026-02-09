@@ -3,586 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus Pro - Cuadrillero V7</title>
+    <title>AgriCactus Maestro V14.0 - Vista Cuadros</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { 
-            --p: #2e7d32; --s: #f1f8e9; --danger: #d32f2f; 
-            --info: #1976d2; --sup: #673ab7; --accent: #f57c00; --dark: #212121;
-            --warn: #ff9800;
+        :root { --p: #2e7d32; --accent: #f57c00; --dark: #121212; --danger: #d32f2f; --info: #1976d2; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: #1a1a1a; margin: 0; padding: 10px; color: white;
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/image_83f71e.jpg'); 
+            background-size: cover; background-attachment: fixed;
         }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #e0e0e0; margin: 0; padding: 10px; padding-bottom: 120px; }
+        .setup-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 5000; padding: 25px; box-sizing: border-box; overflow-y: auto; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: none; background: rgba(255,255,255,0.95); font-size: 16px; box-sizing: border-box; color: #333; font-weight: bold; }
+        .btn { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-info { background: var(--info); color: white; font-size: 11px; padding: 10px; margin-bottom: 10px; }
         
-        .monitor-avance { 
-            background: var(--dark); color: white; padding: 15px; border-radius: 15px; 
-            margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: center;
-        }
-        .monitor-avance b { font-size: 18px; display: block; color: var(--accent); }
-        .monitor-avance span { font-size: 10px; text-transform: uppercase; opacity: 0.8; }
+        .manual-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .manual-box input { margin-bottom: 0; flex-grow: 1; }
+        .manual-box .btn-mini { width: 80px; padding: 0; background: var(--accent); color: white; border-radius: 12px; border: none; font-weight: bold; }
 
-        .config-status { 
-            background: white; border: 4px solid var(--p); padding: 15px; border-radius: 15px; 
-            margin-bottom: 10px; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .map-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); 
+            gap: 8px; 
+            margin-top: 15px; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            padding: 10px; 
+            background: rgba(0,0,0,0.4); 
+            border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.1); 
         }
-        .config-status.pending { border-color: var(--warn); background: #fffde7; }
+        .row-box { 
+            height: 45px; 
+            border-radius: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 14px; 
+            font-weight: bold; 
+            background: #333; 
+            border: 2px solid #444; 
+            transition: 0.3s;
+        }
+        .row-done { background: var(--p) !important; border-color: #81c784; box-shadow: 0 0 8px var(--p); }
+        .row-active { background: var(--accent) !important; border-color: #ffb74d; animation: pulse 2s infinite; }
+        .row-tag { font-size: 8px; opacity: 0.9; text-transform: uppercase; margin-top: 2px; }
         
-        .valid-badge {
-            position: absolute; top: -10px; left: 20px; background: var(--p); color: white;
-            padding: 4px 12px; border-radius: 10px; font-size: 10px; font-weight: bold;
-        }
-        .pending-badge {
-            position: absolute; top: -10px; left: 20px; background: var(--warn); color: white;
-            padding: 4px 12px; border-radius: 10px; font-size: 10px; font-weight: bold;
-        }
-
-        .conteo-grande { 
-            position: absolute; top: 10px; right: 10px; width: 65px; height: 65px; 
-            background: var(--p); color: white; border-radius: 50%; display: flex; 
-            flex-direction: column; align-items: center; justify-content: center; font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        .conteo-grande small { font-size: 8px; text-transform: uppercase; margin-top: -2px; }
-
-        .nav-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .btn-accion { 
-            padding: 15px; border: none; border-radius: 12px; font-weight: bold; 
-            color: white; font-size: 14px; text-transform: uppercase; cursor: pointer;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-        }
-
-        .card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        label { display: block; font-weight: bold; font-size: 12px; color: #333; margin-top: 10px; margin-bottom: 5px; }
-        select, input { 
-            width: 100%; height: 55px; border: 2px solid #ccc; border-radius: 10px; 
-            font-size: 18px; padding: 0 15px; box-sizing: border-box; background: #fafafa;
-        }
-        
-        #reader { width: 100%; background: #000; border-radius: 15px; margin-top: 10px; overflow: hidden; border: 4px solid #fff; }
-        #status-area { text-align: center; margin: 10px 0; }
-        #status { font-weight: bold; padding: 15px; border-radius: 10px; font-size: 16px; background: #eee; display: inline-block; width: 100%; box-sizing: border-box; }
-        .btn-cancel-scan { background: var(--danger); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 5px; width: 100%; cursor: pointer; display: none; }
-
-        .division-box { 
-            background: #fff3e0; border: 3px solid var(--accent); padding: 15px; 
-            border-radius: 15px; margin-top: 10px;
-        }
-        .cola-list { max-height: 200px; overflow-y: auto; margin: 10px 0; }
-        .cola-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            background: white; padding: 12px; border-radius: 10px; margin-bottom: 5px; border: 1px solid #ffccbc;
-        }
-
-        .modal { 
-            display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-            background:white; z-index:2000; padding: 20px; box-sizing: border-box; overflow-y: auto;
-        }
-        
-        .btn-enviar { 
-            position: fixed; bottom: 15px; left: 15px; right: 15px; background: var(--sup); 
-            color: white; padding: 20px; border: none; border-radius: 20px; font-weight: bold; 
-            font-size: 18px; box-shadow: 0 6px 20px rgba(103, 58, 183, 0.4); z-index: 1000;
-        }
-
-        .input-hilera-actual {
-            background: #e3f2fd;
-            border: 3px solid var(--info);
-            font-size: 24px;
-            text-align: center;
-            font-weight: bold;
-            color: var(--info);
-        }
-
-        .reg-item-edit {
-            border-bottom: 1px solid #ddd; padding: 12px; background: #f9f9f9; 
-            margin-bottom: 8px; border-radius: 10px; position: relative;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .btn-mini-edit {
-            background: var(--info); color: white; border: none; padding: 8px 12px;
-            border-radius: 8px; font-weight: bold; font-size: 12px;
-        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); } }
+        .hidden { display: none !important; }
+        label { display: block; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
+        .edit-card { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 6px solid var(--info); color: white; }
     </style>
 </head>
-<body id="mainBody">
+<body>
 
-<div class="monitor-avance">
-    <div><span>Hileras</span><b id="statLineas">0</b></div>
-    <div><span>Gente</span><b id="statGente">0</b></div>
-    <div><span>L/Hora</span><b id="statEficiencia">0.0</b></div>
+<div id="screenSetup" class="setup-screen">
+    <div style="text-align:center; margin-bottom:20px;">
+        <img src="https://raw.githubusercontent.com/tu-usuario/tu-repo/main/image_83f31f.png" style="max-width:180px;">
+    </div>
+    <button class="btn btn-info" onclick="abrirModal('modalImport')">📂 CARGAR CUADROS / ACTIVIDADES</button>
+    <div class="glass">
+        <label>Responsable</label><input type="text" id="in_resp">
+        <label>N° Trabajadores</label><input type="number" id="in_gente">
+        <label>Cuadro</label><input type="text" id="in_cuadro" list="lC" oninput="sugerir()">
+        <datalist id="lC"></datalist>
+        <label>Actividad</label><input type="text" id="in_act" list="lA">
+        <datalist id="lA"></datalist>
+        <label>Rango Hileras (Ej: 1-50)</label><input type="text" id="in_rangos">
+    </div>
+    <button class="btn btn-p" onclick="iniciarMision()">DESPLEGAR EQUIPO</button>
 </div>
 
-<div id="cardStatus" class="config-status">
-    <div id="badgeStatus" class="valid-badge">CUADRO REVISADO ✅</div>
-    <div class="conteo-grande" id="circuloConteo">
-        <span id="conteoRestante">0</span>
-        <small>Faltan</small>
+<div id="screenCheckIn" class="setup-screen hidden">
+    <h2 style="text-align: center; color: var(--accent);">👤 REGISTRO DE PERSONAL</h2>
+    <div id="readerCheckIn" style="border-radius:15px; overflow:hidden;"></div>
+    <div class="manual-box glass">
+        <input type="number" id="manualCheckIn" placeholder="N° Credencial...">
+        <button class="btn-mini" onclick="regManualCheckIn()">ADD</button>
     </div>
-    <div style="width: 75%;">
-        <span style="font-size: 10px; color: #666; text-transform: uppercase;">Lugar de Trabajo:</span><br>
-        <b style="font-size: 18px;">CUADRO <span id="displayCuadro">--</span></b> (<span id="displayLado">--</span>)<br>
-        🌱 <span id="displayVariedad">--</span> | 🧵 <span id="displayRango">-- al --</span>
-    </div>
-    <div style="background:#ddd; height:8px; border-radius:4px; margin-top:10px; overflow:hidden;">
-        <div id="progressBar" style="background:var(--p); height:100%; width:0%; transition:0.5s;"></div>
-    </div>
+    <div id="listaCheckIn" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;"></div>
+    <button class="btn btn-p" id="btnIrAMapa" onclick="autoAsignarYPasar()" style="display: none; margin-top: 20px;">INICIAR MAPA DE AVANCE</button>
 </div>
 
-<div class="card" style="border-top: 5px solid var(--info); background: #e3f2fd;">
-    <label style="color: var(--info); margin-top: 0;">🧵 HILERA EN TRABAJO ACTUAL</label>
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <input type="number" id="globalHilera" class="input-hilera-actual" placeholder="0" oninput="actualizarInterfaz()">
-        <div style="font-size: 10px; color: #555; line-height: 1.1;">Todos los escaneos se guardarán en esta línea.</div>
-    </div>
-</div>
-
-<div class="nav-buttons">
-    <button class="btn-accion" style="background:var(--sup)" onclick="activarEscaneoSup()">🛰️ RECIBIR CUADRO</button>
-    <button class="btn-accion" style="background:#455a64" onclick="abrirModal('modalListado')">📋 VER LISTA</button>
-</div>
-
-<div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <label>ACTIVIDAD / TRABAJO</label>
-        <button onclick="abrirModal('modalConfig')" style="border:none; background:none; color:var(--info); font-weight:bold; font-size:12px;">⚙️ CONFIGURACIÓN</button>
-    </div>
-    <select id="selActividad"></select>
-
-    <label>TURNO</label>
-    <select id="selTurno">
-        <option value="9">MATUTINO (9)</option>
-        <option value="11">VESPERTINO (11)</option>
-        <option value="16">1 TAREA (16)</option>
-        <option value="17">2 TAREAS (17)</option>
-        <option value="18">MATUTINO VESPERTINO (18)</option>
-        <option value="0">SE DESCANSÓ (0)</option>
-    </select>
-    
-    <button id="btnReuse" style="background:var(--info); color:white; border:none; padding:15px; border-radius:12px; font-weight:bold; width:100%; margin-top:15px; display:none;" onclick="reutilizarCuadrilla()">
-        ♻️ TRAER GENTE DE LA VEZ PASADA
-    </button>
-
-    <div id="reader"></div>
-    <div id="status-area">
-        <div id="status">CÁMARA LISTA</div>
-        <button id="btnCancelSup" class="btn-cancel-scan" onclick="cancelarEscaneoSup()">❌ CANCELAR LECTURA DE JEFE</button>
-    </div>
-
-    <div style="display:flex; margin-top:10px; gap:5px;">
-        <input type="number" id="manualID" placeholder="N° de Credencial..." style="flex-grow:1;">
-        <button class="btn-accion" style="background:var(--accent); width:90px;" onclick="agregarManual()">AÑADIR</button>
-    </div>
-</div>
-
-<div class="division-box" id="areaCola" style="display:none;">
-    <h3 style="margin:0; text-align:center;">👥 GRUPO SELECCIONADO (<span id="colaCount">0</span>)</h3>
-    <div class="cola-list" id="colaUI"></div>
-    
-    <button onclick="guardarGrupo()" style="width:100%; background:var(--p); color:white; padding:20px; border:none; border-radius:15px; font-weight:bold; font-size:20px; box-shadow: 0 6px 0 #1b5e20; margin-top:10px;">✅ GUARDAR EN HILERA <span id="labelHileraBoton">0</span></button>
-    <button onclick="vaciarCola()" style="width:100%; background:none; color:red; border:none; margin-top:12px; font-weight:bold; font-size:13px;">X CANCELAR Y BORRAR GRUPO</button>
-</div>
-
-<button class="btn-enviar" id="btnReporteFinal" onclick="prepararReporte()">📤 ENTREGAR TRABAJO AL JEFE</button>
-
-<div id="modalListado" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="color:var(--dark)">📋 Lista de Hoy</h2>
-        <button onclick="cerrarModal('modalListado')" style="padding:12px 20px; background:var(--danger); color:white; border:none; border-radius:10px; font-weight:bold;">VOLVER</button>
+<div id="mainUI" class="hidden">
+    <div class="glass" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom:10px;">
+        <div style="text-align:center;"><small>HECHAS</small><br><b id="statH" style="font-size:24px; color:#4caf50;">0</b></div>
+        <div style="text-align:center;"><small>PERSONAL</small><br><b id="statP" style="font-size:24px; color:var(--accent);">0/0</b></div>
     </div>
     
-    <div id="resumenParejas" style="background:var(--s); padding:10px; border-radius:10px; margin-bottom:15px; font-size:11px;">
-        <b>🤝 Resumen de Trabajo en Equipo:</b><br>
-        <div id="listaParejasStats">Cargando...</div>
+    <div class="glass">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b>📍 CUADRO <span id="dispC">--</span></b>
+            <button onclick="nuevoCuadroRapido()" style="background:var(--info); border:none; color:white; padding:5px 10px; border-radius:8px; font-size:10px; font-weight:bold;">🔄 NUEVO CUADRO</button>
+        </div>
+        <div id="mapaHileras" class="map-grid"></div>
     </div>
 
-    <div id="listaRegsUI" style="margin-top:20px;"></div>
-    <hr>
-    <button onclick="borrarTodo()" style="width:100%; padding:15px; background:white; color:var(--danger); border: 2px solid var(--danger); border-radius:12px; font-weight:bold;">🗑️ BORRAR TODOS LOS REGISTROS</button>
+    <div id="readerMain" style="border-radius:20px; overflow:hidden; border:2px solid white; margin:10px 0;"></div>
+    
+    <div class="manual-box glass">
+        <input type="number" id="manualAvance" placeholder="ID para Mover...">
+        <button class="btn-mini" onclick="regManualAvance()">MOVER</button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button class="btn" style="background:var(--info); color:white;" onclick="abrirModal('modalListado')">👥 GESTIÓN</button>
+        <button class="btn btn-accent" onclick="prepararReporte()">📤 REPORTES</button>
+    </div>
 </div>
 
-<div id="modalConfig" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="color:var(--p)">⚙️ Ajustes</h2>
-        <button onclick="cerrarModal('modalConfig')" style="padding:12px 20px; background:#666; color:white; border:none; border-radius:10px; font-weight:bold;">CERRAR</button>
-    </div>
-    <textarea id="csvActividades" style="height:120px; margin-top:10px;" placeholder="ID, NOMBRE, CLAVE"></textarea>
-    <button onclick="cargarActividades()" style="width:100%; padding:15px; background:var(--dark); color:white; border:none; border-radius:10px; margin-top:10px;">ACTUALIZAR ACTIVIDADES</button>
-    <hr>
-    <input type="text" id="m_cuadro" placeholder="Cuadro">
-    <input type="text" id="m_variedad" placeholder="Variedad">
-    <select id="m_lado">
-        <option value="NORTE">NORTE</option><option value="SUR">SUR</option><option value="ORIENTE">ORIENTE</option><option value="PONIENTE">PONIENTE</option><option value="COMPLETA">COMPLETA</option>
-    </select>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <input type="number" id="m_ini" placeholder="Inicio">
-        <input type="number" id="m_fin" placeholder="Fin">
-    </div>
-    <input type="text" id="m_sup" placeholder="Supervisor">
-    <button onclick="fijarManual()" style="width:100%; padding:15px; background:var(--warn); color:white; border:none; border-radius:10px; margin-top:10px;">FIJAR MANUAL</button>
-    <hr>
-    <button onclick="limpiarCuadroActual()" style="width:100%; padding:15px; background:var(--danger); color:white; border:none; border-radius:10px; margin-top:10px; font-weight:bold;">❌ BORRAR CUADRO ACTUAL</button>
+<div id="modalListado" class="setup-screen hidden">
+    <h2>🛠️ Edición de Cuadrilla</h2>
+    <div id="listaEdicionUI"></div>
+    <button class="btn btn-p" style="margin-top:20px;" onclick="cerrarModal('modalListado')">VOLVER AL MAPA</button>
 </div>
 
-<div id="modalQR" class="modal" style="text-align:center;">
-    <h2 style="color:var(--sup)">REPORTE PARA ASISTENCIA</h2>
-    <div id="qrcode" style="display:flex; justify-content:center; margin:20px; background:white; padding:10px;"></div>
-    <div id="reporteTxt" style="font-size: 14px; margin-bottom: 20px; color: #444;"></div>
-    <button class="btn-accion" style="background:var(--p); width:100%;" onclick="descargarReporteFile()">💾 BAJAR ARCHIVO .JSON</button>
-    <button onclick="cerrarModal('modalQR')" style="width:100%; padding:15px; background:#ddd; border:none; border-radius:10px; margin-top:20px;">VOLVER</button>
+<div id="modalImport" class="setup-screen hidden">
+    <h3>📂 Catálogos Maestros</h3>
+    <textarea id="csvC" placeholder="Cuadros: ID, Lado, Hileras, Var"></textarea>
+    <textarea id="csvA" placeholder="Actividades: ID, Desc, Clave"></textarea>
+    <button class="btn btn-p" onclick="saveDB()">GUARDAR</button>
+    <button class="btn" onclick="cerrarModal('modalImport')" style="background:none; color:white;">VOLVER</button>
+</div>
+
+<div id="modalQR" class="setup-screen hidden">
+    <h2 style="text-align:center;">REPORTES</h2>
+    <div class="glass" style="background:white; color:black; text-align:center; padding:15px;">
+        <div id="qr1" style="display:flex; justify-content:center; margin-bottom:10px;"></div>
+        <div id="qr2" style="display:flex; justify-content:center;"></div>
+    </div>
+    <button class="btn" style="background:var(--danger); color:white; margin-top:10px;" onclick="if(confirm('¿Reiniciar todo?')){localStorage.clear();location.reload();}">🛑 FIN JORNADA</button>
+    <button class="btn btn-p" style="margin-top:10px;" onclick="cerrarModal('modalQR')">VOLVER</button>
 </div>
 
 <script>
-let REGS = JSON.parse(localStorage.getItem('c_regs_v7')) || [];
-let ACTS = JSON.parse(localStorage.getItem('c_acts_v7')) || [];
-let COLA = [];
-let CUR = JSON.parse(localStorage.getItem('c_cur_v7')) || { c:"", lado:"", li:0, lf:0, v:"", s:"", vld: false };
-let MODO_SUP = false;
+let CONFIG = JSON.parse(localStorage.getItem('v13_conf')) || null;
+let STAFF = JSON.parse(localStorage.getItem('v13_staff')) || [];
+let AVANCE = JSON.parse(localStorage.getItem('v13_avan')) || [];
+let DB_C = JSON.parse(localStorage.getItem('v13_db_c')) || [];
+let DB_A = JSON.parse(localStorage.getItem('v13_db_a')) || [];
+const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
 window.onload = () => {
-    actualizarInterfaz();
-    filtrarActividades();
-    verificarBotones();
-    try {
-        const scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
-        scanner.render(alEscanear);
-    } catch(e) { document.getElementById('status').innerText = "CÁMARA NO DISPONIBLE"; }
+    actualizarSugerencias();
+    if(CONFIG) {
+        if(STAFF.length < CONFIG.gente) iniciarCheckIn();
+        else pasarAMapa();
+    }
 };
 
-function abrirModal(id) { 
-    if(id === 'modalListado') {
-        calcularEstadisticasParejas();
-        renderizarListaHoy();
-    }
-    document.getElementById(id).style.display = 'block'; 
-}
-function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-
-function activarEscaneoSup() { 
-    MODO_SUP = true; 
-    document.getElementById('status').innerText = "🛰️ ESCANEA EL QR DEL JEFE..."; 
-    document.getElementById('status').style.background = "#fff9c4"; 
-    document.getElementById('btnCancelSup').style.display = "block";
-}
-
-function cancelarEscaneoSup() {
-    MODO_SUP = false;
-    document.getElementById('status').innerText = "CÁMARA LISTA";
-    document.getElementById('status').style.background = "#eee";
-    document.getElementById('btnCancelSup').style.display = "none";
-}
-
-function alEscanear(codigo) {
-    if(MODO_SUP) {
-        const p = codigo.split('|');
-        if(p[0].startsWith("SUP_") || p[0].startsWith("AGRICACTUS_PACK") || p[0].startsWith("AGRI_REP")) {
-            const nuevoC = p[1] || "--";
-            
-            if(CUR.c && CUR.c !== nuevoC && CUR.c !== "--") {
-                if(!confirm(`⚠️ ATENCIÓN: Ya tienes el Cuadro ${CUR.c}. ¿Deseas CORREGIRLO y cambiar al Cuadro ${nuevoC}?`)) {
-                    cancelarEscaneoSup();
-                    return;
-                }
-                if(REGS.some(r => r.c === CUR.c)) {
-                    if(confirm(`¿Quieres cambiar los registros anteriores del Cuadro ${CUR.c} para que ahora digan Cuadro ${nuevoC}?`)) {
-                        REGS.forEach(r => { if(r.c === CUR.c) { r.c = nuevoC; r.vld = true; } });
-                        localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
-                    }
-                }
-            }
-
-            CUR = { c: nuevoC, lado: p[2] || "--", li: parseInt(p[3]) || 0, lf: parseInt(p[4]) || 0, v: p[5] || "--", s: p[6] || p[7] || "SIN NOMBRE", vld: true };
-            localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
-            document.getElementById('mainBody').style.background = "#c8e6c9";
-            setTimeout(()=>document.getElementById('mainBody').style.background = "#e0e0e0", 500);
-            cancelarEscaneoSup();
-            actualizarInterfaz(); 
-            verificarBotones();
-        }
-    } else {
-        // Lógica independiente: Si no hay cuadro, pedir configuración
-        if(!CUR.c || CUR.c === "") { 
-            if(confirm("⚠️ No has configurado un cuadro. ¿Quieres ir a AJUSTES para poner uno manualmente?")) {
-                abrirModal('modalConfig');
-            }
-            return; 
-        }
-        agregarACola(codigo.trim());
+function nuevoCuadroRapido() {
+    if(confirm("¿Deseas asignar un nuevo cuadro/actividad manteniendo al personal?")) {
+        // Marcamos como terminadas las hileras actuales para que se graben en el reporte
+        AVANCE.forEach(a => { if(!a.fin) a.fin = Date.now(); });
+        STAFF.forEach(s => s.l = 0);
+        save();
+        document.getElementById('mainUI').classList.add('hidden');
+        document.getElementById('screenSetup').classList.remove('hidden');
     }
 }
 
-// Busca y reemplaza tu función agregarACola por esta:
-function agregarACola(id) {
-    if(COLA.find(c => c.e === id)) return;
+function iniciarMision() {
+    const rInput = document.getElementById('in_rangos').value;
+    if(!rInput.includes('-')) return alert("Formato hileras: 1-50");
+    const r = rInput.split('-').map(Number);
+    CONFIG = { resp: document.getElementById('in_resp').value, gente: parseInt(document.getElementById('in_gente').value), cuadro: document.getElementById('in_cuadro').value, act: document.getElementById('in_act').value, start: r[0], end: r[1], meta: (r[1]-r[0]+1) };
+    localStorage.setItem('v13_conf', JSON.stringify(CONFIG));
     
-    // Obtenemos la hilera actual del input azul
-    let hileraActual = parseInt(document.getElementById('globalHilera').value);
-    
-    if(isNaN(hileraActual) || hileraActual === 0) {
-        alert("⚠️ Por favor, indica primero en qué HILERA van a trabajar.");
-        return;
-    }
+    // Si ya tenemos personal de una misión anterior, vamos directo al mapa
+    if(STAFF.length > 0) autoAsignarYPasar();
+    else iniciarCheckIn();
+}
 
-    // Añadimos a la persona con su hilera asignada
-    COLA.push({ 
-        e: id, 
-        l: hileraActual 
+function autoAsignarYPasar() {
+    let hList = []; for(let i=CONFIG.start; i<=CONFIG.end; i++) hList.push(i);
+    STAFF.forEach((p, idx) => {
+        let hIdx = Math.floor(idx / 2);
+        let hAsignada = hList[hIdx] || CONFIG.start;
+        AVANCE.push({ e: p.id, l: hAsignada, inicio: Date.now(), fin: null, act: CONFIG.act });
+        p.l = hAsignada;
     });
-    
-    document.getElementById('status').innerText = "👤 " + id + " asignado a línea " + hileraActual;
-    renderCola();
-
-    // Auto-guardado: Si ya hay 2 personas (la pareja), podrías activar el guardado automático
-    // o simplemente dejar que el cuadrillero presione el botón verde.
-}
+    save(); 
+    pasarAMapa();
 }
 
-// Reemplaza tu función renderCola por esta:
-function renderCola() {
-    const cont = document.getElementById('colaUI');
-    document.getElementById('areaCola').style.display = COLA.length > 0 ? 'block' : 'none';
-    document.getElementById('colaCount').innerText = COLA.length;
-    
-    cont.innerHTML = COLA.map((item, idx) => `
-        <div class="cola-item">
-            <span><b>${item.e}</b> (Línea: ${item.l})</span>
-            <div>
-                <button onclick="editarHileraCola(${idx})" style="background:var(--info); color:white; border:none; padding:5px 10px; border-radius:5px; margin-right:5px;">✏️</button>
-                <button onclick="removerCola(${idx})" style="background:none; border:none; color:red; font-weight:bold;">X</button>
+function ejecutarMovimiento(id, nH) {
+    if (nH >= CONFIG.start && nH <= CONFIG.end) {
+        let p = STAFF.find(x => x.id == id);
+        // Al mover, damos por concluida la hilera anterior (se pone verde)
+        AVANCE.forEach(a => { if(a.e == id && !a.fin) a.fin = Date.now(); });
+        // Registramos la nueva hilera asignada
+        AVANCE.push({ e: id, l: nH, inicio: Date.now(), fin: null, act: CONFIG.act });
+        p.l = nH; audio.play(); save();
+    } else alert("Rango inválido");
+}
+
+function onScanAvance(id) {
+    let p = STAFF.find(x => x.id == id.trim());
+    if(!p) return alert("ID no registrado.");
+    // El sistema informa hilera actual y pregunta a cuál se mueve (concluyendo la actual)
+    let nH = prompt(`ID ${id.trim()} terminó hilera ${p.l}.\n¿A qué hilera se mueve ahora?`);
+    if(nH) ejecutarMovimiento(id.trim(), parseInt(nH));
+}
+
+function actualizarInterfaz() {
+    // Las hileras hechas son aquellas que tienen fecha de 'fin' (fueron concluidas)
+    document.getElementById('statH').innerText = new Set(AVANCE.filter(a=>a.fin).map(a=>a.l)).size;
+    document.getElementById('statP').innerText = `${STAFF.length}/${CONFIG.gente}`;
+    document.getElementById('dispC').innerText = CONFIG.cuadro;
+    const mapa = document.getElementById('mapaHileras'); 
+    mapa.innerHTML = "";
+    for(let i=CONFIG.start; i<=CONFIG.end; i++) {
+        let d = document.createElement('div'); 
+        d.className="row-box"; 
+        d.innerHTML=`<span>${i}</span>`;
+        // Pintar de verde (Hechas)
+        if(AVANCE.some(a=>a.l==i && a.fin)) d.classList.add('row-done');
+        // Pintar de naranja (Activas)
+        const g = STAFF.filter(s=>s.l == i).length;
+        if(g > 0) {
+            d.classList.add('row-active');
+            d.innerHTML += `<span class="row-tag">${g==1?'MITAD':'PAR'}</span>`;
+        }
+        mapa.appendChild(d);
+    }
+}
+
+function renderEdicion() {
+    const cont = document.getElementById('listaEdicionUI');
+    cont.innerHTML = STAFF.map((s, idx) => `
+        <div class="edit-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>ID: ${s.id}</b><br><small>Hilera: ${s.l}</small></div>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-mini" style="background:var(--info); height:35px;" onclick="editarID(${idx})">ID</button>
+                    <button class="btn-mini" style="background:var(--accent); height:35px;" onclick="editarHilera(${idx})">MOVE</button>
+                </div>
             </div>
         </div>
     `).join('');
 }
 
-// Nueva función para corregir la línea antes de guardar
-function editarHileraCola(idx) {
-    const nueva = prompt("Cambiar número de hilera para " + COLA[idx].e, COLA[idx].l);
-    if(nueva !== null && nueva !== "") {
-        COLA[idx].l = parseInt(nueva);
-        renderCola();
+function editarID(idx) {
+    const nID = prompt("Corregir ID para " + STAFF[idx].id + ":", STAFF[idx].id);
+    if(nID && nID !== STAFF[idx].id) {
+        let vID = STAFF[idx].id;
+        STAFF[idx].id = nID;
+        AVANCE.forEach(a => { if(a.e === vID) a.e = nID; });
+        save(); renderEdicion();
     }
 }
 
-function removerCola(idx) { COLA.splice(idx, 1); renderCola(); }
-function vaciarCola() { if(confirm("¿Borrar todo este grupo?")) { COLA = []; renderCola(); } }
-
-function guardarGrupo() {
-    const ahora = new Date();
-    const h = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-    const f = ahora.toLocaleDateString('en-GB');
-    const turno = document.getElementById('selTurno').value;
-    const actID = document.getElementById('selActividad').value;
-    const actObj = ACTS.find(a => a.id === actID);
-    const groupId = Date.now();
-
-    COLA.forEach((p, i) => {
-        REGS.push({
-            id: groupId + i, 
-            groupId: groupId, 
-            f: f, h: h, ts: ahora.getTime(),
-            c: CUR.c, 
-            l: p.l, // <--- Aquí usa la línea individual de cada persona
-            lado: CUR.lado, v: CUR.v,
-            e: p.e, s: CUR.s, t: turno, 
-            a: actObj ? actObj.n : "--", ak: actObj ? actObj.ak : "--",
-            vld: CUR.vld 
-        });
-    });
-
-    localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
-    COLA = []; 
-    renderCola(); 
-    actualizarInterfaz();
-    document.getElementById('status').innerText = "✅ Registros guardados correctamente";
-}
-
-    const ahora = new Date();
-    const h = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
-    const f = ahora.toLocaleDateString('en-GB');
-    const turno = document.getElementById('selTurno').value;
-    const actID = document.getElementById('selActividad').value;
-    const actObj = ACTS.find(a => a.id === actID);
-    const groupId = Date.now();
-
-    COLA.forEach((p, i) => {
-        REGS.push({
-            id: groupId + i, 
-            groupId: groupId, 
-            f: f, h: h, ts: ahora.getTime(),
-            c: CUR.c, l: parseInt(hilera), lado: CUR.lado, v: CUR.v,
-            e: p.e, s: CUR.s, t: turno, 
-            a: actObj ? actObj.n : "--", ak: actObj ? actObj.ak : "--",
-            vld: CUR.vld 
-        });
-    });
-
-    localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
-    COLA = []; 
-    renderCola(); 
-    actualizarInterfaz();
-    document.getElementById('status').innerText = "✅ GRUPO GUARDADO EN LÍNEA "+hilera;
-}
-
-function actualizarInterfaz() {
-    const card = document.getElementById('cardStatus');
-    const badge = document.getElementById('badgeStatus');
-    const hileraActual = document.getElementById('globalHilera').value || "0";
-    
-    document.getElementById('labelHileraBoton').innerText = hileraActual;
-    document.getElementById('displayCuadro').innerText = CUR.c || "--";
-    document.getElementById('displayLado').innerText = CUR.lado || "--";
-    document.getElementById('displayVariedad').innerText = CUR.v || "--";
-    document.getElementById('displayRango').innerText = `${CUR.li} al ${CUR.lf}`;
-    
-    if(CUR.c === "" || CUR.c === "--") {
-        badge.innerText = "ESPERANDO CONFIGURACIÓN ⚠️";
-        badge.className = "pending-badge";
-        card.classList.add('pending');
-    } else if(CUR.vld) {
-        card.classList.remove('pending');
-        badge.innerText = "REVISADO ✅";
-        badge.className = "valid-badge";
-    } else {
-        card.classList.add('pending');
-        badge.innerText = "PENDIENTE (MANUAL) ⚠️";
-        badge.className = "pending-badge";
-    }
-
-    const hUnicasCuadro = new Set(REGS.filter(r => r.c === CUR.c).map(r => r.l)).size;
-    const totalRango = (CUR.lf - CUR.li + 1) || 1;
-    const resto = Math.max(0, totalRango - hUnicasCuadro);
-    document.getElementById('conteoRestante').innerText = resto;
-    document.getElementById('circuloConteo').style.background = resto === 0 ? 'var(--danger)' : (resto < 10 ? 'var(--accent)' : 'var(--p)');
-    document.getElementById('progressBar').style.width = Math.min((hUnicasCuadro / totalRango) * 100, 100) + "%";
-    actualizarMonitor();
-}
-
-function calcularEstadisticasParejas() {
-    const stats = {};
-    const grupos = {};
-    REGS.forEach(r => {
-        if(!grupos[r.groupId]) grupos[r.groupId] = [];
-        grupos[r.groupId].push(r.e);
-    });
-    Object.values(grupos).forEach(nombres => {
-        if(nombres.length >= 2) {
-            const grupoTxt = nombres.sort().join(" + ");
-            stats[grupoTxt] = (stats[grupoTxt] || 0) + 1;
-        }
-    });
-    const cont = document.getElementById('listaParejasStats');
-    const entries = Object.entries(stats);
-    cont.innerHTML = entries.length === 0 ? "Sin datos de grupos aún." : entries.map(([grupo, count]) => `<div>👥 ${grupo}: <b>${count} hileras</b></div>`).join('');
-}
-
-function renderizarListaHoy() {
-    const cont = document.getElementById('listaRegsUI');
-    cont.innerHTML = REGS.slice(-50).reverse().map(r => `
-        <div class="reg-item-edit">
-            <div>
-                <b style="font-size:16px;">${r.e}</b><br>
-                <small>HILERA: <span id="valH-${r.id}">${r.l}</span> (${r.c})</small>
-            </div>
-            <button class="btn-mini-edit" onclick="editarHileraIndividual(${r.id}, ${r.l})">CAMBIAR LÍNEA</button>
-        </div>
-    `).join('') || "Sin registros.";
-}
-
-function editarHileraIndividual(id, valorActual) {
-    const nueva = prompt(`Cambiar número de hilera para este registro:`, valorActual);
-    if(nueva !== null && nueva !== "") {
-        const idx = REGS.findIndex(x => x.id === id);
-        if(idx !== -1) {
-            REGS[idx].l = parseInt(nueva);
-            localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
-            renderizarListaHoy();
-            actualizarInterfaz();
-        }
-    }
-}
-
-function actualizarMonitor() {
-    if(REGS.length === 0) return;
-    const hUnicasTotal = new Set(REGS.map(r => `${r.c}-${r.l}-${r.lado}`)).size;
-    const genteTotal = [...new Set(REGS.map(r=>r.e))].length;
-    const ts = REGS.map(r => r.ts);
-    const diff = Math.max(0.1, (Math.max(...ts) - Math.min(...ts)) / (3600000));
-    document.getElementById('statLineas').innerText = hUnicasTotal;
-    document.getElementById('statGente').innerText = genteTotal;
-    document.getElementById('statEficiencia').innerText = (hUnicasTotal / diff).toFixed(1);
-}
-
-function fijarManual() {
-    CUR = { c: document.getElementById('m_cuadro').value, lado: document.getElementById('m_lado').value, li: parseInt(document.getElementById('m_ini').value), lf: parseInt(document.getElementById('m_fin').value), v: document.getElementById('m_variedad').value || "--", s: document.getElementById('m_sup').value || "MANUAL", vld: false };
-    localStorage.setItem('c_cur_v7', JSON.stringify(CUR)); actualizarInterfaz(); cerrarModal('modalConfig'); verificarBotones();
-}
-
-function limpiarCuadroActual() {
-    if(confirm("¿Seguro que quieres borrar el cuadro actual?")) {
-        CUR = { c:"", lado:"", li:0, lf:0, v:"", s:"", vld: false };
-        localStorage.setItem('c_cur_v7', JSON.stringify(CUR));
-        actualizarInterfaz(); cerrarModal('modalConfig');
-    }
-}
-
-function cargarActividades() {
-    const raw = document.getElementById('csvActividades').value.trim();
-    try {
-        ACTS = raw.split('\n').map(l => { const p = l.split(','); return { id: p[0].trim(), n: p[1] ? p[1].trim() : p[0].trim(), ak: p[2] ? p[2].trim() : "" }; }).filter(a => a.id !== "");
-        localStorage.setItem('c_acts_v7', JSON.stringify(ACTS)); alert("✅ OK"); filtrarActividades(); cerrarModal('modalConfig');
-    } catch(e) { alert("Error"); }
-}
-
-function filtrarActividades() {
-    const sel = document.getElementById('selActividad');
-    if(ACTS.length === 0) { sel.innerHTML = '<option value="">Sin actividades</option>'; return; }
-    sel.innerHTML = ACTS.map(a => `<option value="${a.id}">${a.n} (${a.ak})</option>`).join('');
+function editarHilera(idx) {
+    const nH = prompt("Cambiar manualmente a hilera:", STAFF[idx].l);
+    if(nH) { ejecutarMovimiento(STAFF[idx].id, parseInt(nH)); renderEdicion(); }
 }
 
 function prepararReporte() {
-    if(REGS.length === 0) return alert("Sin datos.");
-    
-    const qrCont = document.getElementById("qrcode"); 
-    qrCont.innerHTML = "";
-    
-    // Resumen para el Supervisor
-    const lineasTotales = new Set(REGS.map(r => `${r.c}-${r.l}`)).size;
-    const personasTotales = [...new Set(REGS.map(r => r.e))].length;
-    const actividades = [...new Set(REGS.map(r => r.a))].join(", ");
-
-    // Paquete de datos estructurado
-    const pSmall = { 
-        res: { 
-            l: lineasTotales, 
-            g: personasTotales,
-            act: actividades 
-        }, 
-        detalles: REGS.slice(-60).map(r => ({ 
-            e: r.e, c: r.c, l: r.l, a: r.ak, t: r.t, h: r.h, v: r.vld ? 1 : 0 
-        })) 
-    };
-    
-    new QRCode(qrCont, { text: "AGRI_REP|" + JSON.stringify(pSmall), width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
-    
-    document.getElementById('reporteTxt').innerHTML = `<b>Resumen:</b> ${lineasTotales} Hileras | ${personasTotales} Personas<br><small>${actividades}</small>`;
     abrirModal('modalQR');
+    document.getElementById('qr1').innerHTML = ""; 
+    document.getElementById('qr2').innerHTML = "";
+    const hDone = new Set(AVANCE.filter(a=>a.fin).map(a=>a.l)).size;
+    new QRCode(document.getElementById('qr1'), { text: JSON.stringify({resp: CONFIG.resp, cuadro: CONFIG.cuadro, act: CONFIG.act, hechas: hDone}), width: 150, height: 150 });
+    new QRCode(document.getElementById('qr2'), { text: JSON.stringify(STAFF.map(s => s.id)), width: 150, height: 150 });
 }
 
-function descargarReporteFile() {
-    const blob = new Blob([JSON.stringify({ detalles: REGS }, null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `Corte_${new Date().toISOString().slice(0,10)}.json`; a.click();
+function save() { localStorage.setItem('v13_staff', JSON.stringify(STAFF)); localStorage.setItem('v13_avan', JSON.stringify(AVANCE)); actualizarInterfaz(); }
+function saveDB() {
+    DB_C = document.getElementById('csvC').value.split('\n').map(l=>{const p=l.split(','); return {id:p[0].trim(), h:p[2]?.trim()||0};});
+    DB_A = document.getElementById('csvA').value.split('\n').map(l=>{const p=l.split(','); return {id:p[0].trim(), n:p[1]?.trim()||""};});
+    localStorage.setItem('v13_db_c', JSON.stringify(DB_C)); localStorage.setItem('v13_db_a', JSON.stringify(DB_A));
+    actualizarSugerencias(); cerrarModal('modalImport');
 }
-
-function reutilizarCuadrilla() {
-    if(REGS.length === 0) return;
-    const ult = REGS[REGS.length - 1];
-    const g = REGS.filter(r => r.c === ult.c && r.lado === ult.lado).map(r => r.e);
-    COLA = [...new Set(g)].map(e => ({ e: e })); renderCola(); actualizarInterfaz();
+function actualizarSugerencias() {
+    document.getElementById('lC').innerHTML = DB_C.map(c=>`<option value="${c.id}">`).join('');
+    document.getElementById('lA').innerHTML = DB_A.map(a=>`<option value="${a.n}">`).join('');
 }
-
-function verificarBotones() { document.getElementById('btnReuse').style.display = REGS.length > 0 ? 'block' : 'none'; }
-function borrarTodo() { if(confirm("⚠️ ¿Borrar todo?")) { REGS = []; localStorage.setItem('c_regs_v7', '[]'); actualizarInterfaz(); cerrarModal('modalListado'); } }
-function agregarManual() { const id = document.getElementById('manualID').value.trim(); if(id) { agregarACola(id); document.getElementById('manualID').value = ""; } }
+function sugerir() { const m = DB_C.find(c=>c.id == document.getElementById('in_cuadro').value); if(m) document.getElementById('in_rangos').value = `1-${m.h}`; }
+function regManualCheckIn() { const val = document.getElementById('manualCheckIn').value.trim(); if(val) procesarCheckIn(val), document.getElementById('manualCheckIn').value = ""; }
+function procesarCheckIn(id) { if (STAFF.length < CONFIG.gente && !STAFF.some(s => s.id === id)) { STAFF.push({ id: id, l: 0 }); save(); renderCheckInList(); if (STAFF.length >= CONFIG.gente) document.getElementById('btnIrAMapa').style.display = 'block'; } }
+function renderCheckInList() { document.getElementById('listaCheckIn').innerHTML = STAFF.map(s => `<div style="background:rgba(255,255,255,0.2); padding:5px; border-radius:8px; font-size:10px; text-align:center;">👤 ${s.id}</div>`).join(''); }
+function iniciarCheckIn() { document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.remove('hidden'); renderCheckInList(); new Html5QrcodeScanner("readerCheckIn", {fps:20, qrbox:200}).render(procesarCheckIn); }
+function pasarAMapa() { document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden'); setTimeout(() => { actualizarInterfaz(); new Html5QrcodeScanner("readerMain", {fps:20, qrbox:250}).render(onScanAvance); }, 500); }
+function regManualAvance() { const val = document.getElementById('manualAvance').value.trim(); if(val) onScanAvance(val); document.getElementById('manualAvance').value = ""; }
+function abrirModal(id) { if(id==='modalListado') renderEdicion(); document.getElementById(id).classList.remove('hidden'); }
+function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
 </html>
