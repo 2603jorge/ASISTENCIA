@@ -311,32 +311,90 @@ function alEscanear(codigo) {
     }
 }
 
+// Busca y reemplaza tu función agregarACola por esta:
 function agregarACola(id) {
     if(COLA.find(c => c.e === id)) return;
-    COLA.push({ e: id });
-    document.getElementById('status').innerText = "👤 "+id+" AÑADIDO";
+    
+    // Obtenemos la hilera actual del input azul
+    let hileraActual = parseInt(document.getElementById('globalHilera').value);
+    
+    if(isNaN(hileraActual) || hileraActual === 0) {
+        alert("⚠️ Por favor, indica primero en qué HILERA van a trabajar.");
+        return;
+    }
+
+    // Añadimos a la persona con su hilera asignada
+    COLA.push({ 
+        e: id, 
+        l: hileraActual 
+    });
+    
+    document.getElementById('status').innerText = "👤 " + id + " asignado a línea " + hileraActual;
     renderCola();
+
+    // Auto-guardado: Si ya hay 2 personas (la pareja), podrías activar el guardado automático
+    // o simplemente dejar que el cuadrillero presione el botón verde.
+}
 }
 
+// Reemplaza tu función renderCola por esta:
 function renderCola() {
     const cont = document.getElementById('colaUI');
     document.getElementById('areaCola').style.display = COLA.length > 0 ? 'block' : 'none';
     document.getElementById('colaCount').innerText = COLA.length;
-    cont.innerHTML = COLA.map((item, idx) => `<div class="cola-item"><span><b>${item.e}</b></span><button onclick="removerCola(${idx})" style="background:none; border:none; color:red; font-weight:bold;">QUITAR</button></div>`).join('');
+    
+    cont.innerHTML = COLA.map((item, idx) => `
+        <div class="cola-item">
+            <span><b>${item.e}</b> (Línea: ${item.l})</span>
+            <div>
+                <button onclick="editarHileraCola(${idx})" style="background:var(--info); color:white; border:none; padding:5px 10px; border-radius:5px; margin-right:5px;">✏️</button>
+                <button onclick="removerCola(${idx})" style="background:none; border:none; color:red; font-weight:bold;">X</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Nueva función para corregir la línea antes de guardar
+function editarHileraCola(idx) {
+    const nueva = prompt("Cambiar número de hilera para " + COLA[idx].e, COLA[idx].l);
+    if(nueva !== null && nueva !== "") {
+        COLA[idx].l = parseInt(nueva);
+        renderCola();
+    }
 }
 
 function removerCola(idx) { COLA.splice(idx, 1); renderCola(); }
 function vaciarCola() { if(confirm("¿Borrar todo este grupo?")) { COLA = []; renderCola(); } }
 
 function guardarGrupo() {
-    let hilera = parseInt(document.getElementById('globalHilera').value);
-    
-    if(isNaN(hilera) || hilera === 0) {
-        hilera = prompt("⚠️ No has puesto hilera. ¿En qué hilera están trabajando?");
-        if(!hilera) return;
-        document.getElementById('globalHilera').value = hilera;
-        actualizarInterfaz();
-    }
+    const ahora = new Date();
+    const h = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
+    const f = ahora.toLocaleDateString('en-GB');
+    const turno = document.getElementById('selTurno').value;
+    const actID = document.getElementById('selActividad').value;
+    const actObj = ACTS.find(a => a.id === actID);
+    const groupId = Date.now();
+
+    COLA.forEach((p, i) => {
+        REGS.push({
+            id: groupId + i, 
+            groupId: groupId, 
+            f: f, h: h, ts: ahora.getTime(),
+            c: CUR.c, 
+            l: p.l, // <--- Aquí usa la línea individual de cada persona
+            lado: CUR.lado, v: CUR.v,
+            e: p.e, s: CUR.s, t: turno, 
+            a: actObj ? actObj.n : "--", ak: actObj ? actObj.ak : "--",
+            vld: CUR.vld 
+        });
+    });
+
+    localStorage.setItem('c_regs_v7', JSON.stringify(REGS));
+    COLA = []; 
+    renderCola(); 
+    actualizarInterfaz();
+    document.getElementById('status').innerText = "✅ Registros guardados correctamente";
+}
 
     const ahora = new Date();
     const h = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: false});
@@ -528,3 +586,4 @@ function agregarManual() { const id = document.getElementById('manualID').value.
 </script>
 </body>
 </html>
+
