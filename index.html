@@ -3,134 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus Maestro V24.0 - Bluetooth Ready</title>
+    <title>AgriCactus Maestro V23.0 - Flexible</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #2e7d32; --accent: #f57c00; --dark: #121212; --danger: #d32f2f; --info: #1976d2; }
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; margin: 0; padding: 10px; color: white; background-size: cover; background-attachment: fixed; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: #1a1a1a; margin: 0; padding: 10px; color: white;
+            background: linear-gradient(rgba(0,0,0,0.92), rgba(0,0,0,0.92)), url('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/image_83f71e.jpg'); 
+            background-size: cover; background-attachment: fixed;
+        }
         .setup-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 5000; padding: 25px; box-sizing: border-box; overflow-y: auto; }
         .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
         input, select, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: none; background: rgba(255,255,255,0.95); font-size: 16px; box-sizing: border-box; color: #333; font-weight: bold; }
         .btn { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
         .btn-p { background: var(--p); color: white; }
         .btn-info { background: var(--info); color: white; font-size: 11px; padding: 10px; margin-bottom: 10px; }
+        
         .manual-box { display: flex; gap: 8px; margin-bottom: 15px; }
         .manual-box input { margin-bottom: 0; flex-grow: 1; }
         .manual-box .btn-mini { width: 80px; padding: 0; background: var(--accent); color: white; border-radius: 12px; border: none; font-weight: bold; }
+
         .map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; margin-top: 15px; max-height: 350px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .row-box { height: 45px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; background: #333; border: 2px solid #444; transition: 0.3s; position: relative; }
-        .row-done { background: var(--p) !important; border-color: #81c784; opacity: 0.6; }
+        .row-done { background: var(--p) !important; border-color: #81c784; box-shadow: 0 0 8px var(--p); opacity: 0.6; }
         .row-active { background: var(--accent) !important; border-color: #ffb74d; color: black; animation: pulse 2s infinite; }
         .row-tag { font-size: 8px; opacity: 0.9; text-transform: uppercase; margin-top: 2px; }
         .badge-count { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); } }
         .hidden { display: none !important; }
         label { display: block; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
+        
         .edit-card { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 6px solid var(--info); color: white; }
         .action-row { display: flex; gap: 5px; margin-top: 10px; }
         .btn-edit { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; color: white; }
+        
         .decision-box { text-align: center; color: white; }
         .big-option { padding: 20px; margin: 10px 0; border-radius: 15px; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); }
         .opt-green { background: var(--p); }
         .opt-orange { background: var(--accent); }
+
         .tab-container { display: flex; gap: 10px; margin-bottom: 0; }
         .tab-btn { flex: 1; padding: 12px; border: none; border-top-left-radius: 15px; border-top-right-radius: 15px; font-weight: bold; cursor: pointer; background: rgba(255,255,255,0.1); color: #aaa; transition: 0.3s; }
         .tab-btn.active { background: white; color: var(--dark); }
         .qr-viewer { background: white; border-radius: 0 0 20px 20px; padding: 30px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }
+
         .sync-box { background: white; color: black; padding: 20px; border-radius: 20px; text-align: center; }
         .sync-text { word-break: break-all; font-size: 10px; background: #eee; padding: 10px; margin: 10px 0; max-height: 100px; overflow: auto; }
     </style>
 </head>
 <body>
-<div id="screenSetup" class="setup-screen"><h2 style="text-align:center; color: var(--p);">AGRI-CACTUS V24</h2><button class="btn btn-info" onclick="abrirModal('modalImport')">📂 CARGAR BASE DE DATOS</button><div class="glass"><label>Responsable</label><input type="text" id="in_resp"><label style="color: var(--accent);">🛠️ MODO</label><select id="in_modo" onchange="toggleBloqueInput()"><option value="BLOQUE">🟢 INDIVIDUAL</option><option value="PAREJA">👥 PAREJAS</option></select><div id="divBloqueConfig"><label>Filas por Tarea</label><input type="number" id="in_bloque" value="5" style="border: 2px solid var(--accent); color: var(--accent);"></div><label>Total Trabajadores</label><input type="number" id="in_gente"><label>Cuadro</label><input type="text" id="in_cuadro" list="lC" oninput="sugerir()"><datalist id="lC"></datalist><label>Actividad</label><input type="text" id="in_act" list="lA"><datalist id="lA"></datalist><label>Rango (Ej: 1-100)</label><input type="text" id="in_rangos"></div><button class="btn btn-p" onclick="iniciarMision()">DESPLEGAR</button></div>
-<div id="screenCheckIn" class="setup-screen hidden"><h2 style="text-align: center; color: var(--accent);">👤 REGISTRO</h2><p style="text-align:center; color:#aaa; font-size:12px;">Escanea al personal...</p><div id="readerCheckIn" style="border-radius:15px; overflow:hidden;"></div><div class="manual-box glass"><input type="number" id="manualCheckIn" placeholder="N° Credencial..."><button class="btn-mini" onclick="regManualCheckIn()">ADD</button></div><div id="listaCheckIn" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;"></div><button class="btn btn-p" id="btnIrAMapa" onclick="autoAsignarYPasar()" style="margin-top: 20px;">INICIAR</button></div>
-<div id="mainUI" class="hidden"><div class="glass" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom:10px;"><div style="text-align:center;"><small>HECHAS</small><br><b id="statH" style="font-size:24px; color:#4caf50;">0</b></div><div style="text-align:center;"><small>PERSONAL</small><br><b id="statP" style="font-size:24px; color:var(--accent);">0</b></div></div><div class="glass"><div style="display:flex; justify-content:space-between; align-items:center;"><b>📍 <span id="dispC">--</span> <small id="dispModo" style="color:#aaa;">(MODO)</small></b><button onclick="nuevoCuadroRapido()" style="background:var(--info); border:none; color:white; padding:5px 10px; border-radius:8px; font-size:10px; font-weight:bold;">🔄 REINICIAR</button></div><div id="mapaHileras" class="map-grid"></div><button onclick="avanceMasivo()" style="width:100%; margin-top:10px; background: #5e35b1; color: white; border:none; padding:10px; border-radius:10px; font-weight:bold;">⏩ AVANCE MASIVO</button></div><div id="readerMain" style="border-radius:20px; overflow:hidden; border:2px solid white; margin:10px 0;"></div><div class="manual-box glass"><input type="number" id="manualAvance" placeholder="ID para Avanzar..."><button class="btn-mini" onclick="regManualAvance()">MOVER</button></div><button class="btn" style="background:#00bcd4; color:white; margin-bottom:10px;" onclick="abrirSync()">🔗 SINCRONIZAR (BLUETOOTH)</button><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><button class="btn" style="background:var(--info); color:white;" onclick="abrirModal('modalListado')">👥 GESTIÓN</button><button class="btn btn-accent" onclick="prepararReporte()">📤 REPORTES</button></div></div>
-<div id="modalDecision" class="setup-screen hidden" style="z-index: 6000; background: rgba(0,0,0,0.95);"><div class="decision-box"><h1 style="font-size:40px;">👷 <span id="decID">--</span></h1><p>Terminó: <b id="decTermino">--</b></p><hr style="border-color:#333;"><h3>SUGERENCIA:</h3><div class="big-option opt-green" onclick="confirmarSugerencia()"><span style="font-size:12px;">ASIGNAR</span><br><b id="decSug" style="font-size:24px;">--</b></div><h3>O MANUAL:</h3><div class="big-option opt-orange"><input type="text" id="decManualInput" placeholder="Ej: 20-25" style="text-align:center;"><button class="btn" style="background:white; color:black; margin-top:5px;" onclick="confirmarManual()">USAR MANUAL</button></div><button class="btn" onclick="cerrarModal('modalDecision')" style="background:transparent; color:#aaa; margin-top:20px;">CANCELAR</button></div></div>
-<div id="modalListado" class="setup-screen hidden"><h2>🛠️ Gestión</h2><button class="btn" style="background:#4caf50; color:white; margin-bottom:15px;" onclick="agregarObreroManual()">➕ AGREGAR TRABAJADOR</button><div id="listaEdicionUI"></div><button class="btn btn-p" style="margin-top:20px;" onclick="cerrarModal('modalListado')">VOLVER</button></div>
-<div id="modalImport" class="setup-screen hidden"><h3>📂 Catálogos</h3><textarea id="csvC" placeholder="Cuadros..."></textarea><textarea id="csvA" placeholder="Actividades..."></textarea><button class="btn btn-p" onclick="saveDB()">GUARDAR</button><button class="btn" onclick="cerrarModal('modalImport')" style="background:none;">VOLVER</button></div>
-<div id="modalQR" class="setup-screen hidden"><h2 style="text-align:center;">REPORTES</h2><div class="tab-container"><button id="tab1" class="tab-btn active" onclick="verQR(1)">📊 RESUMEN</button><button id="tab2" class="tab-btn" onclick="verQR(2)">👥 PERSONAL</button></div><div class="qr-viewer"><div id="qr1"></div><div id="qr2" class="hidden"></div><button onclick="descargarExcel()" style="margin-top:20px; background:#4caf50; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold;">📥 EXCEL DETALLADO (.CSV)</button></div><button class="btn" style="background:var(--danger); color:white; margin-top:20px;" onclick="if(confirm('¿Reiniciar?')){localStorage.clear();location.reload();}">🛑 FIN JORNADA</button><button class="btn btn-p" style="margin-top:10px;" onclick="cerrarModal('modalQR')">VOLVER</button></div>
+
+<div id="screenSetup" class="setup-screen">
+    <h2 style="text-align:center; color: var(--p);">AGRI-CACTUS V23</h2>
+    <button class="btn btn-info" onclick="abrirModal('modalImport')">📂 CARGAR BASE DE DATOS</button>
+    <div class="glass">
+        <label>Responsable</label><input type="text" id="in_resp">
+        <label style="color: var(--accent);">🛠️ MODO DE TRABAJO</label>
+        <select id="in_modo" onchange="toggleBloqueInput()">
+            <option value="BLOQUE">🟢 INDIVIDUAL (POR BLOQUES/TAREA)</option>
+            <option value="PAREJA">👥 PAREJAS (COMPARTIR FILA)</option>
+        </select>
+        <div id="divBloqueConfig">
+            <label>Filas por Persona (Tarea)</label>
+            <input type="number" id="in_bloque" value="5" style="border: 2px solid var(--accent); color: var(--accent);">
+        </div>
+        <label>N° Trabajadores Total</label><input type="number" id="in_gente">
+        <label>Cuadro</label><input type="text" id="in_cuadro" list="lC" oninput="sugerir()">
+        <datalist id="lC"></datalist>
+        <label>Actividad</label><input type="text" id="in_act" list="lA">
+        <datalist id="lA"></datalist>
+        <label>Rango Hileras (Ej: 1-100)</label><input type="text" id="in_rangos">
+    </div>
+    <button class="btn btn-p" onclick="iniciarMision()">DESPLEGAR EQUIPO</button>
+</div>
+
+<div id="screenCheckIn" class="setup-screen hidden">
+    <h2 style="text-align: center; color: var(--accent);">👤 REGISTRO DE PERSONAL</h2>
+    <p style="text-align:center; color:#aaa; font-size:12px;">Escanea a los que faltan...</p>
+    <div id="readerCheckIn" style="border-radius:15px; overflow:hidden;"></div>
+    <div class="manual-box glass">
+        <input type="number" id="manualCheckIn" placeholder="N° Credencial...">
+        <button class="btn-mini" onclick="regManualCheckIn()">ADD</button>
+    </div>
+    <div id="listaCheckIn" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;"></div>
+    
+    <button class="btn btn-p" id="btnIrAMapa" onclick="autoAsignarYPasar()" style="margin-top: 20px;">INICIAR ASIGNACIÓN</button>
+</div>
+
+<div id="mainUI" class="hidden">
+    <div class="glass" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom:10px;">
+        <div style="text-align:center;"><small>HECHAS</small><br><b id="statH" style="font-size:24px; color:#4caf50;">0</b></div>
+        <div style="text-align:center;"><small>PERSONAL</small><br><b id="statP" style="font-size:24px; color:var(--accent);">0</b></div>
+    </div>
+    <div class="glass">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b>📍 <span id="dispC">--</span> <small id="dispModo" style="color:#aaa;">(MODO)</small></b>
+            <button onclick="nuevoCuadroRapido()" style="background:var(--info); border:none; color:white; padding:5px 10px; border-radius:8px; font-size:10px; font-weight:bold;">🔄 REINICIAR</button>
+        </div>
+        <div id="mapaHileras" class="map-grid"></div>
+        <button onclick="avanceMasivo()" style="width:100%; margin-top:10px; background: #5e35b1; color: white; border:none; padding:10px; border-radius:10px; font-weight:bold;">⏩ AVANCE MASIVO (TODOS)</button>
+    </div>
+    <div id="readerMain" style="border-radius:20px; overflow:hidden; border:2px solid white; margin:10px 0;"></div>
+    <div class="manual-box glass">
+        <input type="number" id="manualAvance" placeholder="ID para Avanzar...">
+        <button class="btn-mini" onclick="regManualAvance()">MOVER</button>
+    </div>
+    
+    <button class="btn" style="background:#00bcd4; color:white; margin-bottom:10px;" onclick="abrirSync()">🔗 SINCRONIZAR CON SUPERVISOR</button>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button class="btn" style="background:var(--info); color:white;" onclick="abrirModal('modalListado')">👥 GESTIÓN</button>
+        <button class="btn btn-accent" onclick="prepararReporte()">📤 REPORTES</button>
+    </div>
+</div>
+
+<div id="modalDecision" class="setup-screen hidden" style="z-index: 6000; background: rgba(0,0,0,0.95);">
+    <div class="decision-box">
+        <h1 style="font-size:40px;">👷 <span id="decID">--</span></h1>
+        <p>Terminó: <b id="decTermino">--</b></p>
+        <hr style="border-color:#333;">
+        <h3>SUGERENCIA DEL SISTEMA:</h3>
+        <div class="big-option opt-green" onclick="confirmarSugerencia()">
+            <span style="font-size:12px;">ASIGNAR</span><br>
+            <b id="decSug" style="font-size:24px;">--</b>
+            <br><small>CLICK PARA ACEPTAR</small>
+        </div>
+        <h3>O PERSONALIZAR:</h3>
+        <div class="big-option opt-orange">
+            <label style="color:white;">Escribir rango manual:</label>
+            <input type="text" id="decManualInput" placeholder="Ej: 20-25" style="text-align:center;">
+            <button class="btn" style="background:white; color:black; margin-top:5px;" onclick="confirmarManual()">USAR MANUAL</button>
+        </div>
+        <button class="btn" onclick="cerrarModal('modalDecision')" style="background:transparent; color:#aaa; margin-top:20px;">CANCELAR</button>
+    </div>
+</div>
+
+<div id="modalListado" class="setup-screen hidden">
+    <h2>🛠️ Gestión de Equipo</h2>
+    <button class="btn" style="background:#4caf50; color:white; margin-bottom:15px;" onclick="agregarObreroManual()">➕ AGREGAR TRABAJADOR MANUAL</button>
+    <div id="listaEdicionUI"></div>
+    <button class="btn btn-p" style="margin-top:20px;" onclick="cerrarModal('modalListado')">VOLVER</button>
+</div>
 
 <div id="modalSync" class="setup-screen hidden">
     <h2>🔗 Enviar a Supervisor</h2>
     <div class="sync-box">
-        <p><b>OPCIÓN 1 (SIN INTERNET):</b><br>Guardar archivo y enviar por Bluetooth/Quick Share.</p>
-        <button class="btn" style="background:#e91e63; color:white;" onclick="descargarJSON()">💾 GUARDAR ARCHIVO DATOS</button>
-        <hr>
-        <p><b>OPCIÓN 2:</b> Escanear QR con App Visión</p>
+        <p>Escanea este QR con la app <b>AgriCactus VISIÓN</b></p>
         <div id="qrSync" style="display:flex; justify-content:center;"></div>
+        <hr>
+        <p>O copia este código:</p>
+        <div id="txtSync" class="sync-text"></div>
+        <button class="btn" onclick="copiarCodigo()">COPIAR CÓDIGO</button>
     </div>
     <button class="btn btn-p" style="margin-top:20px;" onclick="cerrarModal('modalSync')">VOLVER</button>
 </div>
 
-<script>
-let CONFIG=JSON.parse(localStorage.getItem('v24_conf'))||null, STAFF=JSON.parse(localStorage.getItem('v24_staff'))||[], AVANCE=JSON.parse(localStorage.getItem('v24_avan'))||[], DB_C=JSON.parse(localStorage.getItem('v24_db_c'))||[], DB_A=JSON.parse(localStorage.getItem('v24_db_a'))||[];
-const audio=new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-let tempID=null, tempSugerencia=[];
+<div id="modalImport" class="setup-screen hidden">
+    <h3>📂 Catálogos Maestros</h3>
+    <textarea id="csvC" placeholder="Cuadros: ID, Lado, Hileras, Var"></textarea>
+    <textarea id="csvA" placeholder="Actividades: ID, Desc, Clave"></textarea>
+    <button class="btn btn-p" onclick="saveDB()">GUARDAR</button>
+    <button class="btn" onclick="cerrarModal('modalImport')" style="background:none; color:white;">VOLVER</button>
+</div>
 
-window.onload=()=>{ actualizarSugerencias(); toggleBloqueInput(); if(CONFIG){ if(STAFF.length<CONFIG.gente) iniciarCheckIn(); else pasarAMapa(); }};
-function toggleBloqueInput(){ document.getElementById('divBloqueConfig').style.display = (document.getElementById('in_modo').value === 'BLOQUE') ? 'block' : 'none'; }
-function nuevoCuadroRapido(){ if(confirm("¿Cerrar cuadro?")){ AVANCE.forEach(a=>{if(!a.fin)a.fin=Date.now()}); STAFF.forEach(s=>s.rango=[]); save(); document.getElementById('mainUI').classList.add('hidden'); document.getElementById('screenSetup').classList.remove('hidden'); }}
-function iniciarMision(){
-    let rInput=document.getElementById('in_rangos').value, modo=document.getElementById('in_modo').value;
-    if(!rInput.includes('-'))return alert("Formato: 1-50");
-    let r=rInput.split('-').map(Number);
-    CONFIG={resp:document.getElementById('in_resp').value, gente:parseInt(document.getElementById('in_gente').value), cuadro:document.getElementById('in_cuadro').value, act:document.getElementById('in_act').value, start:r[0], end:r[1], modo:modo, bloque:parseInt(document.getElementById('in_bloque').value)||1};
-    localStorage.setItem('v24_conf', JSON.stringify(CONFIG));
-    if(STAFF.length<CONFIG.gente) iniciarCheckIn(); else autoAsignarYPasar();
+<div id="modalQR" class="setup-screen hidden">
+    <h2 style="text-align:center;">REPORTES</h2>
+    <div class="tab-container">
+        <button id="tab1" class="tab-btn active" onclick="verQR(1)">📊 RESUMEN</button>
+        <button id="tab2" class="tab-btn" onclick="verQR(2)">👥 PERSONAL</button>
+    </div>
+    <div class="qr-viewer">
+        <div id="qr1"></div>
+        <div id="qr2" class="hidden"></div>
+        <button onclick="descargarExcel()" style="margin-top:20px; background:#4caf50; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
+            📥 DESCARGAR DETALLE DE TIEMPOS (.CSV)
+        </button>
+    </div>
+    <button class="btn" style="background:var(--danger); color:white; margin-top:20px;" onclick="if(confirm('¿Reiniciar todo?')){localStorage.clear();location.reload();}">🛑 FIN JORNADA</button>
+    <button class="btn btn-p" style="margin-top:10px;" onclick="cerrarModal('modalQR')">VOLVER</button>
+</div>
+
+<script>
+let CONFIG = JSON.parse(localStorage.getItem('v23_conf')) || null;
+let STAFF = JSON.parse(localStorage.getItem('v23_staff')) || [];
+let AVANCE = JSON.parse(localStorage.getItem('v23_avan')) || [];
+let DB_C = JSON.parse(localStorage.getItem('v23_db_c')) || [];
+let DB_A = JSON.parse(localStorage.getItem('v23_db_a')) || [];
+const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+let tempID = null, tempSugerencia = [];
+
+window.onload = () => {
+    actualizarSugerencias(); toggleBloqueInput(); 
+    if(CONFIG) {
+        // CORRECCION: Si hay menos gente de la esperada, ir a CheckIn
+        if(STAFF.length < CONFIG.gente) iniciarCheckIn();
+        else pasarAMapa();
+    }
+};
+
+function toggleBloqueInput() {
+    const modo = document.getElementById('in_modo').value;
+    document.getElementById('divBloqueConfig').style.display = (modo === 'BLOQUE') ? 'block' : 'none';
 }
-function calcularSiguiente(id){
-    if(CONFIG.modo==='PAREJA'){
-        for(let i=CONFIG.start; i<=CONFIG.end; i++){ if(AVANCE.some(a=>a.l===i&&a.fin))continue; if(STAFF.filter(s=>s.rango&&s.rango.includes(i)).length<2) return [i,i]; }
-    } else {
-        let max=CONFIG.start-1; if(AVANCE.length>0) max=Math.max(...AVANCE.map(a=>a.l));
-        let ns=max+1, ne=Math.min(ns+CONFIG.bloque-1, CONFIG.end); if(ns<=CONFIG.end) return [ns,ne];
-    } return null;
-}
-function onScanAvance(id){ let p=STAFF.find(x=>x.id==id.trim()); if(!p)return alert("Error ID"); audio.play(); tempID=p.id; document.getElementById('decID').innerText=tempID; document.getElementById('decTermino').innerText=p.rango?.join('-')||"Nada"; tempSugerencia=calcularSiguiente(tempID); document.getElementById('decSug').innerText=tempSugerencia?tempSugerencia.join('-'):"FIN"; abrirModal('modalDecision'); }
-function cerrarFilaActual(id){ let p=STAFF.find(x=>x.id==id); if(p.rango?.length){ AVANCE.forEach(a=>{if(p.rango.includes(a.l)&&!a.fin)a.fin=Date.now()}); p.rango=[]; } }
-function aplicarAsignacion(id, r){ STAFF.find(s=>s.id==id).rango=r; for(let i=r[0]; i<=r[1]; i++) AVANCE.push({e:id, l:i, inicio:Date.now(), fin:null, act:CONFIG.act}); save(); }
-function confirmarSugerencia(){ if(!tempSugerencia)return; cerrarFilaActual(tempID); aplicarAsignacion(tempID, tempSugerencia); cerrarModal('modalDecision'); }
-function confirmarManual(){ let v=document.getElementById('decManualInput').value, r=v.includes('-')?v.split('-').map(Number):[parseInt(v),parseInt(v)]; if(!isNaN(r[0])){ cerrarFilaActual(tempID); aplicarAsignacion(tempID, r); document.getElementById('decManualInput').value=""; cerrarModal('modalDecision'); } }
-function avanceMasivo(){ if(!confirm("¿Mover TODOS?"))return; STAFF.forEach(p=>cerrarFilaActual(p.id)); STAFF.forEach(p=>{let s=calcularSiguiente(p.id); if(s)aplicarAsignacion(p.id,s)}); save(); }
-function autoAsignarYPasar(){ if(AVANCE.length===0) STAFF.forEach(p=>{let s=calcularSiguiente(p.id); if(s)aplicarAsignacion(p.id,s)}); save(); pasarAMapa(); }
-function actualizarInterfaz(){
-    document.getElementById('statH').innerText=new Set(AVANCE.filter(a=>a.fin).map(a=>a.l)).size+"/"+(CONFIG.end-CONFIG.start+1); document.getElementById('statP').innerText=STAFF.length; document.getElementById('dispC').innerText=CONFIG.cuadro; document.getElementById('dispModo').innerText=CONFIG.modo;
-    let m=document.getElementById('mapaHileras'); m.innerHTML="";
-    for(let i=CONFIG.start; i<=CONFIG.end; i++){
-        let d=document.createElement('div'), ga=STAFF.filter(s=>s.rango&&s.rango.includes(i)); d.className="row-box"; d.innerText=i;
-        if(AVANCE.find(a=>a.l==i&&a.fin)) d.className+=" row-done"; else if(ga.length) { d.className+=" row-active"; d.innerHTML+=`<span class="row-tag">${ga.length>1?'2':ga[0].id.slice(-3)}</span>`; }
-        m.appendChild(d);
+
+function nuevoCuadroRapido() {
+    if(confirm("¿Cerrar cuadro actual y comenzar uno nuevo?")) {
+        AVANCE.forEach(a => { if(!a.fin) a.fin = Date.now(); });
+        STAFF.forEach(s => s.rango = []);
+        save();
+        document.getElementById('mainUI').classList.add('hidden');
+        document.getElementById('screenSetup').classList.remove('hidden');
     }
 }
-function renderEdicion(){ document.getElementById('listaEdicionUI').innerHTML=STAFF.map((s,i)=>`<div class="edit-card"><b>${s.id}</b> (${s.rango?.join('-')||'Wait'}) <div class="action-row"><button class="btn-edit" style="background:#2196f3;" onclick="editarID(${i})">✏️</button><button class="btn-edit" style="background:#ff9800;" onclick="editarRango(${i})">📍</button><button class="btn-edit" style="background:#f44336;" onclick="eliminarObrero(${i})">🗑️</button></div></div>`).join(''); }
-function agregarObreroManual(){ let n=prompt("ID:"); if(n&&!STAFF.some(s=>s.id==n)){ STAFF.push({id:n,rango:[]}); let s=calcularSiguiente(n); if(s)aplicarAsignacion(n,s); else save(); renderEdicion(); }}
-function editarID(i){ let n=prompt("Nuevo ID:",STAFF[i].id); if(n){ let o=STAFF[i].id; STAFF[i].id=n; AVANCE.forEach(a=>{if(a.e===o)a.e=n}); save(); renderEdicion(); }}
-function editarRango(i){ let v=prompt("Rango:"); if(v){ let r=v.includes('-')?v.split('-').map(Number):[parseInt(v),parseInt(v)]; if(!isNaN(r[0])){ cerrarFilaActual(STAFF[i].id); aplicarAsignacion(STAFF[i].id,r); renderEdicion(); }}}
-function eliminarObrero(i){ if(confirm("¿Borrar?")){ let id=STAFF[i].id; STAFF.splice(i,1); for(let k=AVANCE.length-1;k>=0;k--)if(AVANCE[k].e===id&&!AVANCE[k].fin)AVANCE.splice(k,1); save(); renderEdicion(); }}
 
-// SYNC Y ARCHIVOS
-function obtenerPayload(){ return {c:CONFIG.cuadro, r:CONFIG.resp, h:AVANCE.filter(a=>a.fin).length, t:CONFIG.end-CONFIG.start+1, s:STAFF.map(p=>{ let f=AVANCE.filter(a=>a.e==p.id&&a.fin), m=0; if(f.length){let s=Math.min(...f.map(a=>a.inicio)),e=Math.max(...f.map(a=>a.fin)); m=(e-s)/60000;} return {id:p.id, n:f.length, m:m.toFixed(1)}; })}; }
-function abrirSync(){ abrirModal('modalSync'); let pl=obtenerPayload(), j=JSON.stringify(pl); document.getElementById('qrSync').innerHTML=""; new QRCode(document.getElementById('qrSync'),{text:j,width:200,height:200}); }
-function descargarJSON(){ let b=new Blob([JSON.stringify(obtenerPayload())],{type:"application/json"}), l=document.createElement("a"); l.href=URL.createObjectURL(b); l.download=`VISOR_${CONFIG.cuadro}.json`; l.click(); }
+function iniciarMision() {
+    const rInput = document.getElementById('in_rangos').value;
+    const modo = document.getElementById('in_modo').value;
+    const bInput = (modo === 'PAREJA') ? 1 : (parseInt(document.getElementById('in_bloque').value) || 1);
+    if(!rInput.includes('-')) return alert("Formato hileras: 1-50");
+    const r = rInput.split('-').map(Number);
+    
+    CONFIG = { 
+        resp: document.getElementById('in_resp').value, 
+        gente: parseInt(document.getElementById('in_gente').value), 
+        cuadro: document.getElementById('in_cuadro').value, 
+        act: document.getElementById('in_act').value, 
+        start: r[0], end: r[1], modo: modo, bloque: bInput 
+    };
+    localStorage.setItem('v23_conf', JSON.stringify(CONFIG));
+    
+    // CORRECCION CRITICA: Comparar cantidad actual vs deseada
+    if(STAFF.length < CONFIG.gente) iniciarCheckIn(); 
+    else autoAsignarYPasar();
+}
 
-// REPORTES Y CSV
-function prepararReporte(){ abrirModal('modalQR'); verQR(1); document.getElementById('qr1').innerHTML=""; document.getElementById('qr2').innerHTML=""; new QRCode(document.getElementById('qr1'),{text:`R:${CONFIG.resp}|H:${AVANCE.filter(a=>a.fin).length}`,width:200,height:200}); new QRCode(document.getElementById('qr2'),{text:JSON.stringify(STAFF.map(s=>s.id)),width:200,height:200}); }
-function verQR(n){ [1,2].forEach(x=>{document.getElementById('qr'+x).classList.add('hidden');document.getElementById('tab'+x).classList.remove('active')}); document.getElementById('qr'+n).classList.remove('hidden'); document.getElementById('tab'+n).classList.add('active'); }
-function descargarExcel(){ let c="data:text/csv;charset=utf-8,ID,Cuadro,Fila,Inicio,Fin,Min\n"; AVANCE.forEach(r=>{ let i=new Date(r.inicio), f=r.fin?new Date(r.fin):null, d=f?((f-i)/60000).toFixed(2):"--"; c+=`${r.e},${CONFIG.cuadro},${r.l},${i.toLocaleTimeString()},${f?f.toLocaleTimeString():"--"},${d}\n`; }); let l=document.createElement("a"); l.href=encodeURI(c); l.download=`REP_${CONFIG.cuadro}.csv`; l.click(); }
+/* --- LOGICA CENTRAL --- */
+function calcularSiguiente(idEmpleado) {
+    if (CONFIG.modo === 'PAREJA') {
+        for(let i = CONFIG.start; i <= CONFIG.end; i++) {
+            const terminada = AVANCE.some(a => a.l === i && a.fin);
+            if(terminada) continue;
+            const genteEnHilera = STAFF.filter(s => s.rango && s.rango.includes(i)).length;
+            if (genteEnHilera < 2) return [i, i];
+        }
+        return null;
+    } else {
+        let maxAssigned = CONFIG.start - 1;
+        if (AVANCE.length > 0) maxAssigned = Math.max(...AVANCE.map(a => a.l));
+        let nextStart = maxAssigned + 1;
+        let nextEnd = Math.min(nextStart + CONFIG.bloque - 1, CONFIG.end);
+        if (nextStart > CONFIG.end) return null;
+        return [nextStart, nextEnd];
+    }
+}
 
-function save(){ localStorage.setItem('v24_staff',JSON.stringify(STAFF)); localStorage.setItem('v24_avan',JSON.stringify(AVANCE)); actualizarInterfaz(); }
-function saveDB(){ DB_C=document.getElementById('csvC').value.split('\n').map(l=>{let p=l.split(',');return{id:p[0].trim(),h:p[2]?.trim()||0}}); DB_A=document.getElementById('csvA').value.split('\n').map(l=>{let p=l.split(',');return{id:p[0].trim(),n:p[1]?.trim()||""}}); localStorage.setItem('v24_db_c',JSON.stringify(DB_C)); localStorage.setItem('v24_db_a',JSON.stringify(DB_A)); actualizarSugerencias(); cerrarModal('modalImport'); }
-function actualizarSugerencias(){ document.getElementById('lC').innerHTML=DB_C.map(c=>`<option value="${c.id}">`).join(''); document.getElementById('lA').innerHTML=DB_A.map(a=>`<option value="${a.n}">`).join(''); }
-function sugerir(){ let m=DB_C.find(c=>c.id==document.getElementById('in_cuadro').value); if(m)document.getElementById('in_rangos').value=`1-${m.h}`; }
-function regManualCheckIn(){ let v=document.getElementById('manualCheckIn').value; if(v)procesarCheckIn(v); document.getElementById('manualCheckIn').value=""; }
-function procesarCheckIn(id){ if(!STAFF.some(s=>s.id==id)){ STAFF.push({id:id,rango:[]}); save(); renderCheckInList(); } }
-function renderCheckInList(){ document.getElementById('listaCheckIn').innerHTML=STAFF.map(s=>`<div style="background:rgba(255,255,255,0.2);pad:5px;border-radius:8px;text-align:center;">${s.id}</div>`).join(''); }
-function iniciarCheckIn(){ document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.remove('hidden'); renderCheckInList(); new Html5QrcodeScanner("readerCheckIn",{fps:20,qrbox:200}).render(procesarCheckIn); }
-function pasarAMapa(){ document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden'); setTimeout(()=>{actualizarInterfaz(); new Html5QrcodeScanner("readerMain",{fps:20,qrbox:250}).render(onScanAvance);},500); }
-function regManualAvance(){ let v=document.getElementById('manualAvance').value; if(v)onScanAvance(v); document.getElementById('manualAvance').value=""; }
-function abrirModal(id){ if(id==='modalListado')renderEdicion(); document.getElementById(id).classList.remove('hidden'); }
-function cerrarModal(id){ document.getElementById(id).classList.add('hidden'); }
+function onScanAvance(id) {
+    let p = STAFF.find(x => x.id == id.trim());
+    if(!p) return alert("ID no registrado.");
+    audio.play();
+    tempID = p.id;
+    let rangoPrevio = p.rango || [];
+    document.getElementById('decID').innerText = tempID;
+    document.getElementById('decTermino').innerText = rangoPrevio.length ? rangoPrevio.join('-') : "Nada";
+    tempSugerencia = calcularSiguiente(tempID);
+    if(tempSugerencia) {
+        document.getElementById('decSug').innerText = (tempSugerencia[0] === tempSugerencia[1]) 
+            ? `Fila ${tempSugerencia[0]}` : `${tempSugerencia[0]} al ${tempSugerencia[1]}`;
+    } else { document.getElementById('decSug').innerText = "FIN DEL CUADRO"; }
+    abrirModal('modalDecision');
+}
+
+function cerrarFilaActual(id) {
+    let p = STAFF.find(x => x.id == id);
+    let rangoActual = p.rango || [];
+    if (rangoActual.length > 0) {
+        AVANCE.forEach(a => { if(rangoActual.includes(a.l) && !a.fin) a.fin = Date.now(); });
+        p.rango = [];
+    }
+}
+function aplicarAsignacion(id, rango) {
+    let p = STAFF.find(s => s.id == id); p.rango = rango;
+    for(let i = rango[0]; i <= rango[1]; i++) AVANCE.push({ e: id, l: i, inicio: Date.now(), fin: null, act: CONFIG.act });
+    save();
+}
+function confirmarSugerencia() { if(!tempSugerencia) return alert("Fin."); cerrarFilaActual(tempID); aplicarAsignacion(tempID, tempSugerencia); cerrarModal('modalDecision'); }
+function confirmarManual() {
+    const val = document.getElementById('decManualInput').value;
+    let rManual = val.includes('-') ? val.split('-').map(Number) : [parseInt(val), parseInt(val)];
+    if(isNaN(rManual[0])) return alert("Número inválido");
+    cerrarFilaActual(tempID); aplicarAsignacion(tempID, rManual);
+    document.getElementById('decManualInput').value=""; cerrarModal('modalDecision');
+}
+function avanceMasivo() {
+    if(!confirm("⚠️ ¿Mover a TODOS?")) return;
+    STAFF.forEach(p => cerrarFilaActual(p.id));
+    STAFF.forEach(p => { let sig = calcularSiguiente(p.id); if(sig) aplicarAsignacion(p.id, sig); });
+    save();
+}
+function autoAsignarYPasar() {
+    if(AVANCE.length === 0) STAFF.forEach(p => { let sug = calcularSiguiente(p.id); if(sug) aplicarAsignacion(p.id, sug); });
+    save(); pasarAMapa();
+}
+function actualizarInterfaz() {
+    const hechas = new Set(AVANCE.filter(a=>a.fin).map(a=>a.l)).size;
+    document.getElementById('statH').innerText = `${hechas} / ${(CONFIG.end - CONFIG.start + 1)}`;
+    document.getElementById('statP').innerText = `${STAFF.length}`;
+    document.getElementById('dispC').innerText = CONFIG.cuadro;
+    document.getElementById('dispModo').innerText = (CONFIG.modo === 'PAREJA') ? "(PAREJAS)" : `(BLOQUES ${CONFIG.bloque})`;
+    const mapa = document.getElementById('mapaHileras'); mapa.innerHTML = "";
+    for(let i=CONFIG.start; i<=CONFIG.end; i++) {
+        let d = document.createElement('div'); d.className="row-box"; 
+        const genteAqui = STAFF.filter(s => s.rango && s.rango.includes(i));
+        d.innerHTML=`<span>${i}</span>`;
+        let estado = AVANCE.find(a => a.l == i && a.fin); 
+        if(estado) d.classList.add('row-done'); 
+        else if (genteAqui.length > 0) {
+            d.classList.add('row-active');
+            if(CONFIG.modo === 'PAREJA' && genteAqui.length > 1) d.innerHTML += `<div class="badge-count">2</div>`;
+            else d.innerHTML += `<span class="row-tag">${genteAqui[0].id.slice(-3)}</span>`;
+        }
+        mapa.appendChild(d);
+    }
+}
+
+/* --- GESTION & AGREGAR TARDE --- */
+function renderEdicion() {
+    document.getElementById('listaEdicionUI').innerHTML = STAFF.map((s, idx) => `
+        <div class="edit-card">
+            <div><b>ID: ${s.id}</b><br><small>Ubicación: ${s.rango && s.rango.length ? s.rango.join('-') : 'Sin Asignar'}</small></div>
+            <div class="action-row">
+                <button class="btn-edit" style="background:#2196f3;" onclick="editarID(${idx})">✏️ ID</button>
+                <button class="btn-edit" style="background:#ff9800;" onclick="editarRango(${idx})">📍 FILAS</button>
+                <button class="btn-edit" style="background:#f44336;" onclick="eliminarObrero(${idx})">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+function agregarObreroManual() {
+    const nid = prompt("Ingresa ID del nuevo trabajador:");
+    if(nid && !STAFF.some(s=>s.id == nid)) {
+        STAFF.push({ id: nid, rango: [] });
+        // Intentar asignarle trabajo inmediato
+        let sug = calcularSiguiente(nid);
+        if(sug) aplicarAsignacion(nid, sug);
+        else save();
+        renderEdicion(); alert("✅ Trabajador agregado.");
+    } else alert("ID inválido o duplicado.");
+}
+function editarID(idx) {
+    const oldID = STAFF[idx].id; const newID = prompt("Corrección de ID:", oldID);
+    if(newID && newID !== oldID) { STAFF[idx].id = newID; AVANCE.forEach(a => { if(a.e === oldID) a.e = newID; }); save(); renderEdicion(); }
+}
+function editarRango(idx) {
+    const p = STAFF[idx]; const val = prompt(`Asignar filas manualmente a ${p.id}:`, "");
+    if(val) {
+        let rManual = val.includes('-') ? val.split('-').map(Number) : [parseInt(val), parseInt(val)];
+        if(!isNaN(rManual[0])) { cerrarFilaActual(p.id); aplicarAsignacion(p.id, rManual); renderEdicion(); }
+    }
+}
+function eliminarObrero(idx) {
+    if(confirm(`¿Eliminar a ${STAFF[idx].id}?`)) {
+        const idBorrar = STAFF[idx].id; STAFF.splice(idx, 1);
+        for(let i = AVANCE.length - 1; i >= 0; i--) { if(AVANCE[i].e === idBorrar && !AVANCE[i].fin) AVANCE.splice(i, 1); }
+        save(); renderEdicion();
+    }
+}
+
+/* --- SYNC & REPORTES --- */
+function abrirSync(){
+    abrirModal('modalSync');
+    const payload = {
+        c: CONFIG.cuadro, r: CONFIG.resp, h: AVANCE.filter(a=>a.fin).length, t: CONFIG.end - CONFIG.start + 1,
+        s: STAFF.map(p => {
+            let susFilas = AVANCE.filter(a => a.e == p.id && a.fin);
+            let mins = 0;
+            if(susFilas.length > 0) {
+                let start = Math.min(...susFilas.map(a=>a.inicio)); let end = Math.max(...susFilas.map(a=>a.fin));
+                mins = (end-start)/1000/60;
+            }
+            return { id: p.id, n: susFilas.length, m: mins.toFixed(1) };
+        })
+    };
+    const jsonStr = JSON.stringify(payload);
+    document.getElementById('qrSync').innerHTML="";
+    new QRCode(document.getElementById('qrSync'), {text:jsonStr, width:200, height:200});
+    document.getElementById('txtSync').innerText = jsonStr;
+}
+function copiarCodigo(){ navigator.clipboard.writeText(document.getElementById('txtSync').innerText); alert("Código copiado."); }
+function prepararReporte() { abrirModal('modalQR'); verQR(1); document.getElementById('qr1').innerHTML = ""; document.getElementById('qr2').innerHTML = ""; const hDone = AVANCE.filter(a=>a.fin).length; new QRCode(document.getElementById('qr1'), { text: `R:${CONFIG.resp}|M:${CONFIG.modo}|H:${hDone}`, width: 200, height: 200 }); new QRCode(document.getElementById('qr2'), { text: JSON.stringify(STAFF.map(s => s.id)), width: 200, height: 200 }); }
+function verQR(n) { document.getElementById('qr1').classList.add('hidden'); document.getElementById('qr2').classList.add('hidden'); document.getElementById('tab1').classList.remove('active'); document.getElementById('tab2').classList.remove('active'); document.getElementById('qr'+n).classList.remove('hidden'); document.getElementById('tab'+n).classList.add('active'); }
+function descargarExcel() {
+    let csvContent = "data:text/csv;charset=utf-8,ID Empleado,Cuadro,Actividad,Fila,Hora Inicio,Hora Fin,Duracion (Min)\n";
+    AVANCE.forEach(row => {
+        let inicio = new Date(row.inicio); let hInicio = inicio.toLocaleTimeString(); let hFin = "--"; let duracion = "--";
+        if(row.fin) { let fin = new Date(row.fin); hFin = fin.toLocaleTimeString(); let diffMs = (fin - inicio); duracion = (diffMs / 1000 / 60).toFixed(2); }
+        csvContent += `${row.e},${CONFIG.cuadro},${CONFIG.act},${row.l},${hInicio},${hFin},${duracion}\n`;
+    });
+    const encodedUri = encodeURI(csvContent); const link = document.createElement("a");
+    link.setAttribute("href", encodedUri); link.setAttribute("download", `Reporte_${CONFIG.cuadro}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+function save() { localStorage.setItem('v23_staff', JSON.stringify(STAFF)); localStorage.setItem('v23_avan', JSON.stringify(AVANCE)); actualizarInterfaz(); }
+function saveDB() { DB_C = document.getElementById('csvC').value.split('\n').map(l=>{const p=l.split(','); return {id:p[0].trim(), h:p[2]?.trim()||0};}); DB_A = document.getElementById('csvA').value.split('\n').map(l=>{const p=l.split(','); return {id:p[0].trim(), n:p[1]?.trim()||""};}); localStorage.setItem('v23_db_c', JSON.stringify(DB_C)); localStorage.setItem('v23_db_a', JSON.stringify(DB_A)); actualizarSugerencias(); cerrarModal('modalImport'); }
+function actualizarSugerencias() { document.getElementById('lC').innerHTML = DB_C.map(c=>`<option value="${c.id}">`).join(''); document.getElementById('lA').innerHTML = DB_A.map(a=>`<option value="${a.n}">`).join(''); }
+function sugerir() { const m = DB_C.find(c=>c.id == document.getElementById('in_cuadro').value); if(m) document.getElementById('in_rangos').value = `1-${m.h}`; }
+function regManualCheckIn() { const val = document.getElementById('manualCheckIn').value.trim(); if(val) procesarCheckIn(val), document.getElementById('manualCheckIn').value = ""; }
+function procesarCheckIn(id) { if (!STAFF.some(s => s.id === id)) { STAFF.push({ id: id, rango: [] }); save(); renderCheckInList(); } }
+function renderCheckInList() { document.getElementById('listaCheckIn').innerHTML = STAFF.map(s => `<div style="background:rgba(255,255,255,0.2); padding:5px; border-radius:8px; font-size:10px; text-align:center;">👤 ${s.id}</div>`).join(''); }
+function iniciarCheckIn() { document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.remove('hidden'); renderCheckInList(); new Html5QrcodeScanner("readerCheckIn", {fps:20, qrbox:200}).render(procesarCheckIn); }
+function pasarAMapa() { document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden'); setTimeout(() => { actualizarInterfaz(); new Html5QrcodeScanner("readerMain", {fps:20, qrbox:250}).render(onScanAvance); }, 500); }
+function regManualAvance() { const val = document.getElementById('manualAvance').value.trim(); if(val) onScanAvance(val); document.getElementById('manualAvance').value = ""; }
+function abrirModal(id) { if(id==='modalListado') renderEdicion(); document.getElementById(id).classList.remove('hidden'); }
+function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
 </script>
 </body>
 </html>
-
