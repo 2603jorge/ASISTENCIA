@@ -3,268 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus - CONCENTRADOR V7</title>
+    <title>AgriCactus Maestro V24.0 - Bluetooth Ready</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { 
-            --p: #1565c0; --s: #e3f2fd; --danger: #c62828; 
-            --success: #2e7d32; --accent: #ff9800; --dark: #263238;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--s); margin: 0; padding: 15px; padding-bottom: 120px; }
-        
-        .card-jefe { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; background: black; border: 4px solid white; }
-        
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .stat-box { text-align: center; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid var(--p); }
-        .stat-val { font-size: 24px; font-weight: bold; display: block; }
-        .c-total { color: var(--p); }
-        .c-last { color: var(--success); }
-        
-        h3 { color: var(--dark); border-left: 5px solid var(--p); padding-left: 10px; margin-top: 20px; font-size: 16px; text-transform: uppercase; }
-        
-        .tabla-contenedor { background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; color: #475569; font-weight: bold; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
-
-        .btn-main { background: var(--p); color: white; padding: 18px; border: none; border-radius: 15px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(21,101,192,0.3); cursor: pointer; width: 100%; }
-        .btn-file-input { background: var(--dark); color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; text-align: center; }
-        
-        .badge-pend { background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; }
-        .badge-vld { background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 9px; }
-
-        .footer-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); z-index: 1000; }
-        
-        #status-camera { padding: 12px; text-align: center; font-size: 13px; font-weight: bold; border-radius: 10px; margin-bottom: 10px; background: #eee; }
+        :root { --p: #2e7d32; --accent: #f57c00; --dark: #121212; --danger: #d32f2f; --info: #1976d2; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; margin: 0; padding: 10px; color: white; background-size: cover; background-attachment: fixed; }
+        .setup-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 5000; padding: 25px; box-sizing: border-box; overflow-y: auto; }
+        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: none; background: rgba(255,255,255,0.95); font-size: 16px; box-sizing: border-box; color: #333; font-weight: bold; }
+        .btn { padding: 18px; border: none; border-radius: 15px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-info { background: var(--info); color: white; font-size: 11px; padding: 10px; margin-bottom: 10px; }
+        .manual-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .manual-box input { margin-bottom: 0; flex-grow: 1; }
+        .manual-box .btn-mini { width: 80px; padding: 0; background: var(--accent); color: white; border-radius: 12px; border: none; font-weight: bold; }
+        .map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; margin-top: 15px; max-height: 350px; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .row-box { height: 45px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; background: #333; border: 2px solid #444; transition: 0.3s; position: relative; }
+        .row-done { background: var(--p) !important; border-color: #81c784; opacity: 0.6; }
+        .row-active { background: var(--accent) !important; border-color: #ffb74d; color: black; animation: pulse 2s infinite; }
+        .row-tag { font-size: 8px; opacity: 0.9; text-transform: uppercase; margin-top: 2px; }
+        .badge-count { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+        .hidden { display: none !important; }
+        label { display: block; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; color: #aaa; }
+        .edit-card { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 10px; border-left: 6px solid var(--info); color: white; }
+        .action-row { display: flex; gap: 5px; margin-top: 10px; }
+        .btn-edit { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; color: white; }
+        .decision-box { text-align: center; color: white; }
+        .big-option { padding: 20px; margin: 10px 0; border-radius: 15px; cursor: pointer; border: 2px solid rgba(255,255,255,0.2); }
+        .opt-green { background: var(--p); }
+        .opt-orange { background: var(--accent); }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 0; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-top-left-radius: 15px; border-top-right-radius: 15px; font-weight: bold; cursor: pointer; background: rgba(255,255,255,0.1); color: #aaa; transition: 0.3s; }
+        .tab-btn.active { background: white; color: var(--dark); }
+        .qr-viewer { background: white; border-radius: 0 0 20px 20px; padding: 30px; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }
+        .sync-box { background: white; color: black; padding: 20px; border-radius: 20px; text-align: center; }
+        .sync-text { word-break: break-all; font-size: 10px; background: #eee; padding: 10px; margin: 10px 0; max-height: 100px; overflow: auto; }
     </style>
 </head>
 <body>
+<div id="screenSetup" class="setup-screen"><h2 style="text-align:center; color: var(--p);">AGRI-CACTUS V24</h2><button class="btn btn-info" onclick="abrirModal('modalImport')">📂 CARGAR BASE DE DATOS</button><div class="glass"><label>Responsable</label><input type="text" id="in_resp"><label style="color: var(--accent);">🛠️ MODO</label><select id="in_modo" onchange="toggleBloqueInput()"><option value="BLOQUE">🟢 INDIVIDUAL</option><option value="PAREJA">👥 PAREJAS</option></select><div id="divBloqueConfig"><label>Filas por Tarea</label><input type="number" id="in_bloque" value="5" style="border: 2px solid var(--accent); color: var(--accent);"></div><label>Total Trabajadores</label><input type="number" id="in_gente"><label>Cuadro</label><input type="text" id="in_cuadro" list="lC" oninput="sugerir()"><datalist id="lC"></datalist><label>Actividad</label><input type="text" id="in_act" list="lA"><datalist id="lA"></datalist><label>Rango (Ej: 1-100)</label><input type="text" id="in_rangos"></div><button class="btn btn-p" onclick="iniciarMision()">DESPLEGAR</button></div>
+<div id="screenCheckIn" class="setup-screen hidden"><h2 style="text-align: center; color: var(--accent);">👤 REGISTRO</h2><p style="text-align:center; color:#aaa; font-size:12px;">Escanea al personal...</p><div id="readerCheckIn" style="border-radius:15px; overflow:hidden;"></div><div class="manual-box glass"><input type="number" id="manualCheckIn" placeholder="N° Credencial..."><button class="btn-mini" onclick="regManualCheckIn()">ADD</button></div><div id="listaCheckIn" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;"></div><button class="btn btn-p" id="btnIrAMapa" onclick="autoAsignarYPasar()" style="margin-top: 20px;">INICIAR</button></div>
+<div id="mainUI" class="hidden"><div class="glass" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom:10px;"><div style="text-align:center;"><small>HECHAS</small><br><b id="statH" style="font-size:24px; color:#4caf50;">0</b></div><div style="text-align:center;"><small>PERSONAL</small><br><b id="statP" style="font-size:24px; color:var(--accent);">0</b></div></div><div class="glass"><div style="display:flex; justify-content:space-between; align-items:center;"><b>📍 <span id="dispC">--</span> <small id="dispModo" style="color:#aaa;">(MODO)</small></b><button onclick="nuevoCuadroRapido()" style="background:var(--info); border:none; color:white; padding:5px 10px; border-radius:8px; font-size:10px; font-weight:bold;">🔄 REINICIAR</button></div><div id="mapaHileras" class="map-grid"></div><button onclick="avanceMasivo()" style="width:100%; margin-top:10px; background: #5e35b1; color: white; border:none; padding:10px; border-radius:10px; font-weight:bold;">⏩ AVANCE MASIVO</button></div><div id="readerMain" style="border-radius:20px; overflow:hidden; border:2px solid white; margin:10px 0;"></div><div class="manual-box glass"><input type="number" id="manualAvance" placeholder="ID para Avanzar..."><button class="btn-mini" onclick="regManualAvance()">MOVER</button></div><button class="btn" style="background:#00bcd4; color:white; margin-bottom:10px;" onclick="abrirSync()">🔗 SINCRONIZAR (BLUETOOTH)</button><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><button class="btn" style="background:var(--info); color:white;" onclick="abrirModal('modalListado')">👥 GESTIÓN</button><button class="btn btn-accent" onclick="prepararReporte()">📤 REPORTES</button></div></div>
+<div id="modalDecision" class="setup-screen hidden" style="z-index: 6000; background: rgba(0,0,0,0.95);"><div class="decision-box"><h1 style="font-size:40px;">👷 <span id="decID">--</span></h1><p>Terminó: <b id="decTermino">--</b></p><hr style="border-color:#333;"><h3>SUGERENCIA:</h3><div class="big-option opt-green" onclick="confirmarSugerencia()"><span style="font-size:12px;">ASIGNAR</span><br><b id="decSug" style="font-size:24px;">--</b></div><h3>O MANUAL:</h3><div class="big-option opt-orange"><input type="text" id="decManualInput" placeholder="Ej: 20-25" style="text-align:center;"><button class="btn" style="background:white; color:black; margin-top:5px;" onclick="confirmarManual()">USAR MANUAL</button></div><button class="btn" onclick="cerrarModal('modalDecision')" style="background:transparent; color:#aaa; margin-top:20px;">CANCELAR</button></div></div>
+<div id="modalListado" class="setup-screen hidden"><h2>🛠️ Gestión</h2><button class="btn" style="background:#4caf50; color:white; margin-bottom:15px;" onclick="agregarObreroManual()">➕ AGREGAR TRABAJADOR</button><div id="listaEdicionUI"></div><button class="btn btn-p" style="margin-top:20px;" onclick="cerrarModal('modalListado')">VOLVER</button></div>
+<div id="modalImport" class="setup-screen hidden"><h3>📂 Catálogos</h3><textarea id="csvC" placeholder="Cuadros..."></textarea><textarea id="csvA" placeholder="Actividades..."></textarea><button class="btn btn-p" onclick="saveDB()">GUARDAR</button><button class="btn" onclick="cerrarModal('modalImport')" style="background:none;">VOLVER</button></div>
+<div id="modalQR" class="setup-screen hidden"><h2 style="text-align:center;">REPORTES</h2><div class="tab-container"><button id="tab1" class="tab-btn active" onclick="verQR(1)">📊 RESUMEN</button><button id="tab2" class="tab-btn" onclick="verQR(2)">👥 PERSONAL</button></div><div class="qr-viewer"><div id="qr1"></div><div id="qr2" class="hidden"></div><button onclick="descargarExcel()" style="margin-top:20px; background:#4caf50; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold;">📥 EXCEL DETALLADO (.CSV)</button></div><button class="btn" style="background:var(--danger); color:white; margin-top:20px;" onclick="if(confirm('¿Reiniciar?')){localStorage.clear();location.reload();}">🛑 FIN JORNADA</button><button class="btn btn-p" style="margin-top:10px;" onclick="cerrarModal('modalQR')">VOLVER</button></div>
 
-    <div class="card-jefe">
-        <h2 style="margin:0 0 15px 0; font-size: 18px; color: var(--p); text-align: center;">📱 Concentrador V7 - Jefe</h2>
-        
-        <!-- Opción para Reportes Masivos (2500+ registros) -->
-        <label class="btn-file-input">
-            📂 CARGAR REPORTE JSON (MASIVO)
-            <input type="file" id="fileReporte" accept=".json" style="display:none;" onchange="procesarArchivo(this)">
-        </label>
-
-        <div id="status-camera">INICIANDO CÁMARA...</div>
-        <div id="reader"></div>
+<div id="modalSync" class="setup-screen hidden">
+    <h2>🔗 Enviar a Supervisor</h2>
+    <div class="sync-box">
+        <p><b>OPCIÓN 1 (SIN INTERNET):</b><br>Guardar archivo y enviar por Bluetooth/Quick Share.</p>
+        <button class="btn" style="background:#e91e63; color:white;" onclick="descargarJSON()">💾 GUARDAR ARCHIVO DATOS</button>
+        <hr>
+        <p><b>OPCIÓN 2:</b> Escanear QR con App Visión</p>
+        <div id="qrSync" style="display:flex; justify-content:center;"></div>
     </div>
+    <button class="btn btn-p" style="margin-top:20px;" onclick="cerrarModal('modalSync')">VOLVER</button>
+</div>
 
-    <div class="stats">
-        <div class="stat-box">
-            <span class="stat-val c-total" id="countTotal">0</span>
-            <small>Personal Recibido</small>
-        </div>
-        <div class="stat-box">
-            <span class="stat-val c-last" id="countHileras">0</span>
-            <small>Líneas Totales</small>
-        </div>
-    </div>
+<script>
+let CONFIG=JSON.parse(localStorage.getItem('v24_conf'))||null, STAFF=JSON.parse(localStorage.getItem('v24_staff'))||[], AVANCE=JSON.parse(localStorage.getItem('v24_avan'))||[], DB_C=JSON.parse(localStorage.getItem('v24_db_c'))||[], DB_A=JSON.parse(localStorage.getItem('v24_db_a'))||[];
+const audio=new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+let tempID=null, tempSugerencia=[];
 
-    <h3>📋 Vista Previa (Últimos 50)</h3>
-    <div class="tabla-contenedor">
-        <table>
-            <thead>
-                <tr>
-                    <th>Empleado</th>
-                    <th>Cuadro</th>
-                    <th>Línea</th>
-                    <th>Actividad</th>
-                    <th>Turno</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="cuerpoTabla">
-                <tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Escanea un QR o carga un archivo JSON...</td></tr>
-            </tbody>
-        </table>
-    </div>
+window.onload=()=>{ actualizarSugerencias(); toggleBloqueInput(); if(CONFIG){ if(STAFF.length<CONFIG.gente) iniciarCheckIn(); else pasarAMapa(); }};
+function toggleBloqueInput(){ document.getElementById('divBloqueConfig').style.display = (document.getElementById('in_modo').value === 'BLOQUE') ? 'block' : 'none'; }
+function nuevoCuadroRapido(){ if(confirm("¿Cerrar cuadro?")){ AVANCE.forEach(a=>{if(!a.fin)a.fin=Date.now()}); STAFF.forEach(s=>s.rango=[]); save(); document.getElementById('mainUI').classList.add('hidden'); document.getElementById('screenSetup').classList.remove('hidden'); }}
+function iniciarMision(){
+    let rInput=document.getElementById('in_rangos').value, modo=document.getElementById('in_modo').value;
+    if(!rInput.includes('-'))return alert("Formato: 1-50");
+    let r=rInput.split('-').map(Number);
+    CONFIG={resp:document.getElementById('in_resp').value, gente:parseInt(document.getElementById('in_gente').value), cuadro:document.getElementById('in_cuadro').value, act:document.getElementById('in_act').value, start:r[0], end:r[1], modo:modo, bloque:parseInt(document.getElementById('in_bloque').value)||1};
+    localStorage.setItem('v24_conf', JSON.stringify(CONFIG));
+    if(STAFF.length<CONFIG.gente) iniciarCheckIn(); else autoAsignarYPasar();
+}
+function calcularSiguiente(id){
+    if(CONFIG.modo==='PAREJA'){
+        for(let i=CONFIG.start; i<=CONFIG.end; i++){ if(AVANCE.some(a=>a.l===i&&a.fin))continue; if(STAFF.filter(s=>s.rango&&s.rango.includes(i)).length<2) return [i,i]; }
+    } else {
+        let max=CONFIG.start-1; if(AVANCE.length>0) max=Math.max(...AVANCE.map(a=>a.l));
+        let ns=max+1, ne=Math.min(ns+CONFIG.bloque-1, CONFIG.end); if(ns<=CONFIG.end) return [ns,ne];
+    } return null;
+}
+function onScanAvance(id){ let p=STAFF.find(x=>x.id==id.trim()); if(!p)return alert("Error ID"); audio.play(); tempID=p.id; document.getElementById('decID').innerText=tempID; document.getElementById('decTermino').innerText=p.rango?.join('-')||"Nada"; tempSugerencia=calcularSiguiente(tempID); document.getElementById('decSug').innerText=tempSugerencia?tempSugerencia.join('-'):"FIN"; abrirModal('modalDecision'); }
+function cerrarFilaActual(id){ let p=STAFF.find(x=>x.id==id); if(p.rango?.length){ AVANCE.forEach(a=>{if(p.rango.includes(a.l)&&!a.fin)a.fin=Date.now()}); p.rango=[]; } }
+function aplicarAsignacion(id, r){ STAFF.find(s=>s.id==id).rango=r; for(let i=r[0]; i<=r[1]; i++) AVANCE.push({e:id, l:i, inicio:Date.now(), fin:null, act:CONFIG.act}); save(); }
+function confirmarSugerencia(){ if(!tempSugerencia)return; cerrarFilaActual(tempID); aplicarAsignacion(tempID, tempSugerencia); cerrarModal('modalDecision'); }
+function confirmarManual(){ let v=document.getElementById('decManualInput').value, r=v.includes('-')?v.split('-').map(Number):[parseInt(v),parseInt(v)]; if(!isNaN(r[0])){ cerrarFilaActual(tempID); aplicarAsignacion(tempID, r); document.getElementById('decManualInput').value=""; cerrarModal('modalDecision'); } }
+function avanceMasivo(){ if(!confirm("¿Mover TODOS?"))return; STAFF.forEach(p=>cerrarFilaActual(p.id)); STAFF.forEach(p=>{let s=calcularSiguiente(p.id); if(s)aplicarAsignacion(p.id,s)}); save(); }
+function autoAsignarYPasar(){ if(AVANCE.length===0) STAFF.forEach(p=>{let s=calcularSiguiente(p.id); if(s)aplicarAsignacion(p.id,s)}); save(); pasarAMapa(); }
+function actualizarInterfaz(){
+    document.getElementById('statH').innerText=new Set(AVANCE.filter(a=>a.fin).map(a=>a.l)).size+"/"+(CONFIG.end-CONFIG.start+1); document.getElementById('statP').innerText=STAFF.length; document.getElementById('dispC').innerText=CONFIG.cuadro; document.getElementById('dispModo').innerText=CONFIG.modo;
+    let m=document.getElementById('mapaHileras'); m.innerHTML="";
+    for(let i=CONFIG.start; i<=CONFIG.end; i++){
+        let d=document.createElement('div'), ga=STAFF.filter(s=>s.rango&&s.rango.includes(i)); d.className="row-box"; d.innerText=i;
+        if(AVANCE.find(a=>a.l==i&&a.fin)) d.className+=" row-done"; else if(ga.length) { d.className+=" row-active"; d.innerHTML+=`<span class="row-tag">${ga.length>1?'2':ga[0].id.slice(-3)}</span>`; }
+        m.appendChild(d);
+    }
+}
+function renderEdicion(){ document.getElementById('listaEdicionUI').innerHTML=STAFF.map((s,i)=>`<div class="edit-card"><b>${s.id}</b> (${s.rango?.join('-')||'Wait'}) <div class="action-row"><button class="btn-edit" style="background:#2196f3;" onclick="editarID(${i})">✏️</button><button class="btn-edit" style="background:#ff9800;" onclick="editarRango(${i})">📍</button><button class="btn-edit" style="background:#f44336;" onclick="eliminarObrero(${i})">🗑️</button></div></div>`).join(''); }
+function agregarObreroManual(){ let n=prompt("ID:"); if(n&&!STAFF.some(s=>s.id==n)){ STAFF.push({id:n,rango:[]}); let s=calcularSiguiente(n); if(s)aplicarAsignacion(n,s); else save(); renderEdicion(); }}
+function editarID(i){ let n=prompt("Nuevo ID:",STAFF[i].id); if(n){ let o=STAFF[i].id; STAFF[i].id=n; AVANCE.forEach(a=>{if(a.e===o)a.e=n}); save(); renderEdicion(); }}
+function editarRango(i){ let v=prompt("Rango:"); if(v){ let r=v.includes('-')?v.split('-').map(Number):[parseInt(v),parseInt(v)]; if(!isNaN(r[0])){ cerrarFilaActual(STAFF[i].id); aplicarAsignacion(STAFF[i].id,r); renderEdicion(); }}}
+function eliminarObrero(i){ if(confirm("¿Borrar?")){ let id=STAFF[i].id; STAFF.splice(i,1); for(let k=AVANCE.length-1;k>=0;k--)if(AVANCE[k].e===id&&!AVANCE[k].fin)AVANCE.splice(k,1); save(); renderEdicion(); }}
 
-    <div style="margin-top: 20px; padding-bottom: 20px;">
-        <button class="btn-file-input" style="background:var(--danger); margin-bottom: 0;" onclick="limpiarTodoJefe()">🗑️ BORRAR TODO EL LISTADO</button>
-    </div>
+// SYNC Y ARCHIVOS
+function obtenerPayload(){ return {c:CONFIG.cuadro, r:CONFIG.resp, h:AVANCE.filter(a=>a.fin).length, t:CONFIG.end-CONFIG.start+1, s:STAFF.map(p=>{ let f=AVANCE.filter(a=>a.e==p.id&&a.fin), m=0; if(f.length){let s=Math.min(...f.map(a=>a.inicio)),e=Math.max(...f.map(a=>a.fin)); m=(e-s)/60000;} return {id:p.id, n:f.length, m:m.toFixed(1)}; })}; }
+function abrirSync(){ abrirModal('modalSync'); let pl=obtenerPayload(), j=JSON.stringify(pl); document.getElementById('qrSync').innerHTML=""; new QRCode(document.getElementById('qrSync'),{text:j,width:200,height:200}); }
+function descargarJSON(){ let b=new Blob([JSON.stringify(obtenerPayload())],{type:"application/json"}), l=document.createElement("a"); l.href=URL.createObjectURL(b); l.download=`VISOR_${CONFIG.cuadro}.json`; l.click(); }
 
-    <div class="footer-nav">
-        <button class="btn-main" onclick="sincronizarConDrive()">☁️ ENVIAR TODO A GOOGLE DRIVE</button>
-    </div>
+// REPORTES Y CSV
+function prepararReporte(){ abrirModal('modalQR'); verQR(1); document.getElementById('qr1').innerHTML=""; document.getElementById('qr2').innerHTML=""; new QRCode(document.getElementById('qr1'),{text:`R:${CONFIG.resp}|H:${AVANCE.filter(a=>a.fin).length}`,width:200,height:200}); new QRCode(document.getElementById('qr2'),{text:JSON.stringify(STAFF.map(s=>s.id)),width:200,height:200}); }
+function verQR(n){ [1,2].forEach(x=>{document.getElementById('qr'+x).classList.add('hidden');document.getElementById('tab'+x).classList.remove('active')}); document.getElementById('qr'+n).classList.remove('hidden'); document.getElementById('tab'+n).classList.add('active'); }
+function descargarExcel(){ let c="data:text/csv;charset=utf-8,ID,Cuadro,Fila,Inicio,Fin,Min\n"; AVANCE.forEach(r=>{ let i=new Date(r.inicio), f=r.fin?new Date(r.fin):null, d=f?((f-i)/60000).toFixed(2):"--"; c+=`${r.e},${CONFIG.cuadro},${r.l},${i.toLocaleTimeString()},${f?f.toLocaleTimeString():"--"},${d}\n`; }); let l=document.createElement("a"); l.href=encodeURI(c); l.download=`REP_${CONFIG.cuadro}.csv`; l.click(); }
 
-    <script>
-        const URL_DRIVE = "https://script.google.com/macros/s/AKfycbw1ETzr__9DaNydJw-bUG_T6m77ra3zhhRxr2SIZEUkvUmsGiOyeNvc_9QNcKU8mQwW/exec";
-        let DATOS_ACUMULADOS = JSON.parse(localStorage.getItem('jefe_data_v7')) || [];
-
-        const TURNOS = { "9": "Mat.", "11": "Vesp.", "16": "1 Tar.", "17": "2 Tar.", "18": "M/V", "0": "Desc." };
-
-        window.onload = () => {
-            actualizarInterfaz();
-            iniciarEscaneo();
-        };
-
-        function iniciarEscaneo() {
-            // Validación de seguridad para la cámara
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                document.getElementById('status-camera').innerText = "⚠️ ERROR: SE REQUIERE CONEXIÓN SEGURA (HTTPS)";
-                document.getElementById('status-camera').style.background = "#ffcdd2";
-                document.getElementById('status-camera').style.color = "#b71c1c";
-                return;
-            }
-
-            try {
-                const scanner = new Html5QrcodeScanner("reader", { 
-                    fps: 15, 
-                    qrbox: { width: 250, height: 250 },
-                    rememberLastUsedCamera: true,
-                    aspectRatio: 1.0
-                });
-                
-                scanner.render(alEscanear, (err) => {
-                    // Manejo silencioso
-                });
-                
-                document.getElementById('status-camera').innerText = "📷 CÁMARA ACTIVA - LISTO PARA LEER";
-                document.getElementById('status-camera').style.background = "#e8f5e9";
-                document.getElementById('status-camera').style.color = "#2e7d32";
-            } catch(e) {
-                document.getElementById('status-camera').innerText = "❌ ERROR AL INICIAR CÁMARA";
-                console.error(e);
-            }
-        }
-
-        function alEscanear(codigo) {
-            if(codigo.startsWith("AGRI_REP|")) {
-                try {
-                    const data = JSON.parse(codigo.split("|")[1]);
-                    integrarDatos(data.detalles);
-                } catch(e) {
-                    alert("Error: El código QR contiene datos dañados.");
-                }
-            } else {
-                // Si no tiene el prefijo, avisar al usuario
-                alert("⚠️ Este código no es un reporte válido de AgriCactus V7.");
-            }
-        }
-
-        function procesarArchivo(input) {
-            const file = input.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    // El archivo puede venir como objeto {detalles: [...]} o directamente como array [...]
-                    const registros = data.detalles || data;
-                    
-                    if(Array.isArray(registros)) {
-                        integrarDatos(registros);
-                        input.value = ""; // Limpiar para permitir volver a cargar el mismo archivo si se limpia
-                    } else {
-                        alert("El archivo no tiene el formato de AgriCactus esperado.");
-                    }
-                } catch(err) {
-                    alert("Error al leer el archivo. Asegúrate que sea un archivo .json válido.");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function integrarDatos(nuevosRegs) {
-            // Usamos el ID único para no duplicar gente si escanean el mismo QR dos veces
-            const existentes = new Set(DATOS_ACUMULADOS.map(d => d.id));
-            const validos = nuevosRegs.filter(n => !existentes.has(n.id));
-
-            if (validos.length === 0) {
-                alert("ℹ️ Estos registros ya se encontraban en el listado.");
-                return;
-            }
-
-            if(confirm(`Se han detectado ${validos.length} registros nuevos. ¿Deseas agregarlos al listado total?`)) {
-                DATOS_ACUMULADOS = DATOS_ACUMULADOS.concat(validos);
-                localStorage.setItem('jefe_data_v7', JSON.stringify(DATOS_ACUMULADOS));
-                actualizarInterfaz();
-                alert("✅ Registros integrados con éxito.");
-            }
-        }
-
-        function actualizarInterfaz() {
-            document.getElementById('countTotal').innerText = DATOS_ACUMULADOS.length;
-            
-            // Contar hileras únicas (combinación de cuadro, línea y lado)
-            const hilerasUnicas = new Set(DATOS_ACUMULADOS.map(d => `${d.c}-${d.l}-${d.lado}`));
-            document.getElementById('countHileras').innerText = hilerasUnicas.size;
-            
-            const cuerpo = document.getElementById('cuerpoTabla');
-            if(DATOS_ACUMULADOS.length === 0) {
-                cuerpo.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b;">Sin datos acumulados.</td></tr>';
-                return;
-            }
-
-            // Para no ralentizar el navegador, mostramos solo los últimos 50
-            const mostrar = DATOS_ACUMULADOS.slice().reverse().slice(0, 50);
-            cuerpo.innerHTML = mostrar.map(r => {
-                // Identificar si el registro está validado
-                const isValidated = r.v === 1 || r.vld === true;
-                return `
-                    <tr>
-                        <td><b>${r.e}</b></td>
-                        <td>${r.c}</td>
-                        <td>${r.l}</td>
-                        <td>${r.ak || r.a}</td>
-                        <td>${TURNOS[r.t] || r.t}</td>
-                        <td>
-                            <span class="${isValidated ? 'badge-vld' : 'badge-pend'}">
-                                ${isValidated ? 'VALIDADO' : 'MANUAL'}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        async function sincronizarConDrive() {
-            if(DATOS_ACUMULADOS.length === 0) return alert("No hay datos para enviar.");
-            if(!navigator.onLine) return alert("🛑 No tienes conexión a Internet en este momento.");
-
-            if(!confirm(`¿Deseas enviar los ${DATOS_ACUMULADOS.length} registros a la base de datos central?`)) return;
-
-            const btn = document.querySelector('.btn-main');
-            const originalText = btn.innerText;
-            btn.innerText = "⏳ ENVIANDO DATOS...";
-            btn.disabled = true;
-
-            try {
-                // Usamos fetch con modo 'no-cors' para Apps Script
-                await fetch(URL_DRIVE, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(DATOS_ACUMULADOS)
-                });
-                
-                alert("🚀 Envío completado con éxito.");
-                if(confirm("¿Deseas borrar la memoria local del Jefe para empezar un nuevo reporte?")) {
-                    DATOS_ACUMULADOS = [];
-                    localStorage.setItem('jefe_data_v7', '[]');
-                    actualizarInterfaz();
-                }
-            } catch(e) {
-                alert("❌ Error de conexión al intentar subir los datos.");
-                console.error(e);
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        function limpiarTodoJefe() {
-            if(confirm("⚠️ ¿Estás totalmente seguro de borrar TODOS los datos? Esta acción es irreversible.")) {
-                DATOS_ACUMULADOS = [];
-                localStorage.setItem('jefe_data_v7', '[]');
-                actualizarInterfaz();
-            }
-        }
-    </script>
+function save(){ localStorage.setItem('v24_staff',JSON.stringify(STAFF)); localStorage.setItem('v24_avan',JSON.stringify(AVANCE)); actualizarInterfaz(); }
+function saveDB(){ DB_C=document.getElementById('csvC').value.split('\n').map(l=>{let p=l.split(',');return{id:p[0].trim(),h:p[2]?.trim()||0}}); DB_A=document.getElementById('csvA').value.split('\n').map(l=>{let p=l.split(',');return{id:p[0].trim(),n:p[1]?.trim()||""}}); localStorage.setItem('v24_db_c',JSON.stringify(DB_C)); localStorage.setItem('v24_db_a',JSON.stringify(DB_A)); actualizarSugerencias(); cerrarModal('modalImport'); }
+function actualizarSugerencias(){ document.getElementById('lC').innerHTML=DB_C.map(c=>`<option value="${c.id}">`).join(''); document.getElementById('lA').innerHTML=DB_A.map(a=>`<option value="${a.n}">`).join(''); }
+function sugerir(){ let m=DB_C.find(c=>c.id==document.getElementById('in_cuadro').value); if(m)document.getElementById('in_rangos').value=`1-${m.h}`; }
+function regManualCheckIn(){ let v=document.getElementById('manualCheckIn').value; if(v)procesarCheckIn(v); document.getElementById('manualCheckIn').value=""; }
+function procesarCheckIn(id){ if(!STAFF.some(s=>s.id==id)){ STAFF.push({id:id,rango:[]}); save(); renderCheckInList(); } }
+function renderCheckInList(){ document.getElementById('listaCheckIn').innerHTML=STAFF.map(s=>`<div style="background:rgba(255,255,255,0.2);pad:5px;border-radius:8px;text-align:center;">${s.id}</div>`).join(''); }
+function iniciarCheckIn(){ document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.remove('hidden'); renderCheckInList(); new Html5QrcodeScanner("readerCheckIn",{fps:20,qrbox:200}).render(procesarCheckIn); }
+function pasarAMapa(){ document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden'); setTimeout(()=>{actualizarInterfaz(); new Html5QrcodeScanner("readerMain",{fps:20,qrbox:250}).render(onScanAvance);},500); }
+function regManualAvance(){ let v=document.getElementById('manualAvance').value; if(v)onScanAvance(v); document.getElementById('manualAvance').value=""; }
+function abrirModal(id){ if(id==='modalListado')renderEdicion(); document.getElementById(id).classList.remove('hidden'); }
+function cerrarModal(id){ document.getElementById(id).classList.add('hidden'); }
+</script>
 </body>
 </html>
