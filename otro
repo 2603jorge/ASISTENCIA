@@ -2,175 +2,82 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus Supervisor V1.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriCactus VISIÓN V2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --p: #1b5e20; --accent: #f57c00; --dark: #121212; --danger: #c62828; --info: #0277bd; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; background: #1a1a1a; margin: 0; padding: 10px; color: white;
-            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://raw.githubusercontent.com/tu-usuario/tu-repo/main/image_83f71e.jpg'); 
-            background-size: cover; background-attachment: fixed;
-        }
-        .glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
-        .btn { padding: 15px; border: none; border-radius: 12px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; margin-bottom: 10px; color: white; }
-        .btn-p { background: var(--p); }
-        .btn-accent { background: var(--accent); }
-        .btn-danger { background: var(--danger); }
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; font-size: 16px; }
-        .hidden { display: none !important; }
-        .stat-card { text-align: center; border-right: 1px solid rgba(255,255,255,0.1); }
-        .stat-card:last-child { border: none; }
-        #photoPreview { width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid var(--p); display: none; }
-        .worker-item { display: flex; justify-content: space-between; padding: 8px; background: rgba(0,0,0,0.2); margin-bottom: 5px; border-radius: 5px; font-size: 13px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 15px; }
+        .card { background: #1e293b; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h1, h2 { margin: 0 0 15px 0; color: #38bdf8; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #38bdf8; color: #0f172a; text-transform: uppercase; margin-bottom: 10px; }
+        .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        td, th { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
     </style>
 </head>
 <body>
-
-<div id="screenScanner">
-    <h2 style="text-align:center;">🔍 AUDITORÍA DE CAMPO</h2>
-    <div class="glass">
-        <p style="font-size: 12px; text-align: center; color: #ccc;">Escanea el QR del Cuadrillero para iniciar validación</p>
-        <div id="readerAudit" style="border-radius:15px; overflow:hidden;"></div>
-    </div>
-    <button class="btn btn-p" onclick="location.reload()">🔄 REFRESCAR CÁMARA</button>
-</div>
-
-<div id="screenValidation" class="hidden">
-    <div class="glass" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
-        <div class="stat-card"><small>LÍNEAS</small><br><b id="vLineas">0</b></div>
-        <div class="stat-card"><small>TIEMPO</small><br><b id="vMins">0</b> min</div>
-        <div class="stat-card"><small>GENTE</small><br><b id="vGente">0</b></div>
+    <h1 style="text-align:center;">👁️ VISIÓN SUPERVISOR</h1>
+    <div class="card">
+        <h2>📥 Recibir Datos</h2>
+        <button class="btn" onclick="activarEscaner()">📷 ESCANEAR QR</button>
+        <label class="btn" style="display:block; text-align:center; background:#e91e63; color:white;">
+            📂 CARGAR ARCHIVO DATOS (.JSON)
+            <input type="file" style="display:none;" onchange="cargarArchivo(this)">
+        </label>
     </div>
 
-    <div class="glass">
-        <label style="font-size: 11px;">AJUSTAR LÍNEAS REALES (Si hubo error)</label>
-        <input type="number" id="adjLineas" oninput="calcularRendimiento()">
-        
-        <label style="font-size: 11px;">CALIFICACIÓN CALIDAD (1-10)</label>
-        <select id="adjCalidad">
-            <option value="10">10 - Excelente</option>
-            <option value="8">8 - Bueno</option>
-            <option value="6">6 - Regular</option>
-            <option value="4">4 - Deficiente</option>
-        </select>
-
-        <label style="font-size: 11px;">EVIDENCIA FOTOGRÁFICA</label>
-        <input type="file" id="cameraInput" accept="image/*" capture="camera" onchange="previewPhoto()">
-        <img id="photoPreview">
-    </div>
-
-    <div class="glass" id="rendimientoBox">
-        <div style="text-align:center;">
-            <small>RENDIMIENTO CALCULADO</small><br>
-            <b id="vRendimiento" style="font-size:20px;">--</b> <small>lin/hora/per</small>
+    <div id="dashboard" class="hidden">
+        <div class="card">
+            <h2 id="lblCuadro">CUADRO: --</h2>
+            <div style="height:200px; display:flex; justify-content:center;"><canvas id="chartProgreso"></canvas></div>
         </div>
-        <textarea id="vComentarios" placeholder="Si el rendimiento es bajo, escribe aquí la razón (maleza, gente nueva, etc.)" class="hidden" style="margin-top:10px;"></textarea>
+        <div class="card">
+            <h2>🏆 Rendimiento</h2>
+            <canvas id="chartRendimiento"></canvas>
+            <br>
+            <table><thead><tr><th>ID</th><th>Filas</th><th>Min/Fila</th></tr></thead><tbody id="tblStaff"></tbody></table>
+        </div>
+        <button class="btn" style="background:#ef4444; color:white;" onclick="location.reload()">LIMPIAR</button>
     </div>
 
-    <div class="glass">
-        <label style="font-size: 11px;">PERSONAL (Toca para quitar si se descansó)</label>
-        <div id="listaValidacionPersonal"></div>
+    <div id="scannerModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black;">
+        <button onclick="document.getElementById('scannerModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; z-index:1000; padding:10px; background:red; color:white;">CERRAR</button>
+        <div id="reader" style="width:100%; height:100%;"></div>
     </div>
-
-    <button class="btn btn-accent" onclick="guardarAuditoria()">✅ APROBAR Y GUARDAR</button>
-    <button class="btn btn-danger" onclick="cancelarAuditoria()">❌ CANCELAR</button>
-</div>
 
 <script>
-let CURRENT_DATA = null;
-let HISTORIAL = JSON.parse(localStorage.getItem('sup_historial')) || [];
-
-const scanner = new Html5QrcodeScanner("readerAudit", { fps: 15, qrbox: 250 });
-scanner.render(onScanSuccess);
-
-function onScanSuccess(decodedText) {
-    try {
-        CURRENT_DATA = JSON.parse(decodedText); // [resp, cuadro, act, hechas, min, personalArray]
-        // Se asume formato del cuadrillero: {resp, cuadro, act, hechas, min, personal:[]}
-        
-        document.getElementById('screenScanner').classList.add('hidden');
-        document.getElementById('screenValidation').classList.remove('hidden');
-        
-        // Cargar datos
-        document.getElementById('vLineas').innerText = CURRENT_DATA.hechas;
-        document.getElementById('adjLineas').value = CURRENT_DATA.hechas;
-        document.getElementById('vMins').innerText = CURRENT_DATA.min || 0;
-        document.getElementById('vGente').innerText = (CURRENT_DATA.personal || []).length;
-        
-        renderPersonal();
-        calcularRendimiento();
-    } catch(e) {
-        alert("QR no válido para supervisión.");
-    }
-}
-
-function renderPersonal() {
-    const cont = document.getElementById('listaValidacionPersonal');
-    cont.innerHTML = CURRENT_DATA.personal.map((id, idx) => `
-        <div class="worker-item" onclick="quitarTrabajador(${idx})">
-            <span>👤 ${id}</span>
-            <span style="color:var(--danger)">REMOVER</span>
-        </div>
-    `).join('');
-}
-
-function quitarTrabajador(idx) {
-    if(confirm("¿Remover a este trabajador del pago de esta actividad?")) {
-        CURRENT_DATA.personal.splice(idx, 1);
-        document.getElementById('vGente').innerText = CURRENT_DATA.personal.length;
-        renderPersonal();
-        calcularRendimiento();
-    }
-}
-
-function calcularRendimiento() {
-    const h = parseFloat(document.getElementById('adjLineas').value) || 0;
-    const t = (CURRENT_DATA.min || 1) / 60; // Horas
-    const g = CURRENT_DATA.personal.length || 1;
+    let myPie, myBar;
+    function activarEscaner(){ document.getElementById('scannerModal').classList.remove('hidden'); new Html5QrcodeScanner("reader",{fps:10,qrbox:250}).render((t)=>{document.getElementById('scannerModal').classList.add('hidden'); procesar(JSON.parse(t));}); }
     
-    const rend = (h / (t * g)).toFixed(2);
-    document.getElementById('vRendimiento').innerText = rend;
-    
-    // Alerta de rendimiento bajo (ejemplo < 0.5)
-    if(rend < 0.5) {
-        document.getElementById('rendimientoBox').style.background = "rgba(198, 40, 40, 0.3)";
-        document.getElementById('vComentarios').classList.remove('hidden');
-    } else {
-        document.getElementById('rendimientoBox').style.background = "rgba(255, 255, 255, 0.1)";
-        document.getElementById('vComentarios').classList.add('hidden');
+    // NUEVA FUNCION PARA LEER EL ARCHIVO
+    function cargarArchivo(input) {
+        let file = input.files[0];
+        let reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = function() { procesar(JSON.parse(reader.result)); };
     }
-}
 
-function previewPhoto() {
-    const file = document.getElementById('cameraInput').files[0];
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = document.getElementById('photoPreview');
-        img.src = e.target.result;
-        img.style.display = 'block';
+    function procesar(data) {
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('lblCuadro').innerText = `📍 ${data.c} (${data.r})`;
+        
+        if(myPie) myPie.destroy();
+        myPie = new Chart(document.getElementById('chartProgreso'), {
+            type: 'doughnut',
+            data: { labels: ['Listo', 'Falta'], datasets: [{ data: [data.h, data.t-data.h], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth:0 }] }
+        });
+
+        let sorted = data.s.sort((a,b)=>b.n-a.n), labels=sorted.map(s=>s.id), vals=sorted.map(s=>s.n);
+        document.getElementById('tblStaff').innerHTML = sorted.map(s=>`<tr><td>${s.id}</td><td>${s.n}</td><td>${s.n>0?(s.m/s.n).toFixed(1):'--'} min</td></tr>`).join('');
+
+        if(myBar) myBar.destroy();
+        myBar = new Chart(document.getElementById('chartRendimiento'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label:'Filas', data: vals, backgroundColor: '#f59e0b', borderRadius:5 }] },
+            options: { scales: { y: { beginAtZero: true, grid:{color:'#334155'} }, x: { display: false } }, plugins: { legend: { display: false } } }
+        });
     }
-    reader.readAsDataURL(file);
-}
-
-function guardarAuditoria() {
-    const finalData = {
-        ...CURRENT_DATA,
-        hechasReal: document.getElementById('adjLineas').value,
-        calidad: document.getElementById('adjCalidad').value,
-        comentarios: document.getElementById('vComentarios').value,
-        timestamp: Date.now(),
-        rendimiento: document.getElementById('vRendimiento').innerText
-    };
-    
-    HISTORIAL.push(finalData);
-    localStorage.setItem('sup_historial', JSON.stringify(HISTORIAL));
-    alert("Auditoría guardada con éxito.");
-    location.reload();
-}
-
-function cancelarAuditoria() { if(confirm("¿Salir sin guardar?")) location.reload(); }
 </script>
 </body>
 </html>
