@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriCactus VISIÓN V2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 15px; }
+        .card { background: #1e293b; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h1, h2 { margin: 0 0 15px 0; color: #38bdf8; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #38bdf8; color: #0f172a; text-transform: uppercase; margin-bottom: 10px; }
+        .hidden { display: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        td, th { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">👁️ VISIÓN SUPERVISOR</h1>
+    <div class="card">
+        <h2>📥 Recibir Datos</h2>
+        <button class="btn" onclick="activarEscaner()">📷 ESCANEAR QR</button>
+        <label class="btn" style="display:block; text-align:center; background:#e91e63; color:white;">
+            📂 CARGAR ARCHIVO DATOS (.JSON)
+            <input type="file" style="display:none;" onchange="cargarArchivo(this)">
+        </label>
+    </div>
+
+    <div id="dashboard" class="hidden">
+        <div class="card">
+            <h2 id="lblCuadro">CUADRO: --</h2>
+            <div style="height:200px; display:flex; justify-content:center;"><canvas id="chartProgreso"></canvas></div>
+        </div>
+        <div class="card">
+            <h2>🏆 Rendimiento</h2>
+            <canvas id="chartRendimiento"></canvas>
+            <br>
+            <table><thead><tr><th>ID</th><th>Filas</th><th>Min/Fila</th></tr></thead><tbody id="tblStaff"></tbody></table>
+        </div>
+        <button class="btn" style="background:#ef4444; color:white;" onclick="location.reload()">LIMPIAR</button>
+    </div>
+
+    <div id="scannerModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black;">
+        <button onclick="document.getElementById('scannerModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; z-index:1000; padding:10px; background:red; color:white;">CERRAR</button>
+        <div id="reader" style="width:100%; height:100%;"></div>
+    </div>
+
+<script>
+    let myPie, myBar;
+    function activarEscaner(){ document.getElementById('scannerModal').classList.remove('hidden'); new Html5QrcodeScanner("reader",{fps:10,qrbox:250}).render((t)=>{document.getElementById('scannerModal').classList.add('hidden'); procesar(JSON.parse(t));}); }
+    
+    // NUEVA FUNCION PARA LEER EL ARCHIVO
+    function cargarArchivo(input) {
+        let file = input.files[0];
+        let reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = function() { procesar(JSON.parse(reader.result)); };
+    }
+
+    function procesar(data) {
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('lblCuadro').innerText = `📍 ${data.c} (${data.r})`;
+        
+        if(myPie) myPie.destroy();
+        myPie = new Chart(document.getElementById('chartProgreso'), {
+            type: 'doughnut',
+            data: { labels: ['Listo', 'Falta'], datasets: [{ data: [data.h, data.t-data.h], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth:0 }] }
+        });
+
+        let sorted = data.s.sort((a,b)=>b.n-a.n), labels=sorted.map(s=>s.id), vals=sorted.map(s=>s.n);
+        document.getElementById('tblStaff').innerHTML = sorted.map(s=>`<tr><td>${s.id}</td><td>${s.n}</td><td>${s.n>0?(s.m/s.n).toFixed(1):'--'} min</td></tr>`).join('');
+
+        if(myBar) myBar.destroy();
+        myBar = new Chart(document.getElementById('chartRendimiento'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label:'Filas', data: vals, backgroundColor: '#f59e0b', borderRadius:5 }] },
+            options: { scales: { y: { beginAtZero: true, grid:{color:'#334155'} }, x: { display: false } }, plugins: { legend: { display: false } } }
+        });
+    }
+</script>
+</body>
+</html>
