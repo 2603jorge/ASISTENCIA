@@ -66,10 +66,13 @@
 let CONFIG=JSON.parse(localStorage.getItem('v24_conf'))||null, STAFF=JSON.parse(localStorage.getItem('v24_staff'))||[], AVANCE=JSON.parse(localStorage.getItem('v24_avan'))||[], DB_C=JSON.parse(localStorage.getItem('v24_db_c'))||[], DB_A=JSON.parse(localStorage.getItem('v24_db_a'))||[];
 const audio=new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 let tempID=null, tempSugerencia=[];
+// CORRECCIÓN: Variable global para el control de cámara
+let html5QrcodeScanner = null;
 
 window.onload=()=>{ actualizarSugerencias(); toggleBloqueInput(); if(CONFIG){ if(STAFF.length<CONFIG.gente) iniciarCheckIn(); else pasarAMapa(); }};
 function toggleBloqueInput(){ document.getElementById('divBloqueConfig').style.display = (document.getElementById('in_modo').value === 'BLOQUE') ? 'block' : 'none'; }
 function nuevoCuadroRapido(){ if(confirm("¿Cerrar cuadro?")){ AVANCE.forEach(a=>{if(!a.fin)a.fin=Date.now()}); STAFF.forEach(s=>s.rango=[]); save(); document.getElementById('mainUI').classList.add('hidden'); document.getElementById('screenSetup').classList.remove('hidden'); }}
+
 function iniciarMision(){
     let rInput=document.getElementById('in_rangos').value, modo=document.getElementById('in_modo').value;
     if(!rInput.includes('-'))return alert("Formato: 1-50");
@@ -78,6 +81,7 @@ function iniciarMision(){
     localStorage.setItem('v24_conf', JSON.stringify(CONFIG));
     if(STAFF.length<CONFIG.gente) iniciarCheckIn(); else autoAsignarYPasar();
 }
+
 function calcularSiguiente(id){
     if(CONFIG.modo==='PAREJA'){
         for(let i=CONFIG.start; i<=CONFIG.end; i++){ if(AVANCE.some(a=>a.l===i&&a.fin))continue; if(STAFF.filter(s=>s.rango&&s.rango.includes(i)).length<2) return [i,i]; }
@@ -86,6 +90,7 @@ function calcularSiguiente(id){
         let ns=max+1, ne=Math.min(ns+CONFIG.bloque-1, CONFIG.end); if(ns<=CONFIG.end) return [ns,ne];
     } return null;
 }
+
 function onScanAvance(id){ let p=STAFF.find(x=>x.id==id.trim()); if(!p)return alert("Error ID"); audio.play(); tempID=p.id; document.getElementById('decID').innerText=tempID; document.getElementById('decTermino').innerText=p.rango?.join('-')||"Nada"; tempSugerencia=calcularSiguiente(tempID); document.getElementById('decSug').innerText=tempSugerencia?tempSugerencia.join('-'):"FIN"; abrirModal('modalDecision'); }
 function cerrarFilaActual(id){ let p=STAFF.find(x=>x.id==id); if(p.rango?.length){ AVANCE.forEach(a=>{if(p.rango.includes(a.l)&&!a.fin)a.fin=Date.now()}); p.rango=[]; } }
 function aplicarAsignacion(id, r){ STAFF.find(s=>s.id==id).rango=r; for(let i=r[0]; i<=r[1]; i++) AVANCE.push({e:id, l:i, inicio:Date.now(), fin:null, act:CONFIG.act}); save(); }
@@ -93,6 +98,7 @@ function confirmarSugerencia(){ if(!tempSugerencia)return; cerrarFilaActual(temp
 function confirmarManual(){ let v=document.getElementById('decManualInput').value, r=v.includes('-')?v.split('-').map(Number):[parseInt(v),parseInt(v)]; if(!isNaN(r[0])){ cerrarFilaActual(tempID); aplicarAsignacion(tempID, r); document.getElementById('decManualInput').value=""; cerrarModal('modalDecision'); } }
 function avanceMasivo(){ if(!confirm("¿Mover TODOS?"))return; STAFF.forEach(p=>cerrarFilaActual(p.id)); STAFF.forEach(p=>{let s=calcularSiguiente(p.id); if(s)aplicarAsignacion(p.id,s)}); save(); }
 function autoAsignarYPasar(){ if(AVANCE.length===0) STAFF.forEach(p=>{let s=calcularSiguiente(p.id); if(s)aplicarAsignacion(p.id,s)}); save(); pasarAMapa(); }
+
 function actualizarInterfaz(){
     document.getElementById('statH').innerText=new Set(AVANCE.filter(a=>a.fin).map(a=>a.l)).size+"/"+(CONFIG.end-CONFIG.start+1); document.getElementById('statP').innerText=STAFF.length; document.getElementById('dispC').innerText=CONFIG.cuadro; document.getElementById('dispModo').innerText=CONFIG.modo;
     let m=document.getElementById('mapaHileras'); m.innerHTML="";
@@ -102,6 +108,7 @@ function actualizarInterfaz(){
         m.appendChild(d);
     }
 }
+
 function renderEdicion(){ document.getElementById('listaEdicionUI').innerHTML=STAFF.map((s,i)=>`<div class="edit-card"><b>${s.id}</b> (${s.rango?.join('-')||'Wait'}) <div class="action-row"><button class="btn-edit" style="background:#2196f3;" onclick="editarID(${i})">✏️</button><button class="btn-edit" style="background:#ff9800;" onclick="editarRango(${i})">📍</button><button class="btn-edit" style="background:#f44336;" onclick="eliminarObrero(${i})">🗑️</button></div></div>`).join(''); }
 function agregarObreroManual(){ let n=prompt("ID:"); if(n&&!STAFF.some(s=>s.id==n)){ STAFF.push({id:n,rango:[]}); let s=calcularSiguiente(n); if(s)aplicarAsignacion(n,s); else save(); renderEdicion(); }}
 function editarID(i){ let n=prompt("Nuevo ID:",STAFF[i].id); if(n){ let o=STAFF[i].id; STAFF[i].id=n; AVANCE.forEach(a=>{if(a.e===o)a.e=n}); save(); renderEdicion(); }}
@@ -125,8 +132,53 @@ function sugerir(){ let m=DB_C.find(c=>c.id==document.getElementById('in_cuadro'
 function regManualCheckIn(){ let v=document.getElementById('manualCheckIn').value; if(v)procesarCheckIn(v); document.getElementById('manualCheckIn').value=""; }
 function procesarCheckIn(id){ if(!STAFF.some(s=>s.id==id)){ STAFF.push({id:id,rango:[]}); save(); renderCheckInList(); } }
 function renderCheckInList(){ document.getElementById('listaCheckIn').innerHTML=STAFF.map(s=>`<div style="background:rgba(255,255,255,0.2);pad:5px;border-radius:8px;text-align:center;">${s.id}</div>`).join(''); }
-function iniciarCheckIn(){ document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.remove('hidden'); renderCheckInList(); new Html5QrcodeScanner("readerCheckIn",{fps:20,qrbox:200}).render(procesarCheckIn); }
-function pasarAMapa(){ document.getElementById('screenSetup').classList.add('hidden'); document.getElementById('screenCheckIn').classList.add('hidden'); document.getElementById('mainUI').classList.remove('hidden'); setTimeout(()=>{actualizarInterfaz(); new Html5QrcodeScanner("readerMain",{fps:20,qrbox:250}).render(onScanAvance);},500); }
+
+// ==========================================
+// CORRECCIÓN PRINCIPAL: FUNCIONES DE CÁMARA
+// ==========================================
+
+function iniciarCheckIn(){
+    document.getElementById('screenSetup').classList.add('hidden');
+    document.getElementById('screenCheckIn').classList.remove('hidden');
+    renderCheckInList();
+    
+    // Limpieza de cámara anterior
+    if(html5QrcodeScanner) { 
+        html5QrcodeScanner.clear().catch(err => console.error("Error limpieza:", err));
+    }
+    
+    // Nueva instancia para Registro
+    html5QrcodeScanner = new Html5QrcodeScanner("readerCheckIn", { fps: 10, qrbox: 200 });
+    html5QrcodeScanner.render(procesarCheckIn);
+}
+
+function pasarAMapa(){
+    // IMPORTANTE: Detener cámara de registro antes de iniciar la de mapa
+    if(html5QrcodeScanner) { 
+        html5QrcodeScanner.clear().then(() => {
+            iniciarCamaraMapa();
+        }).catch(err => {
+            console.error("Error al limpiar cámara", err);
+            iniciarCamaraMapa(); // Intentamos forzar el avance
+        });
+    } else {
+        iniciarCamaraMapa();
+    }
+}
+
+function iniciarCamaraMapa(){
+    document.getElementById('screenSetup').classList.add('hidden');
+    document.getElementById('screenCheckIn').classList.add('hidden');
+    document.getElementById('mainUI').classList.remove('hidden');
+    
+    setTimeout(()=>{
+        actualizarInterfaz();
+        // Nueva instancia para Mapa (readerMain)
+        html5QrcodeScanner = new Html5QrcodeScanner("readerMain", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanAvance);
+    }, 500);
+}
+
 function regManualAvance(){ let v=document.getElementById('manualAvance').value; if(v)onScanAvance(v); document.getElementById('manualAvance').value=""; }
 function abrirModal(id){ if(id==='modalListado')renderEdicion(); document.getElementById(id).classList.remove('hidden'); }
 function cerrarModal(id){ document.getElementById(id).classList.add('hidden'); }
