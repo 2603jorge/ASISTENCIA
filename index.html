@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V31 - Ciclo Completo</title>
+    <title>AgriCactus V32 - Stable Scan</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
         
-        /* Estilos Base */
+        /* UI Elements */
         .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
         .btn-g { background: var(--main); }
         .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); }
         .btn-r { background: var(--danger); }
+        .btn-sm { padding: 8px; width: auto; font-size: 12px; margin: 0; }
         
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
-        input:focus { border-color: var(--sec); outline: none; background: #333; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
 
         /* Mapa Grid */
@@ -29,11 +29,12 @@
         .row-tag { font-size: 8px; position: absolute; bottom: 1px; width: 100%; text-align: center; }
         .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 8px; padding: 2px 4px; border-radius: 0 0 0 5px; }
         
+        /* Editor List */
+        .edit-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #444; }
+
         /* Modales */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
-        .status-bar { font-size: 12px; text-align: center; color: #888; padding: 8px; background: #222; border-radius: 6px; margin-bottom: 15px; border: 1px dashed #444; }
-        
         .flex-row { display: flex; gap: 10px; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
@@ -41,8 +42,7 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main); margin-top:0;">🌵 AGRICACTUS V31</h2>
-    <div class="status-bar" id="dbStatus">Cargando datos...</div>
+    <h2 style="text-align:center; color: var(--main);">🌵 AGRICACTUS V32</h2>
     <button class="btn btn-b" style="padding:10px;" onclick="abrirDB()">📂 CARGAR CATÁLOGOS</button>
 
     <div class="card">
@@ -57,31 +57,23 @@
         <div class="flex-row">
             <div style="flex:1">
                 <label>Lado</label>
-                <select id="conf_lado">
-                    <option value="COMPLETA">COMPLETA</option>
-                    <option value="NORTE">NORTE</option>
-                    <option value="SUR">SUR</option>
-                </select>
+                <select id="conf_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select>
             </div>
             <div style="flex:1">
-                <label>🔍 Actividad</label>
-                <input type="text" id="conf_act" list="lista_actividades" placeholder="Buscar...">
+                <label>Actividad</label>
+                <input type="text" id="conf_act" list="lista_actividades">
                 <datalist id="lista_actividades"></datalist>
             </div>
         </div>
         
-        <label style="color:var(--sec);">🕒 TIPO DE JORNADA</label>
-        <select id="conf_jornada" style="border: 1px solid var(--sec);">
-            <option value="">-- Cargar Lista Jornadas --</option>
-        </select>
+        <label style="color:var(--sec);">🕒 JORNADA</label>
+        <select id="conf_jornada"><option value="">-- Cargar Lista --</option></select>
 
-        <label>RANGO DE TRABAJO (HILERAS)</label>
+        <label>RANGO DE TRABAJO</label>
         <div class="flex-row">
             <input type="number" id="conf_inicio" placeholder="Desde">
             <input type="number" id="conf_fin" placeholder="Hasta">
         </div>
-
-        <hr style="border-color:#333; margin: 15px 0;">
 
         <label>🛠️ MODO ASIGNACIÓN</label>
         <select id="conf_modo" onchange="toggleModoInput('conf')">
@@ -94,7 +86,7 @@
         </div>
     </div>
 
-    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR PRIMERA ACTIVIDAD</button>
+    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR</button>
 </div>
 
 <div id="viewMain" class="modal">
@@ -126,89 +118,64 @@
         <div id="mapGrid" class="grid-map"></div>
     </div>
 
-    <button class="btn btn-o" onclick="abrirAvanceMasivo()">🔄 SIGUIENTE ACTIVIDAD</button>
+    <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR / CORREGIR (VER LISTA)</button>
     
     <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirReportes()">📊 VER PARCIAL</button>
-        <button class="btn btn-r" onclick="finalizarDia()">🏁 FINALIZAR DÍA (CERRAR)</button>
+        <button class="btn btn-o" onclick="abrirAvanceMasivo()">⏩ CAMBIO MASIVO</button>
+        <button class="btn btn-b" onclick="descargarReporte('ASISTENCIA')">📊 VER PARCIAL</button>
     </div>
+    <button class="btn btn-r" onclick="finalizarDia()">🏁 FINALIZAR DÍA (CERRAR)</button>
+</div>
+
+<div id="modalEditor" class="modal" style="background:#111;">
+    <h2>✏️ CORRECCIÓN DE DATOS</h2>
+    <p style="font-size:12px; color:#aaa;">Aquí puedes cambiar la fila asignada o borrar un registro erróneo de la sesión actual.</p>
+    <div id="editorList" style="max-height: 400px; overflow-y: auto;"></div>
+    <button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">VOLVER</button>
 </div>
 
 <div id="modalMass" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--sec); text-align:center;">🔄 SIGUIENTE ACTIVIDAD</h2>
-    <p style="text-align:center; font-size:12px; color:#ccc;">Se cerrará la actividad actual y se moverá a todo el personal a la nueva configuración.</p>
+    <h2 style="color:var(--sec); text-align:center;">⏩ CAMBIO DE CUADRO/ACT</h2>
     
     <div class="card">
         <label>Siguiente Cuadro</label>
         <input type="text" id="mass_cuadro" list="lista_cuadros" placeholder="Buscar..." oninput="alEscribirCuadro('mass')">
-        
         <div class="flex-row">
             <div style="flex:1"><label>Lado</label><select id="mass_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div>
             <div style="flex:1"><label>Actividad</label><input type="text" id="mass_act" list="lista_actividades"></div>
         </div>
-
-        <label style="color:var(--sec);">Jornada (Opcional cambio)</label>
-        <select id="mass_jornada"></select>
-
+        <label>Jornada</label><select id="mass_jornada"></select>
         <label>Nuevo Rango</label>
-        <div class="flex-row">
-            <input type="number" id="mass_inicio" placeholder="Desde">
-            <input type="number" id="mass_fin" placeholder="Hasta">
-        </div>
-
-        <label>Modo</label>
-        <select id="mass_modo" onchange="toggleModoInput('mass')">
-            <option value="INDIVIDUAL">INDIVIDUAL</option>
-            <option value="PAREJAS">PAREJAS</option>
-        </select>
-        <div id="div_tarea_mass">
-            <label>Filas</label>
-            <input type="number" id="mass_tarea_size" value="1">
-        </div>
+        <div class="flex-row"><input type="number" id="mass_inicio" placeholder="Desde"><input type="number" id="mass_fin" placeholder="Hasta"></div>
+        <label>Modo</label><select id="mass_modo" onchange="toggleModoInput('mass')"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="PAREJAS">PAREJAS</option></select>
+        <div id="div_tarea_mass"><label>Filas</label><input type="number" id="mass_tarea_size" value="1"></div>
     </div>
-
-    <button class="btn btn-g" onclick="ejecutarCambioActividad()">✅ INICIAR NUEVA ACTIVIDAD</button>
+    <button class="btn btn-g" onclick="ejecutarCambioActividad()">✅ MOVER A TODOS</button>
     <button class="btn btn-r" onclick="document.getElementById('modalMass').classList.remove('open')">CANCELAR</button>
-</div>
-
-<div id="modalReports" class="modal">
-    <h2 style="text-align:center;">📊 AVANCE PARCIAL</h2>
-    <div class="card">
-        <p style="font-size:12px; color:#aaa;">Reportes preliminares. Usa "Finalizar Día" para el cierre oficial.</p>
-        <button class="btn btn-b" onclick="descargarReporte('ASISTENCIA')">🕒 PRE-NOMINA (Asistencia)</button>
-        <button class="btn btn-o" onclick="descargarReporte('SUPERVISOR')">📄 DETALLE CAMPO</button>
-    </div>
-    <button class="btn" onclick="document.getElementById('modalReports').classList.remove('open')">VOLVER</button>
 </div>
 
 <div id="modalDB" class="modal" style="background:#111;">
     <h3>📂 Carga de Catálogos</h3>
-    
-    <label>1. CUADROS (ID, CUADRO, VARIEDAD, ORI, AREA, LINEAS)</label>
-    <textarea id="csv_cuadros" rows="3" placeholder="Pega desde Excel..."></textarea>
-    
-    <label>2. ACTIVIDADES (ID, DESC, CLAVE)</label>
-    <textarea id="csv_act" rows="3" placeholder="Pega desde Excel..."></textarea>
-
-    <label style="color:var(--sec);">3. JORNADAS (ID, DESCRIPCION)</label>
-    <textarea id="csv_jor" rows="3" placeholder="Ej: 8, DESAYUNO..."></textarea>
-
-    <button class="btn btn-g" onclick="procesarYGuardar()">💾 GUARDAR TODO</button>
+    <label>1. CUADROS</label><textarea id="csv_cuadros" rows="2"></textarea>
+    <label>2. ACTIVIDADES</label><textarea id="csv_act" rows="2"></textarea>
+    <label>3. JORNADAS</label><textarea id="csv_jor" rows="2"></textarea>
+    <button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button>
     <button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button>
 </div>
 
 <script>
-    // --- ESTADO DE LA APP ---
+    // --- ESTADO ---
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v31_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v31_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v31_jornadas')) || [],
-        sesion: JSON.parse(localStorage.getItem('v31_sesion')) || null,
-        avance: JSON.parse(localStorage.getItem('v31_avance')) || [],
-        historial: JSON.parse(localStorage.getItem('v31_historial')) || [],
-        staff: JSON.parse(localStorage.getItem('v31_staff')) || []
+        cuadros: JSON.parse(localStorage.getItem('v32_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v32_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v32_jornadas')) || [],
+        sesion: JSON.parse(localStorage.getItem('v32_sesion')) || null,
+        avance: JSON.parse(localStorage.getItem('v32_avance')) || [],
+        historial: JSON.parse(localStorage.getItem('v32_historial')) || [],
+        staff: JSON.parse(localStorage.getItem('v32_staff')) || []
     };
     let scanner = null;
+    let lastScanTime = {}; // Para evitar rebotes
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
     window.onload = () => {
@@ -217,9 +184,8 @@
         if (DB.sesion && DB.sesion.activo) irAlMapa();
     };
 
-    // --- UTILS ---
+    // --- SETUP & UTILS ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
-    function abrirReports() { document.getElementById('modalReports').classList.add('open'); }
     function toggleModoInput(prefix) {
         let modo = document.getElementById(prefix + '_modo').value;
         document.getElementById('div_tarea_' + prefix).style.display = (modo === 'INDIVIDUAL') ? 'block' : 'none';
@@ -234,10 +200,9 @@
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
 
-        localStorage.setItem('v31_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v31_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v31_jornadas', JSON.stringify(DB.jornadas));
-        
+        localStorage.setItem('v32_cuadros', JSON.stringify(DB.cuadros));
+        localStorage.setItem('v32_act', JSON.stringify(DB.actividades));
+        localStorage.setItem('v32_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         alert("✅ Datos Actualizados");
         document.getElementById('modalDB').classList.remove('open');
@@ -259,10 +224,7 @@
         const val = document.getElementById(prefix+'_cuadro').value;
         const data = DB.cuadros.find(c => c.nombre === val);
         if(data) {
-            if(prefix==='conf') {
-                document.getElementById('conf_id_interno').innerText = data.id;
-                document.getElementById('conf_info_total').innerText = data.max;
-            }
+            if(prefix==='conf') { document.getElementById('conf_id_interno').innerText = data.id; document.getElementById('conf_info_total').innerText = data.max; }
             document.getElementById(prefix+'_inicio').value = 1;
             document.getElementById(prefix+'_fin').value = data.max;
             let lado = 'COMPLETA';
@@ -283,7 +245,6 @@
         const fin = parseInt(document.getElementById(prefix+'_fin').value);
 
         if(!cNombre || !jNombre || isNaN(ini)) return alert("Faltan datos obligatorios.");
-
         const cObj = DB.cuadros.find(x => x.nombre === cNombre);
         const aObj = DB.actividades.find(x => x.desc === aNombre);
         
@@ -302,12 +263,7 @@
             activo: true
         };
         
-        if(prefix === 'conf') {
-            DB.avance = [];
-            DB.historial = [];
-            DB.staff = [];
-        }
-        
+        if(prefix === 'conf') { DB.avance = []; DB.historial = []; DB.staff = []; }
         guardarTodo();
         irAlMapa();
     }
@@ -316,32 +272,37 @@
         document.getElementById('viewSetup').classList.remove('open');
         document.getElementById('modalMass').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
-        
         document.getElementById('disp_cuadro').innerText = `${DB.sesion.nomCuadro}`;
         document.getElementById('disp_act').innerText = DB.sesion.nomActividad;
         document.getElementById('disp_jornada').innerText = DB.sesion.jornada;
         document.getElementById('disp_rango').innerText = `Hileras ${DB.sesion.inicio} - ${DB.sesion.fin}`;
-
         renderMapa();
+        
         if(!scanner) {
             scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
             scanner.render(onScan);
         }
     }
 
-    // --- OPERACIÓN ---
+    // --- LOGICA DE ESCANEO ANTI-REBOTE ---
     function onScan(id) {
         id = id.trim();
+        let now = Date.now();
+
+        // COOLDOWN: Si pasaron menos de 3000ms (3 segundos) desde el último scan de ESTA MISMA credencial, ignorar.
+        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) {
+            console.log("Scan ignorado por rebote: " + id);
+            return;
+        }
+        lastScanTime[id] = now; // Actualizar tiempo
+
         let trabajador = DB.staff.find(s => s.id === id);
 
         if(trabajador && trabajador.fila) {
             cerrarTarea(trabajador);
             audioBeep.play();
         } else {
-            if(!trabajador) {
-                trabajador = { id: id, fila: null };
-                DB.staff.push(trabajador);
-            }
+            if(!trabajador) { trabajador = { id: id, fila: null }; DB.staff.push(trabajador); }
             asignarNuevaTarea(trabajador);
             audioBeep.play();
         }
@@ -372,11 +333,7 @@
                 for(let k=0; k<size; k++) {
                     if(DB.avance.some(a => a.fila === (i+k))) { bloqueLibre=false; break; }
                 }
-                if(bloqueLibre) {
-                    filaInicio = i;
-                    for(let k=0; k<size; k++) filasAsignadas.push(i+k);
-                    break;
-                }
+                if(bloqueLibre) { filaInicio = i; for(let k=0; k<size; k++) filasAsignadas.push(i+k); break; }
             }
         }
 
@@ -384,16 +341,8 @@
             trabajador.fila = filaInicio;
             filasAsignadas.forEach(f => {
                 DB.avance.push({
-                    fila: f,
-                    obrero: trabajador.id,
-                    inicio: new Date().toLocaleTimeString(),
-                    ts_inicio: Date.now(),
-                    fin: null,
-                    idCuadro: DB.sesion.idCuadro, 
-                    nomCuadro: DB.sesion.nomCuadro,
-                    idActividad: DB.sesion.idActividad,
-                    jornada: DB.sesion.jornada,
-                    lado: DB.sesion.lado
+                    fila: f, obrero: trabajador.id, inicio: new Date().toLocaleTimeString(), ts_inicio: Date.now(), fin: null,
+                    idCuadro: DB.sesion.idCuadro, nomCuadro: DB.sesion.nomCuadro, idActividad: DB.sesion.idActividad, jornada: DB.sesion.jornada, lado: DB.sesion.lado
                 });
             });
         } else {
@@ -401,61 +350,87 @@
         }
     }
 
-    // --- FLUJO: CAMBIO DE ACTIVIDAD ---
+    // --- EDITOR MANUAL ---
+    function abrirEditor() {
+        const list = document.getElementById('editorList');
+        list.innerHTML = "";
+        
+        // Mostrar solo registros activos (sin hora fin)
+        const activos = DB.avance.filter(a => !a.fin);
+        
+        if(activos.length === 0) list.innerHTML = "<p style='color:#aaa; text-align:center;'>No hay gente trabajando ahora.</p>";
+
+        activos.forEach((rec, idx) => {
+            // Buscamos el índice real en el array principal para editarlo
+            let realIdx = DB.avance.indexOf(rec);
+            
+            list.innerHTML += `
+            <div class="edit-item">
+                <div>
+                    <b style="color:var(--sec);">${rec.obrero}</b><br>
+                    <small>Fila Actual: ${rec.fila}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-b" onclick="cambiarFilaManual(${realIdx})">CAMBIAR FILA</button>
+                    <button class="btn btn-sm btn-r" onclick="borrarRegistro(${realIdx}, '${rec.obrero}')">BORRAR</button>
+                </div>
+            </div>`;
+        });
+        document.getElementById('modalEditor').classList.add('open');
+    }
+
+    function cambiarFilaManual(idx) {
+        let nueva = prompt("Ingresa el nuevo número de fila:");
+        if(nueva && !isNaN(nueva)) {
+            DB.avance[idx].fila = parseInt(nueva);
+            guardarTodo();
+            abrirEditor(); // Refrescar lista
+            renderMapa();
+        }
+    }
+
+    function borrarRegistro(idx, idObrero) {
+        if(confirm("¿Eliminar este registro?")) {
+            DB.avance.splice(idx, 1);
+            // También liberar al staff
+            let st = DB.staff.find(s => s.id === idObrero);
+            if(st) st.fila = null;
+            
+            guardarTodo();
+            abrirEditor();
+            renderMapa();
+        }
+    }
+
+    // --- CAMBIO MASIVO ---
     function abrirAvanceMasivo() { 
         document.getElementById('mass_jornada').value = DB.sesion.jornada;
         document.getElementById('modalMass').classList.add('open'); 
     }
 
     function ejecutarCambioActividad() {
-        if(!confirm("¿Cerrar actividad actual e iniciar la siguiente?")) return;
-        
-        // 1. Cerrar Relojes Actuales
+        if(!confirm("¿Mover a todos al nuevo cuadro/actividad?")) return;
         let ahora = new Date().toLocaleTimeString();
         let ts = Date.now();
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
-        
-        // 2. Mover a Historial
         DB.historial = DB.historial.concat(DB.avance);
         DB.avance = [];
-        
-        // 3. Configurar Nueva Actividad
         configurarSesion('mass');
-        
-        // 4. Reasignar Staff Activo
         DB.staff.forEach(s => { s.fila = null; asignarNuevaTarea(s); });
-        
-        alert("✅ Cambio de actividad exitoso.");
         guardarTodo();
         renderMapa();
     }
 
-    // --- FLUJO: FIN DE DÍA (CIERRE TOTAL) ---
+    // --- CIERRE ---
     function finalizarDia() {
-        if(!confirm("🛑 ¿ESTÁS SEGURO DE TERMINAR EL DÍA?\n\nEsto cerrará todos los registros y descargará los reportes finales.")) return;
-
-        // 1. Cerrar Todo
+        if(!confirm("🛑 ¿FINALIZAR DÍA? Se descargarán los reportes.")) return;
         let ahora = new Date().toLocaleTimeString();
         let ts = Date.now();
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
-        
-        // 2. Unificar Historial
         DB.historial = DB.historial.concat(DB.avance);
         DB.avance = [];
-
-        // 3. DESCARGA AUTOMÁTICA
         descargarReporte('ASISTENCIA');
-        setTimeout(() => descargarReporte('SUPERVISOR'), 1000); // Pequeño delay para que no se bloqueen
-
-        alert("🏁 DÍA FINALIZADO.\nLos reportes se han descargado.\nLa aplicación se reiniciará.");
-        
-        // 4. Limpieza (Opcional: borrar historial del día para empezar fresco mañana)
-        localStorage.removeItem('v31_sesion');
-        localStorage.removeItem('v31_avance');
-        localStorage.removeItem('v31_historial');
-        localStorage.removeItem('v31_staff');
-        
-        location.reload();
+        setTimeout(() => location.reload(), 2000);
     }
 
     function renderMapa() {
@@ -470,7 +445,6 @@
             div.className = "row-item";
             let gente = DB.avance.filter(a => a.fila === i && !a.fin).map(a => a.obrero);
             let done = terminadas.has(i) && gente.length === 0;
-
             div.innerHTML = `<span>${i}</span>`;
             if(done) div.className += " done";
             else if(gente.length > 0) {
@@ -480,20 +454,20 @@
             }
             grid.appendChild(div);
         }
-        
         let total = DB.sesion.fin - DB.sesion.inicio + 1;
         document.getElementById('stat_done').innerText = Math.round((terminadas.size/total)*100) + "%";
         document.getElementById('stat_active').innerText = personasActivas;
     }
 
     function guardarTodo() {
-        localStorage.setItem('v31_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v31_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v31_historial', JSON.stringify(DB.historial));
-        localStorage.setItem('v31_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v32_sesion', JSON.stringify(DB.sesion));
+        localStorage.setItem('v32_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v32_historial', JSON.stringify(DB.historial));
+        localStorage.setItem('v32_staff', JSON.stringify(DB.staff));
     }
 
     function descargarReporte(tipo) {
+        // CORRECCIÓN: Unimos historial + avance actual para el reporte parcial
         let data = DB.historial.concat(DB.avance);
         let csv = "";
         let filename = "";
@@ -514,12 +488,6 @@
                 csv += `${parts[0]},${parts[1]},${parts[2]},${parts[3]},${entrada},${salida}\n`;
             });
             filename = `ASISTENCIA_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`;
-        } else {
-            csv = "CUADRO_NOMBRE,ID_CUADRO,LADO,ACT_NOMBRE,ID_ACT,JORNADA,FILA,OBRERO,INICIO,FIN\n";
-            data.forEach(r => {
-                csv += `${r.nomCuadro},${r.idCuadro},${r.lado},${DB.actividades.find(a=>a.id==r.idActividad)?.desc||r.idActividad},${r.idActividad},${r.jornada},${r.fila},${r.obrero},${r.inicio},${r.fin||'--'}\n`;
-            });
-            filename = `CAMPO_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`;
         }
         let blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
         let link = document.createElement("a");
