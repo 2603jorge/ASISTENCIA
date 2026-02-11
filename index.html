@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V35 - Flujo Continuo</title>
+    <title>AgriCactus V36 - Manual & Auto-Move</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; }
@@ -17,7 +17,6 @@
         .btn-b { background: var(--blue); }
         .btn-r { background: var(--danger); }
         .btn-p { background: var(--purple); }
-        .btn-sm { padding: 8px; width: auto; font-size: 11px; margin: 0; }
         
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
@@ -29,6 +28,11 @@
         .row-tag { font-size: 8px; position: absolute; bottom: 1px; width: 100%; text-align: center; }
         .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 8px; padding: 2px 4px; border-radius: 0 0 0 5px; }
         
+        /* Contenedor Entrada Manual */
+        .manual-box { display: flex; gap: 5px; background: #222; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #444; }
+        .manual-box input { margin: 0; flex: 1; }
+        .manual-box button { width: auto; padding: 0 20px; margin: 0; }
+
         .toggle-container { display: flex; align-items: center; justify-content: space-between; background: #333; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #555; }
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -47,7 +51,7 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V35</h2>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V36</h2>
     <button class="btn btn-b" style="padding:10px;" onclick="abrirDB()">📂 CARGAR CATÁLOGOS</button>
 
     <div class="card">
@@ -65,12 +69,8 @@
         </div>
         
         <label>🕒 JORNADA</label><select id="conf_jornada"><option value="">-- Cargar Lista --</option></select>
-        
-        <label style="color:var(--sec);">👥 TOTAL PERSONAL (Esperado)</label>
-        <input type="number" id="conf_total_staff" placeholder="Ej: 20 personas">
-
-        <label>RANGO DE TRABAJO</label>
-        <div class="flex-row"><input type="number" id="conf_inicio" placeholder="Desde"><input type="number" id="conf_fin" placeholder="Hasta"></div>
+        <label style="color:var(--sec);">👥 TOTAL PERSONAL</label><input type="number" id="conf_total_staff" placeholder="Ej: 20">
+        <label>RANGO DE TRABAJO</label><div class="flex-row"><input type="number" id="conf_inicio" placeholder="Desde"><input type="number" id="conf_fin" placeholder="Hasta"></div>
 
         <label>🛠️ MODO ASIGNACIÓN</label>
         <select id="conf_modo" onchange="toggleModoInput('conf')"><option value="INDIVIDUAL">👤 INDIVIDUAL</option><option value="PAREJAS">👥 PAREJAS</option></select>
@@ -89,22 +89,21 @@
     </div>
 
     <div class="toggle-container">
-        <div>
-            <b style="font-size:14px;">🔄 MODO CONTINUO</b><br>
-            <small style="color:#aaa;">Re-scan = Termina y Asigna Nueva</small>
-        </div>
-        <label class="switch">
-            <input type="checkbox" id="toggle_continuo" checked>
-            <span class="slider"></span>
-        </label>
+        <div><b style="font-size:14px;">🔄 MODO CONTINUO</b><br><small style="color:#aaa;">Re-scan = Nueva Tarea</small></div>
+        <label class="switch"><input type="checkbox" id="toggle_continuo" checked><span class="slider"></span></label>
+    </div>
+
+    <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
+    
+    <div class="manual-box">
+        <input type="text" id="manual_id" placeholder="⌨️ Entrada Manual (ID)">
+        <button class="btn btn-b" onclick="registrarManual()">OK</button>
     </div>
 
     <div class="card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center; padding:10px; gap:5px; margin-bottom:10px;">
         <div style="background:#333; border-radius:8px; padding:5px;"><small>HECHO</small><br><b id="stat_done" style="font-size:20px; color:var(--main);">0%</b></div>
         <div style="background:#333; border-radius:8px; padding:5px;"><small>ASISTENCIA</small><br><b id="stat_active" style="font-size:20px; color:var(--sec);">0/0</b></div>
     </div>
-
-    <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
     
     <div class="card" style="padding:5px;"><div id="mapGrid" class="grid-map"></div></div>
     <button class="btn btn-b" style="margin-bottom:15px;" onclick="abrirEditor()">✏️ EDITAR / CORREGIR</button>
@@ -122,6 +121,7 @@
 
 <div id="modalNext" class="modal" style="background:rgba(0,0,0,0.95);">
     <h2 style="color:var(--main); text-align:center;">⏩ SIGUIENTE CUADRO</h2>
+    <p style="text-align:center; font-size:12px; color:#ccc;">Moveremos a TODOS (hayan terminado o no) al nuevo cuadro.</p>
     <div class="card">
         <label>Nuevo Cuadro</label><input type="text" id="next_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('next')">
         <div class="flex-row"><div style="flex:1"><label>Lado</label><select id="next_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div><div style="flex:1"><label>Total BD</label><input type="text" id="next_info_total" readonly style="background:#444; color:#aaa;"></div></div>
@@ -150,13 +150,13 @@
 
 <script>
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v35_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v35_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v35_jornadas')) || [],
-        sesion: JSON.parse(localStorage.getItem('v35_sesion')) || null,
-        avance: JSON.parse(localStorage.getItem('v35_avance')) || [],
-        historial: JSON.parse(localStorage.getItem('v35_historial')) || [],
-        staff: JSON.parse(localStorage.getItem('v35_staff')) || []
+        cuadros: JSON.parse(localStorage.getItem('v36_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v36_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v36_jornadas')) || [],
+        sesion: JSON.parse(localStorage.getItem('v36_sesion')) || null,
+        avance: JSON.parse(localStorage.getItem('v36_avance')) || [],
+        historial: JSON.parse(localStorage.getItem('v36_historial')) || [],
+        staff: JSON.parse(localStorage.getItem('v36_staff')) || []
     };
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -183,9 +183,9 @@
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
 
-        localStorage.setItem('v35_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v35_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v35_jornadas', JSON.stringify(DB.jornadas));
+        localStorage.setItem('v36_cuadros', JSON.stringify(DB.cuadros));
+        localStorage.setItem('v36_act', JSON.stringify(DB.actividades));
+        localStorage.setItem('v36_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         alert("✅ Datos Actualizados");
         document.getElementById('modalDB').classList.remove('open');
@@ -261,7 +261,16 @@
         if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
     }
 
-    // --- ESCANEO CONTINUO ---
+    // --- ENTRADA MANUAL ---
+    function registrarManual() {
+        let id = document.getElementById('manual_id').value.toUpperCase().trim();
+        if(id) {
+            onScan(id);
+            document.getElementById('manual_id').value = ''; // Limpiar campo
+        }
+    }
+
+    // --- ESCANEO ---
     function onScan(id) {
         id = id.trim();
         let now = Date.now();
@@ -272,19 +281,15 @@
         let modoContinuo = document.getElementById('toggle_continuo').checked;
 
         if(trabajador && trabajador.fila) {
-            // Si ya trabaja, cerramos su fila
             cerrarTarea(trabajador);
-            
-            // SI ESTÁ EN MODO CONTINUO, ASIGNAMOS LA SIGUIENTE INMEDIATAMENTE
             if(modoContinuo) {
                 asignarNuevaTarea(trabajador);
-                audioBeep.play(); // Doble beep o distinto idealmente, aqui simple
+                audioBeep.play();
             } else {
-                alert(`⏸️ ${id} pausado/terminado.`);
+                alert(`⏸️ ${id} pausado.`);
                 audioBeep.play();
             }
         } else {
-            // Si no trabaja, asignamos nueva
             if(!trabajador) { trabajador = { id: id, fila: null }; DB.staff.push(trabajador); }
             asignarNuevaTarea(trabajador);
             audioBeep.play();
@@ -335,17 +340,21 @@
     function moverMasivo(prefix) {
         if(!confirm("¿Mover a todos?")) return;
         let ahora = new Date().toLocaleTimeString(), ts = Date.now();
+        // CERRAR A TODOS AUNQUE NO HAYAN TERMINADO
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
         DB.historial = DB.historial.concat(DB.avance);
         DB.avance = [];
         
         configurarSesion(prefix);
-        DB.staff.sort((a, b) => (a.fila || 0) - (b.fila || 0)); // Ordenar por fila anterior
+        
+        // ORDENAR POR FILA ANTERIOR (MANTENER ORDEN)
+        DB.staff.sort((a, b) => (a.fila || 0) - (b.fila || 0));
         
         let moved = 0;
         DB.staff.forEach(s => { 
-            // IMPORTANTE: Movemos a todos los que estaban en la lista de Staff (hayan terminado o no el cuadro anterior)
-            s.fila = null; asignarNuevaTarea(s); moved++;
+            s.fila = null; // Resetear
+            asignarNuevaTarea(s); // Forzar asignación en nuevo cuadro
+            moved++;
         });
         
         alert(`✅ ${moved} personas movidas.`);
@@ -382,8 +391,7 @@
         const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
         let terminadas = new Set(); DB.avance.forEach(a => { if(a.fin) terminadas.add(a.fila); });
         
-        // Calculo de Asistencia Total vs Esperada
-        let presentes = DB.staff.length; // Total de gente que ha pasado lista hoy
+        let presentes = DB.staff.length; 
         document.getElementById('stat_active').innerText = `${presentes}/${DB.sesion.totalStaff || '?'}`;
 
         for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
@@ -399,10 +407,10 @@
     }
 
     function guardarTodo() {
-        localStorage.setItem('v35_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v35_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v35_historial', JSON.stringify(DB.historial));
-        localStorage.setItem('v35_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v36_sesion', JSON.stringify(DB.sesion));
+        localStorage.setItem('v36_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v36_historial', JSON.stringify(DB.historial));
+        localStorage.setItem('v36_staff', JSON.stringify(DB.staff));
     }
 
     function descargarReporte(tipo) {
