@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V33 - Dual Flow</title>
+    <title>AgriCactus V35 - Flujo Continuo</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; }
@@ -22,13 +22,21 @@
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
 
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; max-height: 300px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; max-height: 280px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
         .row-item { height: 45px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 1px solid #444; position: relative; overflow: hidden; }
         .done { background: var(--main); border-color: #66bb6a; opacity: 0.6; }
         .active { background: var(--sec); border-color: #ffca28; color: black; animation: pulse 2s infinite; }
         .row-tag { font-size: 8px; position: absolute; bottom: 1px; width: 100%; text-align: center; }
         .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 8px; padding: 2px 4px; border-radius: 0 0 0 5px; }
         
+        .toggle-container { display: flex; align-items: center; justify-content: space-between; background: #333; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #555; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--main); }
+        input:checked + .slider:before { transform: translateX(26px); }
+
         .edit-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #444; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
@@ -39,7 +47,7 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V33</h2>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V35</h2>
     <button class="btn btn-b" style="padding:10px;" onclick="abrirDB()">📂 CARGAR CATÁLOGOS</button>
 
     <div class="card">
@@ -49,7 +57,7 @@
         <label>🔍 Buscar Cuadro</label>
         <input type="text" id="conf_cuadro" list="lista_cuadros" placeholder="Escribe ID o Nombre..." oninput="alEscribirCuadro('conf')">
         <datalist id="lista_cuadros"></datalist>
-        <div style="font-size:10px; color:#aaa; margin-bottom:10px; text-align:right;">Total: <b id="conf_info_total">--</b></div>
+        <div style="font-size:10px; color:#aaa; margin-bottom:10px; text-align:right;">Total Hileras: <b id="conf_info_total">--</b></div>
 
         <div class="flex-row">
             <div style="flex:1"><label>Lado</label><select id="conf_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div>
@@ -57,6 +65,10 @@
         </div>
         
         <label>🕒 JORNADA</label><select id="conf_jornada"><option value="">-- Cargar Lista --</option></select>
+        
+        <label style="color:var(--sec);">👥 TOTAL PERSONAL (Esperado)</label>
+        <input type="number" id="conf_total_staff" placeholder="Ej: 20 personas">
+
         <label>RANGO DE TRABAJO</label>
         <div class="flex-row"><input type="number" id="conf_inicio" placeholder="Desde"><input type="number" id="conf_fin" placeholder="Hasta"></div>
 
@@ -76,9 +88,20 @@
         <div style="text-align:right;"><span style="font-size:10px; color:#888;">RANGO:</span><br><b id="disp_rango" style="font-size:12px;">--</b></div>
     </div>
 
+    <div class="toggle-container">
+        <div>
+            <b style="font-size:14px;">🔄 MODO CONTINUO</b><br>
+            <small style="color:#aaa;">Re-scan = Termina y Asigna Nueva</small>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="toggle_continuo" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+
     <div class="card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center; padding:10px; gap:5px; margin-bottom:10px;">
         <div style="background:#333; border-radius:8px; padding:5px;"><small>HECHO</small><br><b id="stat_done" style="font-size:20px; color:var(--main);">0%</b></div>
-        <div style="background:#333; border-radius:8px; padding:5px;"><small>GENTE</small><br><b id="stat_active" style="font-size:20px; color:var(--sec);">0</b></div>
+        <div style="background:#333; border-radius:8px; padding:5px;"><small>ASISTENCIA</small><br><b id="stat_active" style="font-size:20px; color:var(--sec);">0/0</b></div>
     </div>
 
     <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
@@ -87,7 +110,7 @@
     <button class="btn btn-b" style="margin-bottom:15px;" onclick="abrirEditor()">✏️ EDITAR / CORREGIR</button>
 
     <div class="flex-row">
-        <button class="btn btn-g" onclick="abrirSiguienteCuadro()">⏩ SIGUIENTE CUADRO<br><small>(Misma Actividad)</small></button>
+        <button class="btn btn-g" onclick="abrirSiguienteCuadro()">⏩ SIGUIENTE CUADRO<br><small>(Mover a todos)</small></button>
         <button class="btn btn-o" onclick="abrirCambioActividad()">🔄 CAMBIO ACTIVIDAD<br><small>(Configurar Todo)</small></button>
     </div>
 
@@ -99,62 +122,41 @@
 
 <div id="modalNext" class="modal" style="background:rgba(0,0,0,0.95);">
     <h2 style="color:var(--main); text-align:center;">⏩ SIGUIENTE CUADRO</h2>
-    <p style="text-align:center; font-size:12px; color:#ccc;">Se mantiene Actividad, Jornada y Modo. Solo cambiamos ubicación.</p>
-    
     <div class="card">
-        <label>Nuevo Cuadro</label>
-        <input type="text" id="next_cuadro" list="lista_cuadros" placeholder="Buscar..." oninput="alEscribirCuadro('next')">
-        <div class="flex-row">
-            <div style="flex:1"><label>Lado</label><select id="next_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div>
-            <div style="flex:1"><label>Total BD</label><input type="text" id="next_info_total" readonly style="background:#444; color:#aaa;"></div>
-        </div>
-        <label>Nuevo Rango</label>
-        <div class="flex-row"><input type="number" id="next_inicio" placeholder="Desde"><input type="number" id="next_fin" placeholder="Hasta"></div>
+        <label>Nuevo Cuadro</label><input type="text" id="next_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('next')">
+        <div class="flex-row"><div style="flex:1"><label>Lado</label><select id="next_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div><div style="flex:1"><label>Total BD</label><input type="text" id="next_info_total" readonly style="background:#444; color:#aaa;"></div></div>
+        <label>Nuevo Rango</label><div class="flex-row"><input type="number" id="next_inicio"><input type="number" id="next_fin"></div>
     </div>
-    <button class="btn btn-g" onclick="ejecutarSiguienteCuadro()">✅ MOVER A TODOS AQUÍ</button>
+    <button class="btn btn-g" onclick="ejecutarSiguienteCuadro()">✅ CONFIRMAR Y MOVER</button>
     <button class="btn btn-r" onclick="document.getElementById('modalNext').classList.remove('open')">CANCELAR</button>
 </div>
 
 <div id="modalChange" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--sec); text-align:center;">🔄 CAMBIO DE ACTIVIDAD</h2>
-    <p style="text-align:center; font-size:12px; color:#ccc;">Configuración completa para nueva tarea.</p>
-    
+    <h2 style="color:var(--sec); text-align:center;">🔄 CAMBIO ACTIVIDAD</h2>
     <div class="card">
         <label>Nuevo Cuadro</label><input type="text" id="chg_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('chg')">
-        <label>Nueva Actividad</label><input type="text" id="chg_act" list="lista_actividades">
-        <label>Nueva Jornada</label><select id="chg_jornada"></select>
-        <label>Nuevo Rango</label><div class="flex-row"><input type="number" id="chg_inicio"><input type="number" id="chg_fin"></div>
+        <label>Actividad</label><input type="text" id="chg_act" list="lista_actividades">
+        <label>Jornada</label><select id="chg_jornada"></select>
+        <label>Rango</label><div class="flex-row"><input type="number" id="chg_inicio"><input type="number" id="chg_fin"></div>
         <label>Modo</label><select id="chg_modo" onchange="toggleModoInput('chg')"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="PAREJAS">PAREJAS</option></select>
         <div id="div_tarea_chg"><label>Filas</label><input type="number" id="chg_tarea_size" value="1"></div>
     </div>
-    <button class="btn btn-o" onclick="ejecutarCambioTotal()">✅ INICIAR NUEVA ACTIVIDAD</button>
+    <button class="btn btn-o" onclick="ejecutarCambioTotal()">✅ INICIAR</button>
     <button class="btn btn-r" onclick="document.getElementById('modalChange').classList.remove('open')">CANCELAR</button>
 </div>
 
-<div id="modalEditor" class="modal" style="background:#111;">
-    <h2>✏️ CORRECCIÓN</h2>
-    <div id="editorList" style="max-height: 400px; overflow-y: auto;"></div>
-    <button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">VOLVER</button>
-</div>
-
-<div id="modalDB" class="modal" style="background:#111;">
-    <h3>📂 Catálogos</h3>
-    <label>1. CUADROS</label><textarea id="csv_cuadros" rows="2"></textarea>
-    <label>2. ACTIVIDADES</label><textarea id="csv_act" rows="2"></textarea>
-    <label>3. JORNADAS</label><textarea id="csv_jor" rows="2"></textarea>
-    <button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button>
-    <button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button>
-</div>
+<div id="modalEditor" class="modal" style="background:#111;"><h2>✏️ CORRECCIÓN</h2><div id="editorList" style="max-height: 400px; overflow-y: auto;"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">VOLVER</button></div>
+<div id="modalDB" class="modal" style="background:#111;"><h3>📂 Catálogos</h3><label>1. CUADROS</label><textarea id="csv_cuadros" rows="2"></textarea><label>2. ACTIVIDADES</label><textarea id="csv_act" rows="2"></textarea><label>3. JORNADAS</label><textarea id="csv_jor" rows="2"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
 
 <script>
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v33_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v33_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v33_jornadas')) || [],
-        sesion: JSON.parse(localStorage.getItem('v33_sesion')) || null,
-        avance: JSON.parse(localStorage.getItem('v33_avance')) || [],
-        historial: JSON.parse(localStorage.getItem('v33_historial')) || [],
-        staff: JSON.parse(localStorage.getItem('v33_staff')) || []
+        cuadros: JSON.parse(localStorage.getItem('v35_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v35_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v35_jornadas')) || [],
+        sesion: JSON.parse(localStorage.getItem('v35_sesion')) || null,
+        avance: JSON.parse(localStorage.getItem('v35_avance')) || [],
+        historial: JSON.parse(localStorage.getItem('v35_historial')) || [],
+        staff: JSON.parse(localStorage.getItem('v35_staff')) || []
     };
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -181,34 +183,29 @@
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
 
-        localStorage.setItem('v33_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v33_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v33_jornadas', JSON.stringify(DB.jornadas));
+        localStorage.setItem('v35_cuadros', JSON.stringify(DB.cuadros));
+        localStorage.setItem('v35_act', JSON.stringify(DB.actividades));
+        localStorage.setItem('v35_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         alert("✅ Datos Actualizados");
         document.getElementById('modalDB').classList.remove('open');
     }
 
     function actualizarSelectores() {
-        const listaC = document.getElementById('lista_cuadros');
-        const listaA = document.getElementById('lista_actividades');
-        
+        const listaC = document.getElementById('lista_cuadros'), listaA = document.getElementById('lista_actividades');
         if(DB.cuadros.length) listaC.innerHTML = DB.cuadros.map(c => `<option value="${c.nombre}">ID: ${c.id} | Ori: ${c.ori}</option>`).join('');
         if(DB.actividades.length) listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">ID: ${a.id}</option>`).join('');
-        
         const optsJ = `<option value="">-- Seleccionar --</option>` + DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
-        document.getElementById('conf_jornada').innerHTML = optsJ;
-        document.getElementById('chg_jornada').innerHTML = optsJ;
+        document.getElementById('conf_jornada').innerHTML = optsJ; document.getElementById('chg_jornada').innerHTML = optsJ;
     }
 
     function alEscribirCuadro(prefix) {
         const val = document.getElementById(prefix+'_cuadro').value;
         const data = DB.cuadros.find(c => c.nombre === val);
         if(data) {
-            if(prefix==='conf') { document.getElementById('conf_info_total').innerText = data.max; }
-            if(prefix==='next') { document.getElementById('next_info_total').value = data.max; }
-            document.getElementById(prefix+'_inicio').value = 1;
-            document.getElementById(prefix+'_fin').value = data.max;
+            if(prefix==='conf') document.getElementById('conf_info_total').innerText = data.max;
+            if(prefix==='next') document.getElementById('next_info_total').value = data.max;
+            document.getElementById(prefix+'_inicio').value = 1; document.getElementById(prefix+'_fin').value = data.max;
             let lado = 'COMPLETA';
             if(data.ori && data.ori.toUpperCase().includes('SUR')) lado = 'SUR';
             if(data.ori && data.ori.toUpperCase().includes('NORTE')) lado = 'NORTE';
@@ -227,21 +224,14 @@
         if(!cNombre || isNaN(ini)) return alert("Faltan datos obligatorios.");
         const cObj = DB.cuadros.find(x => x.nombre === cNombre);
         
-        // RECUPERAR DATOS (Si es 'next', tomamos de la sesión anterior)
-        let aNombre, jNombre, modo, tarea;
+        let aNombre, jNombre, modo, tarea, totalStaff;
         
         if (prefix === 'next') {
-            // HERENCIA DE DATOS
-            aNombre = DB.sesion.nomActividad;
-            jNombre = DB.sesion.jornada;
-            modo = DB.sesion.modo;
-            tarea = DB.sesion.tareaSize;
+            aNombre = DB.sesion.nomActividad; jNombre = DB.sesion.jornada; modo = DB.sesion.modo; tarea = DB.sesion.tareaSize; totalStaff = DB.sesion.totalStaff;
         } else {
-            // LECTURA DE INPUTS (conf o chg)
-            aNombre = document.getElementById(prefix+'_act').value;
-            jNombre = document.getElementById(prefix+'_jornada').value;
-            modo = document.getElementById(prefix+'_modo').value;
-            tarea = parseInt(document.getElementById(prefix+'_tarea_size').value) || 1;
+            aNombre = document.getElementById(prefix+'_act').value; jNombre = document.getElementById(prefix+'_jornada').value;
+            modo = document.getElementById(prefix+'_modo').value; tarea = parseInt(document.getElementById(prefix+'_tarea_size').value) || 1;
+            totalStaff = parseInt(document.getElementById('conf_total_staff').value) || 0;
         }
         
         const aObj = DB.actividades.find(x => x.desc === aNombre);
@@ -249,10 +239,8 @@
         DB.sesion = {
             idCuadro: cObj ? cObj.id : "??", nomCuadro: cNombre,
             idActividad: aObj ? aObj.id : "??", nomActividad: aNombre,
-            jornada: jNombre,
-            lado: document.getElementById(prefix+'_lado').value,
-            modo: modo, tareaSize: tarea,
-            inicio: ini, fin: fin,
+            jornada: jNombre, lado: document.getElementById(prefix+'_lado').value,
+            modo: modo, tareaSize: tarea, inicio: ini, fin: fin, totalStaff: totalStaff,
             responsable: document.getElementById('conf_resp').value || DB.sesion?.responsable || "Admin",
             activo: true
         };
@@ -263,24 +251,17 @@
     }
 
     function irAlMapa() {
-        document.getElementById('viewSetup').classList.remove('open');
-        document.getElementById('modalNext').classList.remove('open');
-        document.getElementById('modalChange').classList.remove('open');
+        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalNext').classList.remove('open'); document.getElementById('modalChange').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
-        
         document.getElementById('disp_cuadro').innerText = `${DB.sesion.nomCuadro}`;
         document.getElementById('disp_act').innerText = DB.sesion.nomActividad;
         document.getElementById('disp_jornada').innerText = DB.sesion.jornada;
         document.getElementById('disp_rango').innerText = `Hileras ${DB.sesion.inicio} - ${DB.sesion.fin}`;
         renderMapa();
-        
-        if(!scanner) {
-            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            scanner.render(onScan);
-        }
+        if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
     }
 
-    // --- ESCANEO ---
+    // --- ESCANEO CONTINUO ---
     function onScan(id) {
         id = id.trim();
         let now = Date.now();
@@ -288,10 +269,22 @@
         lastScanTime[id] = now;
 
         let trabajador = DB.staff.find(s => s.id === id);
+        let modoContinuo = document.getElementById('toggle_continuo').checked;
+
         if(trabajador && trabajador.fila) {
+            // Si ya trabaja, cerramos su fila
             cerrarTarea(trabajador);
-            audioBeep.play();
+            
+            // SI ESTÁ EN MODO CONTINUO, ASIGNAMOS LA SIGUIENTE INMEDIATAMENTE
+            if(modoContinuo) {
+                asignarNuevaTarea(trabajador);
+                audioBeep.play(); // Doble beep o distinto idealmente, aqui simple
+            } else {
+                alert(`⏸️ ${id} pausado/terminado.`);
+                audioBeep.play();
+            }
         } else {
+            // Si no trabaja, asignamos nueva
             if(!trabajador) { trabajador = { id: id, fila: null }; DB.staff.push(trabajador); }
             asignarNuevaTarea(trabajador);
             audioBeep.play();
@@ -333,14 +326,10 @@
         } else alert("⚠️ Rango lleno.");
     }
 
-    // --- CAMBIOS MASIVOS ---
+    // --- MASIVOS ---
     function abrirSiguienteCuadro() { document.getElementById('modalNext').classList.add('open'); }
     function ejecutarSiguienteCuadro() { moverMasivo('next'); }
-
-    function abrirCambioActividad() { 
-        document.getElementById('chg_jornada').value = DB.sesion.jornada;
-        document.getElementById('modalChange').classList.add('open'); 
-    }
+    function abrirCambioActividad() { document.getElementById('chg_jornada').value = DB.sesion.jornada; document.getElementById('modalChange').classList.add('open'); }
     function ejecutarCambioTotal() { moverMasivo('chg'); }
 
     function moverMasivo(prefix) {
@@ -349,9 +338,17 @@
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
         DB.historial = DB.historial.concat(DB.avance);
         DB.avance = [];
+        
         configurarSesion(prefix);
-        DB.staff.forEach(s => { s.fila = null; asignarNuevaTarea(s); });
-        alert("✅ Movimiento completado");
+        DB.staff.sort((a, b) => (a.fila || 0) - (b.fila || 0)); // Ordenar por fila anterior
+        
+        let moved = 0;
+        DB.staff.forEach(s => { 
+            // IMPORTANTE: Movemos a todos los que estaban en la lista de Staff (hayan terminado o no el cuadro anterior)
+            s.fila = null; asignarNuevaTarea(s); moved++;
+        });
+        
+        alert(`✅ ${moved} personas movidas.`);
         guardarTodo();
         renderMapa();
     }
@@ -360,26 +357,19 @@
     function abrirEditor() {
         const list = document.getElementById('editorList'); list.innerHTML = "";
         const activos = DB.avance.filter(a => !a.fin);
-        if(activos.length === 0) list.innerHTML = "<p>Nadie trabajando.</p>";
+        if(activos.length === 0) list.innerHTML = "<p>Nadie activo.</p>";
         activos.forEach((rec) => {
             let realIdx = DB.avance.indexOf(rec);
-            list.innerHTML += `<div class="edit-item"><div><b>${rec.obrero}</b><br><small>Fila: ${rec.fila}</small></div>
-            <div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual(${realIdx})">CAMBIAR</button>
-            <button class="btn btn-sm btn-r" onclick="borrarRegistro(${realIdx}, '${rec.obrero}')">BORRAR</button></div></div>`;
+            list.innerHTML += `<div class="edit-item"><div><b>${rec.obrero}</b><br><small>Fila: ${rec.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual(${realIdx})">CAMBIAR</button><button class="btn btn-sm btn-r" onclick="borrarRegistro(${realIdx}, '${rec.obrero}')">BORRAR</button></div></div>`;
         });
         document.getElementById('modalEditor').classList.add('open');
     }
-    function cambiarFilaManual(idx) {
-        let n = prompt("Nueva fila:");
-        if(n && !isNaN(n)) { DB.avance[idx].fila = parseInt(n); guardarTodo(); abrirEditor(); renderMapa(); }
-    }
-    function borrarRegistro(idx, id) {
-        if(confirm("¿Borrar?")) { DB.avance.splice(idx, 1); let st=DB.staff.find(s=>s.id===id); if(st)st.fila=null; guardarTodo(); abrirEditor(); renderMapa(); }
-    }
+    function cambiarFilaManual(idx) { let n = prompt("Nueva fila:"); if(n && !isNaN(n)) { DB.avance[idx].fila = parseInt(n); guardarTodo(); abrirEditor(); renderMapa(); } }
+    function borrarRegistro(idx, id) { if(confirm("¿Borrar?")) { DB.avance.splice(idx, 1); let st=DB.staff.find(s=>s.id===id); if(st)st.fila=null; guardarTodo(); abrirEditor(); renderMapa(); } }
 
     // --- CIERRE ---
     function finalizarDia() {
-        if(!confirm("🛑 ¿FINALIZAR?")) return;
+        if(!confirm("🛑 ¿FINALIZAR DÍA?")) return;
         let ahora = new Date().toLocaleTimeString(), ts = Date.now();
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
         DB.historial = DB.historial.concat(DB.avance);
@@ -391,7 +381,11 @@
     function renderMapa() {
         const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
         let terminadas = new Set(); DB.avance.forEach(a => { if(a.fin) terminadas.add(a.fila); });
-        let activas = new Set(DB.avance.filter(a=>!a.fin).map(a=>a.obrero)).size;
+        
+        // Calculo de Asistencia Total vs Esperada
+        let presentes = DB.staff.length; // Total de gente que ha pasado lista hoy
+        document.getElementById('stat_active').innerText = `${presentes}/${DB.sesion.totalStaff || '?'}`;
+
         for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
             let div = document.createElement('div'); div.className = "row-item";
             let gente = DB.avance.filter(a => a.fila === i && !a.fin).map(a => a.obrero);
@@ -402,14 +396,13 @@
         }
         let total = DB.sesion.fin - DB.sesion.inicio + 1;
         document.getElementById('stat_done').innerText = Math.round((terminadas.size/total)*100) + "%";
-        document.getElementById('stat_active').innerText = activas;
     }
 
     function guardarTodo() {
-        localStorage.setItem('v33_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v33_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v33_historial', JSON.stringify(DB.historial));
-        localStorage.setItem('v33_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v35_sesion', JSON.stringify(DB.sesion));
+        localStorage.setItem('v35_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v35_historial', JSON.stringify(DB.historial));
+        localStorage.setItem('v35_staff', JSON.stringify(DB.staff));
     }
 
     function descargarReporte(tipo) {
