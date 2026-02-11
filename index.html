@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V26 - Pro Data</title>
+    <title>AgriCactus V27 - Smart Search</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; }
@@ -18,7 +18,10 @@
         .btn-b { background: #1976d2; }
         .btn-r { background: #d32f2f; }
         
+        /* Inputs mejorados para búsqueda */
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
+        input:focus { border-color: var(--sec); outline: none; background: #333; }
+        
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
 
         /* Mapa Grid */
@@ -39,7 +42,7 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main); margin-top:0;">🌵 AGRICACTUS V26</h2>
+    <h2 style="text-align:center; color: var(--main); margin-top:0;">🌵 AGRICACTUS V27</h2>
     
     <div class="status-bar" id="dbStatus">Cargando base de datos...</div>
     <button class="btn btn-b" style="padding:10px; font-size:14px;" onclick="abrirDB()">📂 CARGAR FORMATOS CSV</button>
@@ -48,10 +51,9 @@
         <label>1. Supervisor</label>
         <input type="text" id="conf_resp" placeholder="Tu Nombre">
 
-        <label>2. Seleccionar Cuadro</label>
-        <select id="conf_cuadro" onchange="alSeleccionarCuadro()">
-            <option value="">-- Primero carga la BD --</option>
-        </select>
+        <label>2. Buscar Cuadro 🔍</label>
+        <input type="text" id="conf_cuadro" list="lista_cuadros" placeholder="Escribe para filtrar..." oninput="alEscribirCuadro()" autocomplete="off">
+        <datalist id="lista_cuadros"></datalist>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div>
@@ -68,10 +70,9 @@
             </div>
         </div>
 
-        <label>5. Actividad</label>
-        <select id="conf_act">
-            <option value="">-- Selecciona --</option>
-        </select>
+        <label>5. Buscar Actividad 🔍</label>
+        <input type="text" id="conf_act" list="lista_actividades" placeholder="Escribe actividad..." autocomplete="off">
+        <datalist id="lista_actividades"></datalist>
 
         <label>6. Rango de Trabajo (Opcional)</label>
         <div style="display:flex; gap:10px;">
@@ -143,7 +144,7 @@
         if (DB.sesion && DB.sesion.activo) irAlMapa();
     };
 
-    // --- 1. PROCESAMIENTO DE CSV (INTELIGENTE) ---
+    // --- 1. PROCESAMIENTO DE CSV ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     
     function procesarYGuardar() {
@@ -151,27 +152,25 @@
         const txtA = document.getElementById('csv_act').value;
 
         // Procesar Cuadros
-        // Formato esperado: ID(0), CUADRO(1), VARIEDAD(2), ORIENTACION(3), AREA(4), LINEAS(5)
         if(txtC.trim()){
             DB.cuadros = txtC.split('\n').map(line => {
-                let col = line.split(/[,\t]/); // Divide por coma o tabulación (Excel)
-                if(col.length < 5 || col[0].toUpperCase().includes('ID')) return null; // Ignora cabeceras o líneas vacías
+                let col = line.split(/[,\t]/);
+                if(col.length < 5 || col[0].toUpperCase().includes('ID')) return null;
                 return {
-                    id: col[1].trim(),       // Columna CUADRO
-                    ori: col[3].trim(),      // Columna ORIENTACION (Norte/Sur/Completa)
-                    max: parseInt(col[5])    // Columna LINEAS
+                    id: col[1].trim(),       // ID/Nombre del cuadro
+                    ori: col[3].trim(),      // Orientación
+                    max: parseInt(col[5])    // Líneas
                 };
             }).filter(x => x && x.id);
         }
 
         // Procesar Actividades
-        // Formato esperado: ID(0), DESCRIPCION(1), CLAVE(2)
         if(txtA.trim()){
             DB.actividades = txtA.split('\n').map(line => {
                 let col = line.split(/[,\t]/);
                 if(col.length < 2 || col[0].toUpperCase().includes('ID')) return null;
                 return {
-                    desc: col[1].trim(), // Columna DESCRIPCION
+                    desc: col[1].trim(), 
                     clave: col[2] ? col[2].trim() : "" 
                 };
             }).filter(x => x);
@@ -185,37 +184,57 @@
     }
 
     function actualizarSelectores() {
-        const selC = document.getElementById('conf_cuadro');
-        const selA = document.getElementById('conf_act');
+        const listaC = document.getElementById('lista_cuadros');
+        const listaA = document.getElementById('lista_actividades');
         const st = document.getElementById('dbStatus');
 
+        // Llenar Lista de Cuadros para el buscador
         if(DB.cuadros.length > 0) {
             st.innerHTML = `✅ BD LISTA: ${DB.cuadros.length} Cuadros | ${DB.actividades.length} Actividades`;
             st.style.color = "#4caf50";
-            selC.innerHTML = '<option value="">-- Selecciona --</option>' + 
-                DB.cuadros.map(c => `<option value="${c.id}">${c.id} (${c.ori})</option>`).join('');
+            
+            // Creamos las opciones del buscador
+            listaC.innerHTML = DB.cuadros.map(c => 
+                `<option value="${c.id}">Orientación: ${c.ori}</option>`
+            ).join('');
         } else {
             st.innerHTML = "⚠️ Base de datos vacía";
         }
 
+        // Llenar Lista de Actividades
         if(DB.actividades.length > 0) {
-            selA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">${a.desc}</option>`).join('');
+            listaA.innerHTML = DB.actividades.map(a => 
+                `<option value="${a.desc}">Clave: ${a.clave}</option>`
+            ).join('');
         }
     }
 
-    // --- 2. LÓGICA DE CONFIGURACIÓN ---
-    function alSeleccionarCuadro() {
-        const id = document.getElementById('conf_cuadro').value;
-        const data = DB.cuadros.find(c => c.id === id);
+    // --- 2. LÓGICA DE BÚSQUEDA Y CONFIGURACIÓN ---
+    
+    function alEscribirCuadro() {
+        // Esta función se ejecuta cada vez que escribes una letra
+        const inputVal = document.getElementById('conf_cuadro').value;
+        
+        // Buscamos si lo que escribiste coincide EXACTAMENTE con un cuadro de la BD
+        const data = DB.cuadros.find(c => c.id === inputVal);
+        
         if(data) {
+            // Si hay coincidencia exacta, rellenamos los datos automáticamente
             document.getElementById('conf_max_lineas').value = data.max;
             document.getElementById('conf_fin').value = data.max;
             
-            // Auto-seleccionar la orientación si existe en el CSV, pero permitir cambio
+            // Auto-seleccionar lado
             const selLado = document.getElementById('conf_lado');
             if(data.ori && (data.ori.includes('SUR') || data.ori.includes('Sur'))) selLado.value = 'SUR';
             else if(data.ori && (data.ori.includes('NORTE') || data.ori.includes('Norte'))) selLado.value = 'NORTE';
             else selLado.value = 'COMPLETA';
+            
+            // Feedback visual: Borde verde
+            document.getElementById('conf_cuadro').style.borderColor = "#4caf50";
+        } else {
+            // Si no coincide, limpiamos o indicamos que sigue buscando
+            document.getElementById('conf_max_lineas').value = "";
+            document.getElementById('conf_cuadro').style.borderColor = "#ff9800";
         }
     }
 
@@ -224,13 +243,14 @@
         const lado = document.getElementById('conf_lado').value;
         const ini = parseInt(document.getElementById('conf_inicio').value);
         const fin = parseInt(document.getElementById('conf_fin').value);
+        const act = document.getElementById('conf_act').value;
 
-        if(!c || !fin) return alert("Faltan datos de configuración");
+        if(!c || !fin || !act) return alert("Faltan datos de configuración (Cuadro, Actividad o Líneas)");
 
         DB.sesion = {
             cuadro: c,
-            lado: lado, // NUEVO: Guardamos si es Norte, Sur o Completa
-            actividad: document.getElementById('conf_act').value,
+            lado: lado, 
+            actividad: act,
             responsable: document.getElementById('conf_resp').value,
             inicio: ini,
             fin: fin,
@@ -248,7 +268,6 @@
         document.getElementById('viewSetup').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
         
-        // Render Datos
         document.getElementById('disp_cuadro').innerText = DB.sesion.cuadro;
         document.getElementById('disp_lado').innerText = DB.sesion.lado;
         document.getElementById('disp_actividad').innerText = DB.sesion.actividad;
@@ -265,7 +284,6 @@
         id = id.trim();
         let trabajador = DB.staff.find(s => s.id === id);
 
-        // A) TRABAJADOR YA TIENE ASIGNACIÓN -> CERRAR
         if(trabajador && trabajador.fila) {
             const filaCerrar = trabajador.fila;
             const registro = DB.avance.find(a => a.fila === filaCerrar && !a.fin);
@@ -275,10 +293,8 @@
                 registro.ts_fin = Date.now();
                 trabajador.fila = null;
                 audioBeep.play();
-                // Feedback visual pequeño podría ir aquí
+                alert(`✅ ${id} terminó fila ${filaCerrar}`);
             }
-        
-        // B) TRABAJADOR LIBRE -> ASIGNAR NUEVA
         } else {
             if(!trabajador) {
                 trabajador = { id: id, fila: null };
@@ -296,6 +312,7 @@
                     ts: Date.now()
                 });
                 audioBeep.play();
+                alert(`🚜 ${id} inicia fila ${nuevaFila}`);
             } else {
                 alert("¡Cuadro finalizado!");
             }
@@ -321,7 +338,6 @@
             const div = document.createElement('div');
             div.className = "row-item";
             
-            // Mostrar número y quizás una letra pequeña (N/S)
             let etiqueta = i;
             if(DB.sesion.lado === 'NORTE') etiqueta += 'N';
             if(DB.sesion.lado === 'SUR') etiqueta += 'S';
@@ -352,15 +368,12 @@
         localStorage.setItem('v26_staff', JSON.stringify(DB.staff));
     }
 
-    // --- 4. EXPORTACIÓN ---
     function descargarReporte() {
         const s = DB.sesion;
         let csv = "CUADRO,LADO,ACTIVIDAD,FILA,OBRERO,INICIO,FIN,RESPONSABLE\n";
-        
         DB.avance.forEach(r => {
             csv += `${s.cuadro},${s.lado},${s.actividad},${r.fila},${r.obrero},${r.inicio},${r.fin || "EN PROCESO"},${s.responsable}\n`;
         });
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
