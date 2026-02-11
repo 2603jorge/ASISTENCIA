@@ -3,358 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V25 - Offline DB</title>
+    <title>AgriCactus V26 - Pro Data</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --light: #f5f5f5; }
-        body { font-family: sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
+        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
         
-        /* Estilos Generales */
-        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; }
-        .btn-g { background: var(--main); color: white; }
-        .btn-o { background: var(--sec); color: white; }
-        .btn-b { background: #2196f3; color: white; }
+        /* UI Elements */
+        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-g { background: var(--main); }
+        .btn-o { background: var(--sec); }
+        .btn-b { background: #1976d2; }
+        .btn-r { background: #d32f2f; }
         
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; background: #eee; color: #333; font-size: 16px; box-sizing: border-box; }
-        label { font-size: 12px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
+        label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
 
         /* Mapa Grid */
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; padding: 5px; }
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; padding: 5px; }
         .row-item { height: 50px; background: #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2px solid #444; position: relative; }
-        .done { background: var(--main); border-color: #66bb6a; color: white; opacity: 0.6; }
+        .done { background: var(--main); border-color: #66bb6a; opacity: 0.8; }
         .active { background: var(--sec); border-color: #ffca28; color: black; animation: pulse 1.5s infinite; }
+        .row-tag { font-size: 9px; position: absolute; bottom: 2px; }
         
         /* Modales */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 999; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
+        .status-bar { font-size: 12px; text-align: center; color: #888; padding: 8px; background: #222; border-radius: 6px; margin-bottom: 15px; border: 1px dashed #444; }
         
-        .db-status { font-size: 11px; text-align: center; color: #aaa; margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .hidden { display: none !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">🌵 AGRICACTUS V25</h2>
+    <h2 style="text-align:center; color: var(--main); margin-top:0;">🌵 AGRICACTUS V26</h2>
     
-    <div class="db-status" id="dbStatus">
-        Comprobando datos guardados...
-    </div>
-    <button class="btn btn-b" style="font-size:12px; padding:10px;" onclick="abrirDB()">📂 GESTIONAR LISTAS (BD)</button>
+    <div class="status-bar" id="dbStatus">Cargando base de datos...</div>
+    <button class="btn btn-b" style="padding:10px; font-size:14px;" onclick="abrirDB()">📂 CARGAR FORMATOS CSV</button>
 
     <div class="card">
-        <label>Responsable</label>
-        <input type="text" id="conf_resp" placeholder="Nombre del Supervisor">
+        <label>1. Supervisor</label>
+        <input type="text" id="conf_resp" placeholder="Tu Nombre">
 
-        <label>Cuadro (Seleccionar de Memoria)</label>
-        <select id="conf_cuadro" onchange="cargarRangosAuto()">
-            <option value="">-- Cargar BD primero --</option>
+        <label>2. Seleccionar Cuadro</label>
+        <select id="conf_cuadro" onchange="alSeleccionarCuadro()">
+            <option value="">-- Primero carga la BD --</option>
         </select>
         
-        <label>Actividad</label>
-        <select id="conf_act">
-            <option value="COSECHA">COSECHA</option>
-            <option value="PODA">PODA</option>
-            <option value="LIMPIEZA">LIMPIEZA</option>
-        </select>
-
-        <label>Rango de Hileras</label>
-        <div style="display:flex; gap:10px;">
-            <input type="number" id="conf_inicio" placeholder="Inicio">
-            <input type="number" id="conf_fin" placeholder="Fin">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+                <label>3. Orientación / Lado</label>
+                <select id="conf_lado">
+                    <option value="COMPLETA">COMPLETA</option>
+                    <option value="NORTE">NORTE</option>
+                    <option value="SUR">SUR</option>
+                </select>
+            </div>
+            <div>
+                <label>4. Total Hileras</label>
+                <input type="number" id="conf_max_lineas" readonly style="background:#444; color:#aaa;">
+            </div>
         </div>
 
-        <label>Personal Total</label>
-        <input type="number" id="conf_gente" placeholder="Cantidad de gente hoy">
+        <label>5. Actividad</label>
+        <select id="conf_act">
+            <option value="">-- Selecciona --</option>
+        </select>
+
+        <label>6. Rango de Trabajo (Opcional)</label>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="conf_inicio" value="1">
+            <input type="number" id="conf_fin" placeholder="Fin">
+        </div>
     </div>
 
-    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR OPERACIÓN</button>
+    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR JORNADA</button>
 </div>
 
 <div id="viewMain" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <div>
-            <span style="font-size:12px; color:#aaa;">CUADRO</span><br>
-            <b id="disp_cuadro" style="font-size:20px;">--</b>
+            <b id="disp_cuadro" style="font-size:22px; color:white;">--</b>
+            <span id="disp_lado" style="font-size:12px; background:#444; padding:2px 6px; border-radius:4px; color:#aaa;">--</span>
         </div>
-        <button class="btn btn-b" style="width:auto; padding:8px 15px; font-size:12px;" onclick="location.reload()">🔄 SALIR</button>
+        <button class="btn btn-r" style="width:auto; padding:8px 15px; font-size:12px; margin:0;" onclick="if(confirm('¿Salir?')) location.reload()">❌ SALIR</button>
     </div>
 
-    <div class="card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center;">
-        <div>
-            <span style="color:#aaa; font-size:12px;">AVANCE</span><br>
-            <b id="stat_done" style="font-size:24px; color:var(--main);">0%</b>
-        </div>
-        <div>
-            <span style="color:#aaa; font-size:12px;">ACTIVOS</span><br>
-            <b id="stat_active" style="font-size:24px; color:var(--sec);">0</b>
-        </div>
+    <div class="card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center; padding:10px;">
+        <div><small>PROGRESO</small><br><b id="stat_done" style="font-size:24px; color:var(--main);">0%</b></div>
+        <div><small>PERSONAL</small><br><b id="stat_active" style="font-size:24px; color:var(--sec);">0</b></div>
     </div>
 
-    <div id="reader" style="width:100%; border-radius:15px; overflow:hidden; border:2px solid #555; height:250px; background:#000;"></div>
-    <p style="text-align:center; font-size:11px; color:#aaa;">Escanea credencial para asignar/cerrar fila</p>
-
-    <div class="card">
+    <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px;"></div>
+    
+    <div class="card" style="padding:10px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <small>MAPA DE HILERAS</small>
+            <small id="disp_actividad" style="color:var(--sec);">--</small>
+        </div>
         <div id="mapGrid" class="grid-map"></div>
     </div>
 
-    <button class="btn btn-o" onclick="descargarReporte()">📥 DESCARGAR REPORTE (CSV)</button>
+    <button class="btn btn-b" onclick="descargarReporte()">📥 DESCARGAR REPORTE (.CSV)</button>
 </div>
 
-<div id="modalDB" class="modal" style="background:#222;">
-    <h3>📂 Base de Datos Local</h3>
-    <p style="font-size:12px; color:#aaa;">Copia y pega tus datos desde Excel. El formato es simple. Esto se guarda en el teléfono para siempre.</p>
+<div id="modalDB" class="modal" style="background:#111;">
+    <h3 style="color:var(--b);">📂 Carga de Datos Masiva</h3>
+    <p style="font-size:12px; color:#aaa;">Copia y pega directamente desde tus Excel.</p>
     
-    <label>LISTA DE CUADROS (Formato: Nombre,TotalHileras)</label>
-    <textarea id="input_csv_cuadros" rows="5" placeholder="Ejemplo:&#10;Cuadro A,50&#10;Cuadro B,100&#10;Lote 5,80" style="background:#fff; color:#000; font-family:monospace;"></textarea>
+    <label>TABLA DE CUADROS</label>
+    <div style="font-size:10px; color:#888; margin-bottom:5px;">Orden: ID, CUADRO, VARIEDAD, ORIENTACION, AREA, LINEAS</div>
+    <textarea id="csv_cuadros" rows="6" placeholder="Pega aquí las celdas de Excel..."></textarea>
     
-    <label>LISTA DE ACTIVIDADES</label>
-    <textarea id="input_csv_act" rows="3" placeholder="Ejemplo:&#10;Cosecha&#10;Deshierbe&#10;Aplicacion" style="background:#fff; color:#000; font-family:monospace;"></textarea>
+    <label>TABLA DE ACTIVIDADES</label>
+    <div style="font-size:10px; color:#888; margin-bottom:5px;">Orden: ID, DESCRIPCION, CLAVE</div>
+    <textarea id="csv_act" rows="4" placeholder="Pega aquí las celdas de Excel..."></textarea>
 
-    <button class="btn btn-g" onclick="guardarBD()">💾 GUARDAR EN TELÉFONO</button>
-    <button class="btn" style="background:transparent; border:1px solid #555; color:#aaa;" onclick="cerrarDB()">CANCELAR</button>
+    <button class="btn btn-g" onclick="procesarYGuardar()">💾 GUARDAR DATOS</button>
+    <button class="btn btn-o" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button>
 </div>
 
 <script>
-    // --- LÓGICA DE ALMACENAMIENTO ---
-    // Todo se guarda en localStorage con el prefijo 'v25_'
+    // --- LÓGICA DE DATOS ---
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v25_cuadros')) || [], // Base de datos maestra
-        actividades: JSON.parse(localStorage.getItem('v25_act')) || [],
-        sesion: JSON.parse(localStorage.getItem('v25_sesion')) || null, // Configuración actual
-        avance: JSON.parse(localStorage.getItem('v25_avance')) || [], // Datos del día
-        staff: JSON.parse(localStorage.getItem('v25_staff')) || [] // Trabajadores activos
+        cuadros: JSON.parse(localStorage.getItem('v26_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v26_act')) || [],
+        sesion: JSON.parse(localStorage.getItem('v26_sesion')) || null,
+        avance: JSON.parse(localStorage.getItem('v26_avance')) || [],
+        staff: JSON.parse(localStorage.getItem('v26_staff')) || []
     };
+    let scanner = null;
+    const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
-    let html5QrcodeScanner = null;
-
-    // AL INICIAR
     window.onload = () => {
-        actualizarUI_DB();
-        
-        // Si ya hay una sesión activa, saltar al mapa
-        if (DB.sesion && DB.sesion.activo) {
-            iniciarInterfazMapa();
-        }
+        actualizarSelectores();
+        if (DB.sesion && DB.sesion.activo) irAlMapa();
     };
 
-    // --- GESTIÓN DE BASE DE DATOS (IMPORTANTE) ---
+    // --- 1. PROCESAMIENTO DE CSV (INTELIGENTE) ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
-    function cerrarDB() { document.getElementById('modalDB').classList.remove('open'); }
+    
+    function procesarYGuardar() {
+        const txtC = document.getElementById('csv_cuadros').value;
+        const txtA = document.getElementById('csv_act').value;
 
-    function guardarBD() {
-        // Parsear Cuadros (CSV simple)
-        let txtC = document.getElementById('input_csv_cuadros').value;
-        if(txtC.trim()) {
+        // Procesar Cuadros
+        // Formato esperado: ID(0), CUADRO(1), VARIEDAD(2), ORIENTACION(3), AREA(4), LINEAS(5)
+        if(txtC.trim()){
             DB.cuadros = txtC.split('\n').map(line => {
-                let parts = line.split(',');
-                return { nombre: parts[0].trim(), max: parseInt(parts[1]) || 50 };
-            }).filter(x => x.nombre);
+                let col = line.split(/[,\t]/); // Divide por coma o tabulación (Excel)
+                if(col.length < 5 || col[0].toUpperCase().includes('ID')) return null; // Ignora cabeceras o líneas vacías
+                return {
+                    id: col[1].trim(),       // Columna CUADRO
+                    ori: col[3].trim(),      // Columna ORIENTACION (Norte/Sur/Completa)
+                    max: parseInt(col[5])    // Columna LINEAS
+                };
+            }).filter(x => x && x.id);
         }
 
-        // Parsear Actividades
-        let txtA = document.getElementById('input_csv_act').value;
-        if(txtA.trim()) {
-            DB.actividades = txtA.split('\n').map(l => l.trim()).filter(x => x);
+        // Procesar Actividades
+        // Formato esperado: ID(0), DESCRIPCION(1), CLAVE(2)
+        if(txtA.trim()){
+            DB.actividades = txtA.split('\n').map(line => {
+                let col = line.split(/[,\t]/);
+                if(col.length < 2 || col[0].toUpperCase().includes('ID')) return null;
+                return {
+                    desc: col[1].trim(), // Columna DESCRIPCION
+                    clave: col[2] ? col[2].trim() : "" 
+                };
+            }).filter(x => x);
         }
 
-        // GUARDAR EN MEMORIA DEL TELÉFONO
-        localStorage.setItem('v25_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v25_act', JSON.stringify(DB.actividades));
-        
-        alert("✅ Datos guardados en el teléfono. Ya puedes usarlos sin internet.");
-        actualizarUI_DB();
-        cerrarDB();
+        localStorage.setItem('v26_cuadros', JSON.stringify(DB.cuadros));
+        localStorage.setItem('v26_act', JSON.stringify(DB.actividades));
+        alert("✅ Datos actualizados con éxito");
+        actualizarSelectores();
+        document.getElementById('modalDB').classList.remove('open');
     }
 
-    function actualizarUI_DB() {
-        let statusDiv = document.getElementById('dbStatus');
-        let selCuadro = document.getElementById('conf_cuadro');
-        let selAct = document.getElementById('conf_act');
+    function actualizarSelectores() {
+        const selC = document.getElementById('conf_cuadro');
+        const selA = document.getElementById('conf_act');
+        const st = document.getElementById('dbStatus');
 
         if(DB.cuadros.length > 0) {
-            statusDiv.innerHTML = `✅ BD CARGADA: ${DB.cuadros.length} Cuadros disponibles offline.`;
-            statusDiv.style.color = "#66bb6a";
-            
-            // Llenar selectores
-            selCuadro.innerHTML = `<option value="">Selecciona Cuadro...</option>` + 
-                DB.cuadros.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+            st.innerHTML = `✅ BD LISTA: ${DB.cuadros.length} Cuadros | ${DB.actividades.length} Actividades`;
+            st.style.color = "#4caf50";
+            selC.innerHTML = '<option value="">-- Selecciona --</option>' + 
+                DB.cuadros.map(c => `<option value="${c.id}">${c.id} (${c.ori})</option>`).join('');
         } else {
-            statusDiv.innerHTML = `⚠️ SIN DATOS: Carga la lista de cuadros para empezar.`;
-            statusDiv.style.color = "#ffca28";
+            st.innerHTML = "⚠️ Base de datos vacía";
         }
 
         if(DB.actividades.length > 0) {
-            selAct.innerHTML = DB.actividades.map(a => `<option value="${a}">${a}</option>`).join('');
+            selA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">${a.desc}</option>`).join('');
         }
     }
 
-    function cargarRangosAuto() {
-        let nombre = document.getElementById('conf_cuadro').value;
-        let cuadro = DB.cuadros.find(c => c.nombre === nombre);
-        if(cuadro) {
-            document.getElementById('conf_inicio').value = 1;
-            document.getElementById('conf_fin').value = cuadro.max;
+    // --- 2. LÓGICA DE CONFIGURACIÓN ---
+    function alSeleccionarCuadro() {
+        const id = document.getElementById('conf_cuadro').value;
+        const data = DB.cuadros.find(c => c.id === id);
+        if(data) {
+            document.getElementById('conf_max_lineas').value = data.max;
+            document.getElementById('conf_fin').value = data.max;
+            
+            // Auto-seleccionar la orientación si existe en el CSV, pero permitir cambio
+            const selLado = document.getElementById('conf_lado');
+            if(data.ori && (data.ori.includes('SUR') || data.ori.includes('Sur'))) selLado.value = 'SUR';
+            else if(data.ori && (data.ori.includes('NORTE') || data.ori.includes('Norte'))) selLado.value = 'NORTE';
+            else selLado.value = 'COMPLETA';
         }
     }
 
-    // --- INICIO DE JORNADA ---
     function iniciarJornada() {
-        let c = document.getElementById('conf_cuadro').value;
-        let ini = parseInt(document.getElementById('conf_inicio').value);
-        let fin = parseInt(document.getElementById('conf_fin').value);
-        
-        if(!c || !ini || !fin) return alert("Por favor completa la configuración.");
+        const c = document.getElementById('conf_cuadro').value;
+        const lado = document.getElementById('conf_lado').value;
+        const ini = parseInt(document.getElementById('conf_inicio').value);
+        const fin = parseInt(document.getElementById('conf_fin').value);
 
-        // Guardar Sesión
+        if(!c || !fin) return alert("Faltan datos de configuración");
+
         DB.sesion = {
             cuadro: c,
-            inicio: ini,
-            fin: fin,
+            lado: lado, // NUEVO: Guardamos si es Norte, Sur o Completa
             actividad: document.getElementById('conf_act').value,
             responsable: document.getElementById('conf_resp').value,
+            inicio: ini,
+            fin: fin,
             activo: true
         };
-        // Reiniciar datos del día si es cuadro nuevo
-        DB.avance = []; 
+        // Reset diario
+        DB.avance = [];
         DB.staff = [];
-        
-        guardarEstado();
-        iniciarInterfazMapa();
+        guardarTodo();
+        irAlMapa();
     }
 
-    function guardarEstado() {
-        localStorage.setItem('v25_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v25_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v25_staff', JSON.stringify(DB.staff));
-        renderMapa();
-    }
-
-    // --- PANTALLA PRINCIPAL ---
-    function iniciarInterfazMapa() {
+    // --- 3. LÓGICA DEL MAPA Y ESCÁNER ---
+    function irAlMapa() {
         document.getElementById('viewSetup').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
+        
+        // Render Datos
         document.getElementById('disp_cuadro').innerText = DB.sesion.cuadro;
-        
+        document.getElementById('disp_lado').innerText = DB.sesion.lado;
+        document.getElementById('disp_actividad').innerText = DB.sesion.actividad;
+
         renderMapa();
-        
-        // Iniciar Cámara
-        if(!html5QrcodeScanner) {
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render(onScan);
+
+        if(!scanner) {
+            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+            scanner.render(onScan);
         }
     }
 
-    function onScan(decodedText) {
-        let id = decodedText.trim();
-        let audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); // Sonido beep simple
-        
-        // LÓGICA DE ASIGNACIÓN AUTOMÁTICA
-        // 1. Verificar si el trabajador ya tiene fila asignada
+    function onScan(id) {
+        id = id.trim();
         let trabajador = DB.staff.find(s => s.id === id);
-        
-        if (trabajador && trabajador.filaActual) {
-            // A) YA TIENE FILA -> CERRARLA
-            let fila = trabajador.filaActual;
+
+        // A) TRABAJADOR YA TIENE ASIGNACIÓN -> CERRAR
+        if(trabajador && trabajador.fila) {
+            const filaCerrar = trabajador.fila;
+            const registro = DB.avance.find(a => a.fila === filaCerrar && !a.fin);
             
-            // Buscar registro abierto y cerrarlo
-            let registro = DB.avance.find(a => a.fila === fila && !a.fin);
             if(registro) {
                 registro.fin = new Date().toLocaleTimeString();
                 registro.ts_fin = Date.now();
+                trabajador.fila = null;
+                audioBeep.play();
+                // Feedback visual pequeño podría ir aquí
             }
-            
-            trabajador.filaActual = null; // Queda libre
-            audio.play();
-            alert(`✅ ${id}: Terminó fila ${fila}`);
-
+        
+        // B) TRABAJADOR LIBRE -> ASIGNAR NUEVA
         } else {
-            // B) ESTÁ LIBRE -> ASIGNAR NUEVA
             if(!trabajador) {
-                trabajador = { id: id, filaActual: null };
+                trabajador = { id: id, fila: null };
                 DB.staff.push(trabajador);
             }
             
-            let nuevaFila = buscarSiguienteFila();
+            const nuevaFila = buscarFilaLibre();
             if(nuevaFila) {
-                trabajador.filaActual = nuevaFila;
+                trabajador.fila = nuevaFila;
                 DB.avance.push({
                     fila: nuevaFila,
                     obrero: id,
                     inicio: new Date().toLocaleTimeString(),
-                    ts_inicio: Date.now(),
-                    fin: null
+                    fin: null,
+                    ts: Date.now()
                 });
-                audio.play();
-                alert(`🚜 ${id}: Asignado a fila ${nuevaFila}`);
+                audioBeep.play();
             } else {
-                alert("🏁 ¡Cuadro Terminado!");
+                alert("¡Cuadro finalizado!");
             }
         }
-        
-        guardarEstado();
+        guardarTodo();
+        renderMapa();
     }
 
-    function buscarSiguienteFila() {
-        // Busca la primera fila que no esté iniciada por nadie
-        for (let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
-            // Si nadie ha tocado esta fila en el historial
-            let ocupada = DB.avance.some(a => a.fila === i);
-            if (!ocupada) return i;
+    function buscarFilaLibre() {
+        for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
+            if(!DB.avance.some(a => a.fila === i)) return i;
         }
-        return null; // Todo lleno
+        return null;
     }
 
     function renderMapa() {
-        let grid = document.getElementById('mapGrid');
+        const grid = document.getElementById('mapGrid');
         grid.innerHTML = "";
+        let hechos = 0, activos = 0;
         
-        let terminadas = 0;
-        let activos = 0;
-
-        for (let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
-            let registro = DB.avance.find(a => a.fila === i);
-            let div = document.createElement('div');
+        for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
+            const reg = DB.avance.find(a => a.fila === i);
+            const div = document.createElement('div');
             div.className = "row-item";
-            div.innerText = i;
+            
+            // Mostrar número y quizás una letra pequeña (N/S)
+            let etiqueta = i;
+            if(DB.sesion.lado === 'NORTE') etiqueta += 'N';
+            if(DB.sesion.lado === 'SUR') etiqueta += 'S';
+            
+            div.innerHTML = `<span>${etiqueta}</span>`;
 
-            if (registro) {
-                if (registro.fin) {
-                    div.className += " done"; // Terminada
-                    terminadas++;
+            if(reg) {
+                if(reg.fin) {
+                    div.className += " done";
+                    hechos++;
                 } else {
-                    div.className += " active"; // Trabajando
-                    div.innerHTML += `<br><small style="font-size:8px;">${registro.obrero}</small>`;
+                    div.className += " active";
+                    div.innerHTML += `<span class="row-tag">${reg.obrero}</span>`;
                     activos++;
                 }
             }
             grid.appendChild(div);
         }
 
-        // Actualizar stats
-        let total = DB.sesion.fin - DB.sesion.inicio + 1;
-        document.getElementById('stat_done').innerText = Math.round((terminadas/total)*100) + "%";
+        const total = DB.sesion.fin - DB.sesion.inicio + 1;
+        document.getElementById('stat_done').innerText = Math.round((hechos/total)*100) + "%";
         document.getElementById('stat_active').innerText = activos;
     }
 
+    function guardarTodo() {
+        localStorage.setItem('v26_sesion', JSON.stringify(DB.sesion));
+        localStorage.setItem('v26_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v26_staff', JSON.stringify(DB.staff));
+    }
+
+    // --- 4. EXPORTACIÓN ---
     function descargarReporte() {
-        let csvContent = "data:text/csv;charset=utf-8,Fila,Obrero,Inicio,Fin,Cuadro\n";
-        DB.avance.forEach(row => {
-            csvContent += `${row.fila},${row.obrero},${row.inicio},${row.fin || "EN PROCESO"},${DB.sesion.cuadro}\n`;
-        });
+        const s = DB.sesion;
+        let csv = "CUADRO,LADO,ACTIVIDAD,FILA,OBRERO,INICIO,FIN,RESPONSABLE\n";
         
-        let encodedUri = encodeURI(csvContent);
-        let link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `REPORTE_${DB.sesion.cuadro}.csv`);
-        document.body.appendChild(link);
+        DB.avance.forEach(r => {
+            csv += `${s.cuadro},${s.lado},${s.actividad},${r.fila},${r.obrero},${r.inicio},${r.fin || "EN PROCESO"},${s.responsable}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `REPORTE_${s.cuadro}_${s.lado}.csv`;
         link.click();
     }
 </script>
-
 </body>
 </html>
