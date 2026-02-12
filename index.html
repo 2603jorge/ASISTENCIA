@@ -3,27 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V43 - Smart Move</title>
+    <title>AgriCactus V46 - Control Total</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
+        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
         
-        /* ESTILOS DE V40 (RECUPERADOS) */
-        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        /* UI Elements */
+        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
-        
+        .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
+
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
 
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; max-height: 280px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
-        .row-item { height: 45px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 1px solid #444; position: relative; overflow: hidden; }
-        .done { background: var(--main); border-color: #66bb6a; opacity: 0.6; }
+        /* TABS */
+        .tabs-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
+        .tab { background: #333; color: #aaa; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; display: flex; align-items: center; gap: 5px; }
+        .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); box-shadow: 0 0 10px rgba(0,230,118,0.4); }
+        .tab-add { background: var(--blue); color: white; font-size: 16px; padding: 5px 15px; }
+
+        /* MAPA */
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .row-item { height: 40px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; overflow: hidden; }
+        .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
         .active { background: var(--sec); border-color: #ffca28; color: black; animation: pulse 2s infinite; }
-        .row-tag { font-size: 8px; position: absolute; bottom: 1px; width: 100%; text-align: center; }
-        .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 8px; padding: 2px 4px; border-radius: 0 0 0 5px; }
+        .row-tag { font-size: 7px; position: absolute; bottom: 1px; width: 100%; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 7px; padding: 1px 3px; border-radius: 0 0 0 4px; }
         
         .manual-box { display: flex; gap: 5px; background: #222; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #444; }
         .manual-box input { margin: 0; flex: 1; }
@@ -32,132 +41,181 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
+        
+        /* QR Container */
+        #qrcode { background: white; padding: 10px; display: flex; justify-content: center; border-radius: 10px; margin: 10px auto; width: fit-content; }
+        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V43</h2>
-    <button class="btn btn-b" style="padding:10px;" onclick="abrirDB()">📂 CARGAR CATÁLOGOS</button>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V46</h2>
+    <div class="flex-row">
+        <button class="btn btn-b" onclick="abrirDB()" style="padding:10px;">📂 CARGAR BD</button>
+        <button class="btn btn-p" onclick="abrirHistorial()" style="padding:10px;">📜 HISTORIAL</button>
+    </div>
 
     <div class="card">
-        <h3 style="margin-top:0; color:var(--sec);">👷 SUPERVISOR</h3>
-        <label>ID Credencial Supervisor</label>
+        <h3 style="margin-top:0; color:var(--sec);">👷 DATOS SUPERVISOR</h3>
+        <label>ID Credencial</label>
         <input type="text" id="conf_sup_id" placeholder="Escanea o escribe ID">
         <label>Nombre Supervisor</label>
         <input type="text" id="conf_resp" placeholder="Nombre Completo">
+        <label style="color:var(--highlight);">Actividad Supervisor</label>
+        <input type="text" id="conf_sup_act" placeholder="Ej: Supervisión..." list="lista_actividades">
+        
+        <label style="color:var(--danger); font-size:12px; margin-top:10px;">👥 TOTAL PERSONAL (GLOBAL)</label>
+        <input type="number" id="conf_total_global" placeholder="Ej: 20 (Límite máximo del día)">
+    </div>
 
-        <hr style="border-color:#333; margin: 15px 0;">
-
+    <div class="card">
+        <h3 style="margin-top:0; color:var(--blue);">PRIMER CUADRO (CUADRILLA)</h3>
+        <label>🕒 JORNADA</label><select id="conf_jornada"><option value="">-- Seleccionar --</option></select>
+        
         <label>🔍 Buscar Cuadro</label>
         <input type="text" id="conf_cuadro" list="lista_cuadros" placeholder="Escribe ID..." oninput="alEscribirCuadro('conf')">
         <datalist id="lista_cuadros"></datalist>
-        <div style="font-size:10px; color:#aaa; margin-bottom:10px; text-align:right;">Total Hileras: <b id="conf_info_total">--</b></div>
+        <div style="font-size:10px; color:#aaa; margin-bottom:10px; text-align:right;">Total: <b id="conf_info_total">--</b></div>
 
         <div class="flex-row">
-            <div style="flex:1"><label>Lado</label><select id="conf_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div>
-            <div style="flex:1"><label>Actividad</label><input type="text" id="conf_act" list="lista_actividades"><datalist id="lista_actividades"></datalist></div>
+            <div style="flex:1"><label>Lado (Auto)</label><select id="conf_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div>
+            <div style="flex:1"><label>Actividad Cuadrilla</label><input type="text" id="conf_act" list="lista_actividades"><datalist id="lista_actividades"></datalist></div>
         </div>
         
-        <label>🕒 JORNADA</label><select id="conf_jornada"><option value="">-- Seleccionar --</option></select>
-        <label style="color:var(--sec);">👥 TOTAL PERSONAL</label><input type="number" id="conf_total_staff" placeholder="Ej: 20">
         <label>RANGO DE TRABAJO</label><div class="flex-row"><input type="number" id="conf_inicio" placeholder="Desde"><input type="number" id="conf_fin" placeholder="Hasta"></div>
-
-        <label>🛠️ MODO ASIGNACIÓN</label>
-        <select id="conf_modo" onchange="toggleModoInput('conf')"><option value="PAREJAS">👥 PAREJAS (2 por fila)</option><option value="INDIVIDUAL">👤 INDIVIDUAL (1 por fila)</option></select>
+        <label>MODO</label><select id="conf_modo"><option value="PAREJAS">👥 PAREJAS (2 por fila)</option><option value="INDIVIDUAL">👤 INDIVIDUAL (1 por fila)</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR DÍA</button>
+    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR DÍA</button>
 </div>
 
 <div id="viewMain" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <div style="line-height:1.2;">
-            <b id="disp_cuadro" style="font-size:16px; color:white;">--</b>
-            <div style="font-size:11px; color:#aaa;"><span id="disp_act">--</span> | <span id="disp_jornada" style="color:var(--sec);">--</span></div>
-            <div style="font-size:10px; color:var(--main);">Sup: <span id="disp_sup_name">--</span></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div style="font-size:11px;">
+            Sup: <b id="disp_resp" style="color:var(--main);">--</b><br>
+            <span id="disp_count_global" style="color:var(--sec);">0/0 Personal</span>
         </div>
-        <div style="text-align:right;"><span style="font-size:10px; color:#888;">RANGO:</span><br><b id="disp_rango" style="font-size:12px;">--</b></div>
+        <button class="btn btn-r btn-sm" onclick="confirmarFinDia()">🏁 CERRAR DÍA</button>
+    </div>
+
+    <div class="tabs-container" id="tabsContainer"></div>
+
+    <div style="background:#222; padding:10px; border-radius:10px; margin-bottom:10px; border:1px solid #444;">
+        <div style="display:flex; justify-content:space-between;">
+            <div><b id="disp_cuadro" style="font-size:16px; color:var(--active-tab);">--</b></div>
+            <div style="font-size:11px; color:#aaa;"><span id="disp_act">--</span> | <span id="disp_rango">--</span></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:5px;">
+            <div style="font-size:11px; color:#ccc;">Avance Cuadro: <b id="stat_done" style="color:var(--main);">0%</b></div>
+            <div style="font-size:11px; color:#ccc;">Activos Cuadro: <b id="stat_active" style="color:var(--sec);">0</b></div>
+        </div>
     </div>
 
     <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
     
     <div class="manual-box">
-        <input type="text" id="manual_id" placeholder="⌨️ Entrada Manual (ID)">
+        <input type="text" id="manual_id" placeholder="⌨️ ID Manual">
         <button class="btn btn-b" onclick="registrarManual()">OK</button>
     </div>
-
-    <div class="card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center; padding:10px; gap:5px; margin-bottom:10px;">
-        <div style="background:#333; border-radius:8px; padding:5px;"><small>HECHO</small><br><b id="stat_done" style="font-size:20px; color:var(--main);">0%</b></div>
-        <div style="background:#333; border-radius:8px; padding:5px;"><small>ASISTENCIA</small><br><b id="stat_active" style="font-size:20px; color:var(--sec);">0/0</b></div>
-    </div>
     
-    <div class="card" style="padding:5px;"><div id="mapGrid" class="grid-map"></div></div>
+    <div class="card" style="padding:5px; background:#1a1a1a;"><div id="mapGrid" class="grid-map"></div></div>
     
-    <div class="flex-row">
-        <button class="btn btn-g" onclick="ejecutarAvanceMasivoInteligente()">⏩ AVANCE MASIVO<br><small>(Mover grupos al sig. bloque vacío)</small></button>
-    </div>
+    <button class="btn btn-g" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO<br><small>(Mover grupos al SIGUIENTE bloque vacío)</small></button>
     
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
-        <button class="btn btn-p" onclick="descargarReporte('PARCIAL')">📊 REPORTE</button>
+        <button class="btn btn-p" onclick="descargarReporte('PARCIAL')">📊 REPORTE CSV</button>
     </div>
-    <button class="btn btn-r" onclick="confirmarFinDia()">🏁 FINALIZAR DÍA (Cerrar todo)</button>
 </div>
 
-<div id="modalNextAct" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--sec); text-align:center;">🔄 SIGUIENTE ACTIVIDAD</h2>
-    <p style="text-align:center; color:#fff;">El cuadro anterior se completó. Configura el siguiente paso.</p>
+<div id="viewHistory" class="modal" style="background:#111;">
+    <h2 style="color:var(--purple); text-align:center;">📜 HISTORIAL & CIERRE</h2>
+    
+    <div class="card" style="text-align:center;">
+        <h3 style="margin:0;">Resumen del Día</h3>
+        <div id="qrcode"></div>
+        <p id="hist_summary" style="font-size:12px; color:#aaa;"></p>
+        <div class="flex-row">
+            <button class="btn btn-sm btn-g" onclick="descargarJSON()">💾 BAJAR JSON</button>
+            <button class="btn btn-sm btn-p" onclick="descargarReporte('HISTORICO')">📊 BAJAR CSV</button>
+        </div>
+    </div>
+
+    <h3 style="border-bottom:1px solid #333;">Días Anteriores</h3>
+    <div id="historyList" style="max-height:300px; overflow-y:auto;"></div>
+
+    <button class="btn btn-r" onclick="cerrarHistorial()">VOLVER AL INICIO</button>
+</div>
+
+<div id="modalAddCuadro" class="modal" style="background:rgba(0,0,0,0.95);">
+    <h2 style="color:var(--blue); text-align:center;">➕ AGREGAR OTRO CUADRO</h2>
     <div class="card">
-        <label>Nuevo Cuadro</label><input type="text" id="chg_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('chg')">
-        <label>Actividad</label><input type="text" id="chg_act" list="lista_actividades">
-        <label>Jornada</label><select id="chg_jornada"></select>
-        <label>Rango</label><div class="flex-row"><input type="number" id="chg_inicio"><input type="number" id="chg_fin"></div>
-        <label>Modo</label><select id="chg_modo" onchange="toggleModoInput('chg')"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
+        <label>Cuadro</label><input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
+        <div class="flex-row"><div style="flex:1"><label>Lado (Auto)</label><select id="add_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div><div style="flex:1"><label>Total</label><b id="add_info_total" style="display:block; margin-top:10px;">--</b></div></div>
+        <label>Actividad Cuadrilla</label><input type="text" id="add_act" list="lista_actividades">
+        <label>Rango</label><div class="flex-row"><input type="number" id="add_inicio"><input type="number" id="add_fin"></div>
+        <label>Modo</label><select id="add_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
-    <button class="btn btn-o" onclick="ejecutarCambioActividad()">✅ INICIAR NUEVO CUADRO</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalNextAct').classList.remove('open')">CANCELAR</button>
+    <button class="btn btn-g" onclick="confirmarNuevoCuadro()">✅ AGREGAR PESTAÑA</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
 </div>
 
-<div id="modalDB" class="modal" style="background:#111;"><h3>📂 Catálogos</h3><label>1. CUADROS</label><textarea id="csv_cuadros" rows="2"></textarea><label>2. ACTIVIDADES</label><textarea id="csv_act" rows="2"></textarea><label>3. JORNADAS</label><textarea id="csv_jor" rows="2"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
+<div id="modalDB" class="modal" style="background:#111;"><h3>📂 Catálogos</h3><label>CUADROS</label><textarea id="csv_cuadros" rows="2"></textarea><label>ACTIVIDADES</label><textarea id="csv_act" rows="2"></textarea><label>JORNADAS</label><textarea id="csv_jor" rows="2"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
 <div id="modalEditor" class="modal" style="background:#111;"><h2>✏️ CORRECCIÓN</h2><div id="editorList" style="max-height: 400px; overflow-y: auto;"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">VOLVER</button></div>
 
 <script>
-    // Recuperar datos estilo V40
+    // --- ESTRUCTURA DE DATOS ---
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v43_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v43_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v43_jornadas')) || [],
-        sesion: JSON.parse(localStorage.getItem('v43_sesion')) || null,
-        avance: JSON.parse(localStorage.getItem('v43_avance')) || [], // Historial completo
-        staff: JSON.parse(localStorage.getItem('v43_staff')) || [] // Estado actual de trabajadores
+        cuadros: JSON.parse(localStorage.getItem('v46_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v46_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v46_jornadas')) || [],
+        
+        sesiones: JSON.parse(localStorage.getItem('v46_sesiones')) || [], 
+        currentSessionId: 0,
+        avance: JSON.parse(localStorage.getItem('v46_avance')) || [], 
+        staff: JSON.parse(localStorage.getItem('v46_staff')) || [], // { id, fila, cuadroUid }
+        
+        // Configuración Global incluyendo Total Staff
+        globalConfig: JSON.parse(localStorage.getItem('v46_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
+
+        archive: JSON.parse(localStorage.getItem('v46_archive')) || []
     };
+    
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
     window.onload = () => {
         actualizarSelectores();
-        if (DB.sesion && DB.sesion.activo) irAlMapa();
+        if (DB.sesiones.length > 0) irAlMapa();
     };
 
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
-    function toggleModoInput(prefix) { /* No-op, mantenido por compatibilidad visual */ }
+    
+    function alEscribirCuadro(prefix) {
+        const val = document.getElementById(prefix+'_cuadro').value;
+        const data = DB.cuadros.find(c => c.nombre === val);
+        if(data) {
+            document.getElementById(prefix+'_info_total').innerText = data.max;
+            document.getElementById(prefix+'_inicio').value = 1; document.getElementById(prefix+'_fin').value = data.max;
+            
+            let lado = 'COMPLETA';
+            let ori = (data.ori || "").toUpperCase();
+            if(ori.includes('NORTE') || ori === 'N') lado = 'NORTE';
+            if(ori.includes('SUR') || ori === 'S') lado = 'SUR';
+            document.getElementById(prefix+'_lado').value = lado;
+        }
+    }
 
-    function procesarYGuardar() {
+    function procesarYGuardar() { 
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
         const txtJ = document.getElementById('csv_jor').value;
-
         if(txtC.trim()) DB.cuadros = txtC.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=5) ? {id:c[0].trim(), nombre:c[1].trim(), ori:c[3].trim(), max:parseInt(c[5])} : null }).filter(x=>x&&x.id);
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-
-        localStorage.setItem('v43_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v43_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v43_jornadas', JSON.stringify(DB.jornadas));
-        actualizarSelectores();
-        alert("✅ Datos Actualizados");
-        document.getElementById('modalDB').classList.remove('open');
+        localStorage.setItem('v46_cuadros', JSON.stringify(DB.cuadros)); localStorage.setItem('v46_act', JSON.stringify(DB.actividades)); localStorage.setItem('v46_jornadas', JSON.stringify(DB.jornadas));
+        actualizarSelectores(); alert("✅ Datos Actualizados"); document.getElementById('modalDB').classList.remove('open');
     }
 
     function actualizarSelectores() {
@@ -165,90 +223,105 @@
         if(DB.cuadros.length) listaC.innerHTML = DB.cuadros.map(c => `<option value="${c.nombre}">ID: ${c.id} | Ori: ${c.ori}</option>`).join('');
         if(DB.actividades.length) listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">ID: ${a.id}</option>`).join('');
         const optsJ = `<option value="">-- Seleccionar --</option>` + DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
-        document.getElementById('conf_jornada').innerHTML = optsJ; document.getElementById('chg_jornada').innerHTML = optsJ;
+        document.getElementById('conf_jornada').innerHTML = optsJ;
     }
 
-    function alEscribirCuadro(prefix) {
-        const val = document.getElementById(prefix+'_cuadro').value;
-        const data = DB.cuadros.find(c => c.nombre === val);
-        if(data) {
-            let infoTotal = document.getElementById('conf_info_total');
-            if(infoTotal) infoTotal.innerText = data.max;
-            document.getElementById(prefix+'_inicio').value = 1; document.getElementById(prefix+'_fin').value = data.max;
-            let lado = 'COMPLETA';
-            if(data.ori && data.ori.toUpperCase().includes('SUR')) lado = 'SUR';
-            if(data.ori && data.ori.toUpperCase().includes('NORTE')) lado = 'NORTE';
-            document.getElementById(prefix+'_lado').value = lado;
-        }
-    }
-
-    // --- INICIO SESIÓN ---
-    function iniciarJornada() { 
+    // --- INICIO SISTEMA ---
+    function iniciarSistema() {
+        const resp = document.getElementById('conf_resp').value;
         const supId = document.getElementById('conf_sup_id').value;
-        const supNom = document.getElementById('conf_resp').value;
-        if(!supId || !supNom) return alert("❌ Debes ingresar ID y Nombre del Supervisor");
-        configurarSesion('conf'); 
-    }
+        const supAct = document.getElementById('conf_sup_act').value;
+        const total = parseInt(document.getElementById('conf_total_global').value);
 
-    function configurarSesion(prefix) {
-        const cNombre = document.getElementById(prefix+'_cuadro').value;
-        const ini = parseInt(document.getElementById(prefix+'_inicio').value);
-        const fin = parseInt(document.getElementById(prefix+'_fin').value);
-
-        if(!cNombre || isNaN(ini)) return alert("Faltan datos obligatorios.");
-        const cObj = DB.cuadros.find(x => x.nombre === cNombre);
+        if(!resp || !supAct || isNaN(total) || total <= 0) return alert("Falta Datos Supervisor, Actividad o Total Personal válido.");
         
-        let aNombre, jNombre, modo, totalStaff;
-        
-        if (prefix === 'chg') { 
-             aNombre = document.getElementById(prefix+'_act').value; jNombre = document.getElementById(prefix+'_jornada').value;
-             modo = document.getElementById(prefix+'_modo').value; 
-             totalStaff = DB.sesion.totalStaff;
-        } else {
-            aNombre = document.getElementById(prefix+'_act').value; jNombre = document.getElementById(prefix+'_jornada').value;
-            modo = document.getElementById(prefix+'_modo').value; 
-            totalStaff = parseInt(document.getElementById('conf_total_staff').value) || (DB.sesion ? DB.sesion.totalStaff : 0);
-        }
-        
-        const aObj = DB.actividades.find(x => x.desc === aNombre);
-        const supId = document.getElementById('conf_sup_id').value || (DB.sesion ? DB.sesion.supId : '');
-        const supNom = document.getElementById('conf_resp').value || (DB.sesion ? DB.sesion.responsable : '');
-
-        DB.sesion = {
-            idCuadro: cObj ? cObj.id : "??", nomCuadro: cNombre,
-            idActividad: aObj ? aObj.id : "??", nomActividad: aNombre,
-            jornada: jNombre, lado: document.getElementById(prefix+'_lado').value,
-            modo: modo, inicio: ini, fin: fin, totalStaff: totalStaff,
-            supId: supId, responsable: supNom,
-            activo: true
+        DB.globalConfig = { 
+            resp: resp, 
+            supId: supId, 
+            supAct: supAct,
+            jornada: document.getElementById('conf_jornada').value,
+            totalStaff: total // ALMACENAR TOTAL GLOBAL
         };
+        DB.sesiones = []; DB.staff = []; DB.avance = [];
         
-        if(prefix === 'conf') { DB.avance = []; DB.staff = []; }
-        guardarTodo();
+        crearSesionDesdeForm('conf');
         irAlMapa();
     }
 
+    function crearSesionDesdeForm(prefix) {
+        const cVal = document.getElementById(prefix+'_cuadro').value;
+        if(!cVal) return alert("Falta Cuadro");
+        
+        let sesion = {
+            uid: Date.now(),
+            cuadro: cVal,
+            act: document.getElementById(prefix+'_act').value,
+            lado: document.getElementById(prefix+'_lado').value,
+            inicio: parseInt(document.getElementById(prefix+'_inicio').value),
+            fin: parseInt(document.getElementById(prefix+'_fin').value),
+            modo: document.getElementById(prefix+'_modo').value
+        };
+        DB.sesiones.push(sesion);
+        DB.currentSessionId = DB.sesiones.length - 1;
+        guardarTodo();
+    }
+
+    // --- VISTA PRINCIPAL ---
     function irAlMapa() {
-        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalNextAct').classList.remove('open');
+        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalAddCuadro').classList.remove('open'); document.getElementById('viewHistory').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
-        document.getElementById('disp_cuadro').innerText = `${DB.sesion.nomCuadro}`;
-        document.getElementById('disp_act').innerText = DB.sesion.nomActividad;
-        document.getElementById('disp_jornada').innerText = DB.sesion.jornada;
-        document.getElementById('disp_sup_name').innerText = DB.sesion.responsable;
-        document.getElementById('disp_rango').innerText = `Hileras ${DB.sesion.inicio} - ${DB.sesion.fin} (${DB.sesion.modo})`;
-        renderMapa();
+        
+        document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
+        
+        renderTabs();
+        renderSession();
         if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
     }
 
-    // --- ENTRADA MANUAL ---
+    function renderTabs() {
+        const container = document.getElementById('tabsContainer');
+        container.innerHTML = "";
+        DB.sesiones.forEach((s, idx) => {
+            let active = (idx === DB.currentSessionId) ? "active" : "";
+            container.innerHTML += `<div class="tab ${active}" onclick="cambiarTab(${idx})">${s.cuadro} <small>(${s.inicio}-${s.fin})</small></div>`;
+        });
+        container.innerHTML += `<div class="tab tab-add" onclick="abrirAddCuadro()">+</div>`;
+    }
+
+    function cambiarTab(idx) {
+        DB.currentSessionId = idx;
+        renderTabs();
+        renderSession();
+    }
+
+    function renderSession() {
+        let s = DB.sesiones[DB.currentSessionId];
+        document.getElementById('disp_cuadro').innerText = s.cuadro;
+        document.getElementById('disp_act').innerText = s.act;
+        document.getElementById('disp_rango').innerText = `${s.lado} | Filas ${s.inicio}-${s.fin}`;
+        
+        // Mostrar contador global
+        let total = DB.staff.length;
+        let limit = DB.globalConfig.totalStaff;
+        document.getElementById('disp_count_global').innerText = `${total}/${limit} Personal (Global)`;
+        if(total >= limit) document.getElementById('disp_count_global').style.color = "var(--danger)";
+        else document.getElementById('disp_count_global').style.color = "var(--active-tab)";
+
+        renderMapa();
+    }
+
+    function abrirAddCuadro() { document.getElementById('modalAddCuadro').classList.add('open'); }
+    function confirmarNuevoCuadro() {
+        crearSesionDesdeForm('add');
+        document.getElementById('modalAddCuadro').classList.remove('open');
+        irAlMapa();
+    }
+
+    // --- CORE SCANNING (CON LÍMITE GLOBAL) ---
     function registrarManual() {
         let id = document.getElementById('manual_id').value.toUpperCase().trim();
         if(id) { onScan(id); document.getElementById('manual_id').value = ''; }
     }
-
-    // ==========================================
-    // LÓGICA CORE V43 (RE-ESCANEO Y AVANCE)
-    // ==========================================
 
     function onScan(id) {
         id = id.trim();
@@ -256,263 +329,283 @@
         if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
         lastScanTime[id] = now;
 
+        let sesionActual = DB.sesiones[DB.currentSessionId];
         let trabajador = DB.staff.find(s => s.id === id);
 
-        if(trabajador && trabajador.fila) {
-            // === YA TIENE FILA: PREGUNTAR A DÓNDE MOVER ===
-            let sugerencia = buscarSiguienteFilaVacia();
-            let nuevaFila = prompt(`⚠️ ${id} ya está en la fila ${trabajador.fila}.\n\n¿A qué fila desea moverlo? (Sugerencia: ${sugerencia})`, sugerencia);
-            
-            if (nuevaFila !== null) { // Si no dio Cancelar
-                nuevaFila = parseInt(nuevaFila);
-                if (!isNaN(nuevaFila) && nuevaFila >= DB.sesion.inicio && nuevaFila <= DB.sesion.fin) {
-                    // Validar espacio
-                    if (validarEspacioEnFila(nuevaFila)) {
+        if(trabajador) {
+            // Trabajador ya existe en el sistema (no cuenta para el límite, ya está dentro)
+            if(trabajador.fila) {
+                if(trabajador.cuadroUid !== sesionActual.uid) {
+                    let otraSesion = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
+                    let nombreOtra = otraSesion ? otraSesion.cuadro : "Otro";
+                    if(confirm(`⚠️ ${id} está activo en CUADRO ${nombreOtra}.\n¿Moverlo a este cuadro (${sesionActual.cuadro})?`)) {
                         cerrarTarea(trabajador);
-                        asignarFilaEspecifica(trabajador, nuevaFila);
-                        alert(`✅ Movido a fila ${nuevaFila}`);
+                        asignarNuevaTareaAuto(trabajador, sesionActual);
                         audioBeep.play();
-                    } else {
-                        alert("⛔ Fila llena.");
                     }
                 } else {
-                    alert("⛔ Número de fila inválido.");
+                    let sugerencia = buscarSiguienteFilaVacia(sesionActual);
+                    let nuevaFila = prompt(`⚠️ ${id} en fila ${trabajador.fila}.\n¿Mover a?`, sugerencia);
+                    if(nuevaFila && !isNaN(nuevaFila)) {
+                         cerrarTarea(trabajador);
+                         asignarFilaEspecifica(trabajador, parseInt(nuevaFila), sesionActual);
+                         audioBeep.play();
+                    }
                 }
+            } else {
+                asignarNuevaTareaAuto(trabajador, sesionActual);
+                audioBeep.play();
             }
         } else {
-            // === NUEVO O LIBRE: ASIGNAR AUTOMÁTICO ===
-            if(!trabajador) { trabajador = { id: id, fila: null }; DB.staff.push(trabajador); }
-            asignarNuevaTareaAuto(trabajador);
+            // NUEVO TRABAJADOR - VERIFICAR LÍMITE GLOBAL
+            if (DB.staff.length >= DB.globalConfig.totalStaff) {
+                alert(`⛔ LÍMITE ALCANZADO (${DB.globalConfig.totalStaff}). No se puede agregar a ${id}.`);
+                return;
+            }
+
+            trabajador = { id: id, fila: null, cuadroUid: null };
+            DB.staff.push(trabajador);
+            asignarNuevaTareaAuto(trabajador, sesionActual);
             audioBeep.play();
         }
         guardarTodo();
         renderMapa();
+        renderSession(); // Actualizar contador global
     }
 
-    // Busca la primera fila que cumpla las condiciones (vacía o con 1 espacio si es parejas)
-    function buscarSiguienteFilaVacia() {
-        for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
-            if (validarEspacioEnFila(i)) return i;
+    // --- LÓGICA FILA VACÍA (NO REPETIR HISTÓRICO) ---
+    function buscarSiguienteFilaVacia(sesion, filaInicioBusqueda = null) {
+        let inicio = filaInicioBusqueda || sesion.inicio;
+        
+        // Obtener filas que YA SE TERMINARON en esta sesión (Histórico de 'fin' !== null)
+        let filasQuemadas = new Set(
+            DB.avance
+                .filter(a => a.cuadroUid === sesion.uid && a.fin !== null)
+                .map(a => a.fila)
+        );
+
+        for(let i = inicio; i <= sesion.fin; i++) {
+            // 1. REGLA DE ORO: Si ya se terminó, NO se sugiere.
+            if(filasQuemadas.has(i)) continue;
+
+            // 2. Verificar ocupación actual
+            let ocupantes = DB.staff.filter(s => s.cuadroUid === sesion.uid && s.fila === i).length;
+            
+            if(sesion.modo === 'PAREJAS') { 
+                if(ocupantes < 2) return i; 
+            } else { 
+                if(ocupantes === 0) return i; 
+            }
         }
-        return DB.sesion.fin + 1; // Si todo está lleno
-    }
-
-    function validarEspacioEnFila(filaNum) {
-        let ocupantes = DB.staff.filter(s => s.fila === filaNum).length;
-        if (DB.sesion.modo === 'PAREJAS') return ocupantes < 2;
-        return ocupantes === 0;
+        return sesion.fin + 1; // Lleno
     }
 
     function cerrarTarea(trabajador) {
-        // Encontrar registro abierto en avance (fin: null)
-        // Usamos DB.avance que tiene todo el historial. Los activos tienen fin: null
-        // OJO: DB.avance en V43 es historial acumulativo.
         let reg = DB.avance.find(a => a.obrero === trabajador.id && a.fin === null);
         if(reg) {
             reg.fin = new Date().toLocaleTimeString('es-MX');
             reg.ts_fin = Date.now();
         }
         trabajador.fila = null;
+        trabajador.cuadroUid = null;
     }
 
-    function asignarNuevaTareaAuto(trabajador) {
-        let filaDestino = buscarSiguienteFilaVacia();
-        
-        if (filaDestino > DB.sesion.fin) {
-            preguntaFinDeCuadro(); // Lleno
-            return;
-        }
-
-        asignarFilaEspecifica(trabajador, filaDestino);
+    function asignarNuevaTareaAuto(trabajador, sesion) {
+        let filaDestino = buscarSiguienteFilaVacia(sesion);
+        if(filaDestino > sesion.fin) return alert("⛔ CUADRO LLENO (O todas las filas ya fueron trabajadas)");
+        asignarFilaEspecifica(trabajador, filaDestino, sesion);
     }
 
-    function asignarFilaEspecifica(trabajador, filaNum) {
+    function asignarFilaEspecifica(trabajador, filaNum, sesion) {
         trabajador.fila = filaNum;
+        trabajador.cuadroUid = sesion.uid;
         DB.avance.push({
-            fila: filaNum,
-            obrero: trabajador.id,
-            inicio: new Date().toLocaleTimeString('es-MX'),
-            ts_inicio: Date.now(),
-            fin: null, // Activo
-            ts_fin: null,
-            idCuadro: DB.sesion.idCuadro,
-            nomCuadro: DB.sesion.nomCuadro,
-            responsable: DB.sesion.responsable
+            fila: filaNum, obrero: trabajador.id,
+            inicio: new Date().toLocaleTimeString('es-MX'), ts_inicio: Date.now(), fin: null,
+            nomCuadro: sesion.cuadro, cuadroUid: sesion.uid,
+            responsable: DB.globalConfig.resp, supAct: DB.globalConfig.supAct
         });
     }
 
-    // ==========================================
-    // AVANCE MASIVO INTELIGENTE
-    // ==========================================
-    function ejecutarAvanceMasivoInteligente() {
-        if(!confirm("¿AVANZAR A TODOS AL SIGUIENTE BLOQUE?\n(Se respetarán las agrupaciones actuales)")) return;
+    function ejecutarAvanceMasivoFix() {
+        let s = DB.sesiones[DB.currentSessionId];
+        if(!confirm(`¿AVANZAR GRUPOS EN CUADRO ${s.cuadro}?`)) return;
 
-        // 1. Obtener trabajadores activos y agruparlos por su fila actual
-        let activos = DB.staff.filter(s => s.fila !== null);
-        
-        if (activos.length === 0) return alert("Nadie trabajando para mover.");
+        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        if(activos.length === 0) return alert("Nadie para mover.");
 
-        // Mapa: FilaActual -> [Trabajador1, Trabajador2]
+        let maxFilaOcupada = 0;
+        activos.forEach(t => { if(t.fila > maxFilaOcupada) maxFilaOcupada = t.fila; });
+
         let grupos = {};
-        activos.forEach(t => {
-            if (!grupos[t.fila]) grupos[t.fila] = [];
-            grupos[t.fila].push(t);
-        });
+        activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+        activos.forEach(t => cerrarTarea(t)); // Cerrar libera las filas, añadiéndolas a 'filasQuemadas' implícitamente
 
-        // Ordenar las filas actuales (1, 2, 3...) para mover en orden
-        let filasOrdenadas = Object.keys(grupos).map(Number).sort((a,b) => a - b);
-
-        // 2. Cerrar tareas de todos (para liberar las filas viejas en la logica)
-        activos.forEach(t => cerrarTarea(t));
-
-        // 3. Buscar nuevos lugares para cada grupo
+        let filasOrdenadas = Object.keys(grupos).map(Number).sort((a,b)=>a-b);
+        let punteroBusqueda = maxFilaOcupada + 1;
+        
         let movidos = 0;
-        let filaPuntero = DB.sesion.inicio; // Empezamos a buscar desde el inicio del cuadro
+        for(let viejaFila of filasOrdenadas) {
+            let grupo = grupos[viejaFila];
+            
+            // Usamos la nueva función buscarSiguienteFilaVacia que evita las quemadas
+            // PERO debemos asegurarnos de que el grupo quepa junto.
+            // Simplificación: Buscamos filas vacías consecutivas para el grupo.
+            
+            let nuevaFila = -1;
+            
+            // Búsqueda manual respetando la lógica de "Siguiente Bloque Vacío"
+            for(let f = punteroBusqueda; f <= s.fin; f++) {
+                // Verificar si está quemada
+                let esQuemada = DB.avance.some(a => a.cuadroUid === s.uid && a.fila === f && a.fin !== null);
+                if(esQuemada) continue;
 
-        // Función auxiliar para encontrar fila vacía REAL desde un punto
-        const buscarVaciaDesde = (inicioBusqueda) => {
-            for(let f = inicioBusqueda; f <= DB.sesion.fin; f++) {
-                // Verificamos en DB.staff (que ya tiene los .fila = null de los que acabamos de cerrar)
-                // Y verificamos contra los que YA HEMOS REASIGNADO en este bucle
-                let ocupantes = DB.staff.filter(s => s.fila === f).length;
-                if (ocupantes === 0) return f; // Queremos filas COMPLETAMENTE vacías para el bloque nuevo
+                // Verificar ocupantes
+                let ocupantes = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === f).length;
+                if(ocupantes === 0) { nuevaFila = f; break; }
             }
-            return null;
-        };
 
-        // Recorrer grupo por grupo y asignar
-        for (let filaVieja of filasOrdenadas) {
-            let trabajadoresEnGrupo = grupos[filaVieja]; // Array [t1] o [t1, t2]
-            
-            // Buscar fila para este grupo
-            let nuevaFila = buscarVaciaDesde(filaPuntero);
-            
-            if (nuevaFila !== null) {
-                trabajadoresEnGrupo.forEach(t => {
-                    asignarFilaEspecifica(t, nuevaFila);
-                    movidos++;
-                });
-                // Actualizar puntero para que el siguiente grupo busque DESPUÉS de esta fila
-                filaPuntero = nuevaFila + 1;
+            if(nuevaFila !== -1) {
+                grupo.forEach(t => asignarFilaEspecifica(t, nuevaFila, s));
+                movidos += grupo.length;
+                punteroBusqueda = nuevaFila + 1;
             } else {
-                alert("⚠️ No hay espacio suficiente para mover a todos. El cuadro se llenó.");
-                break;
+                alert("⚠️ Sin espacio válido."); break; 
             }
         }
-
-        guardarTodo();
-        renderMapa();
-        alert(`✅ ${movidos} trabajadores avanzados.`);
-    }
-
-    // ==========================================
-    // CIERRE Y UTILIDADES
-    // ==========================================
-
-    function preguntaFinDeCuadro() {
-        // Evitar spam de modales
-        if(document.querySelector('.modal.open') && document.querySelector('.modal.open').id !== 'viewMain') return;
-
-        if(confirm("⚠️ ¡CUADRO LLENO! \n\n¿Terminó el día de trabajo? \n\n[ACEPTAR] = SÍ, Cerrar Día. \n[CANCELAR] = NO, Cambiar Actividad.")) {
-            confirmarFinDia(); 
-        } else {
-            abrirSiguienteActividad();
-        }
-    }
-
-    function abrirSiguienteActividad() { 
-        document.getElementById('chg_jornada').value = DB.sesion.jornada; 
-        document.getElementById('modalNextAct').classList.add('open'); 
-    }
-
-    function ejecutarCambioActividad() { 
-        if(!document.getElementById('chg_cuadro').value) return alert("Selecciona cuadro");
-        
-        let ahora = new Date().toLocaleTimeString('es-MX'), ts = Date.now();
-        // Cerrar abiertos
-        DB.staff.forEach(t => cerrarTarea(t));
-        
-        configurarSesion('chg'); // Nueva sesión
-        
-        // Limpiar filas del staff (quedan "en el limbo" hasta ser escaneados o movidos)
-        DB.staff.forEach(s => s.fila = null);
-        
-        guardarTodo();
-        renderMapa();
-    }
-
-    function confirmarFinDia() {
-        if(!confirm("🛑 ¿CONFIRMAS QUE EL DÍA TERMINÓ?")) return;
-        DB.staff.forEach(t => cerrarTarea(t));
-        descargarReporte('FINAL');
-        setTimeout(() => location.reload(), 3000);
+        guardarTodo(); renderMapa(); alert(`✅ ${movidos} movidos.`);
     }
 
     function renderMapa() {
+        let s = DB.sesiones[DB.currentSessionId];
         const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
-        let terminadas = new Set(); 
-        // En V43, miramos el avance para ver qué filas se han tocado hoy en este cuadro
-        DB.avance.filter(a => a.idCuadro === DB.sesion.idCuadro && a.fin !== null).forEach(a => terminadas.add(a.fila));
+        let terminadas = new Set();
+        DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).forEach(a => terminadas.add(a.fila));
+        let activosEnSesion = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        document.getElementById('stat_active').innerText = activosEnSesion.length;
         
-        let presentes = DB.staff.length; 
-        document.getElementById('stat_active').innerText = `${presentes}/${DB.sesion.totalStaff || '?'}`;
-
-        for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
+        for(let i = s.inicio; i <= s.fin; i++) {
             let div = document.createElement('div'); div.className = "row-item";
-            let gente = DB.staff.filter(s => s.fila === i).map(s => s.id); // Gente actualmente ahí
-            
+            let gente = activosEnSesion.filter(st => st.fila === i).map(st => st.id);
             div.innerHTML = `<span>${i}</span>`;
-            
-            if (gente.length > 0) {
-                div.className += " active"; 
-                div.innerHTML += `<span class="row-tag">${gente.join(',')}</span><div class="badge">${gente.length}</div>`;
-            } else if (terminadas.has(i)) {
-                div.className += " done";
-            }
+            if(gente.length > 0) { div.className += " active"; div.innerHTML += `<span class="row-tag">${gente.join(',')}</span><div class="badge">${gente.length}</div>`; }
+            else if(terminadas.has(i)) { div.className += " done"; }
             grid.appendChild(div);
         }
-        
-        let total = DB.sesion.fin - DB.sesion.inicio + 1;
-        document.getElementById('stat_done').innerText = Math.round((terminadas.size/total)*100) + "%";
+        let total = s.fin - s.inicio + 1;
+        document.getElementById('stat_done').innerText = Math.round((terminadas.size / total) * 100) + "%";
     }
 
     function guardarTodo() {
-        localStorage.setItem('v43_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v43_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v43_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v46_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v46_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v46_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v46_config', JSON.stringify(DB.globalConfig));
+        localStorage.setItem('v46_archive', JSON.stringify(DB.archive));
+    }
+
+    // --- CIERRE DEL DÍA ---
+    function confirmarFinDia() {
+        if(!confirm("🛑 ¿FINALIZAR DÍA?")) return;
+        let ahora = new Date().toLocaleTimeString('es-MX');
+        DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+        
+        let record = {
+            id: Date.now(),
+            fecha: new Date().toLocaleDateString(),
+            config: DB.globalConfig,
+            avance: [...DB.avance],
+            sesiones: [...DB.sesiones]
+        };
+        
+        DB.archive.unshift(record);
+        if(DB.archive.length > 10) DB.archive.pop();
+        
+        DB.sesiones = []; DB.avance = []; DB.staff = [];
+        guardarTodo();
+        descargarJSON(record);
+        mostrarReporte(record);
+    }
+
+    function abrirHistorial() {
+        document.getElementById('viewSetup').classList.remove('open');
+        document.getElementById('viewHistory').classList.add('open');
+        renderHistoryList();
+    }
+
+    function renderHistoryList() {
+        let div = document.getElementById('historyList'); div.innerHTML = "";
+        if(DB.archive.length === 0) div.innerHTML = "<p style='text-align:center;color:#555;'>No hay días guardados.</p>";
+        DB.archive.forEach(rec => {
+            div.innerHTML += `<div class="card" onclick='mostrarReportePorId(${rec.id})' style="cursor:pointer; border-left:4px solid var(--purple);"><div style="font-weight:bold;">📅 ${rec.fecha} | ${rec.config.resp}</div><div style="font-size:11px; color:#aaa;">Total Pers: ${rec.config.totalStaff}</div></div>`;
+        });
+    }
+
+    function mostrarReportePorId(id) { let rec = DB.archive.find(r => r.id === id); if(rec) mostrarReporte(rec); }
+    let currentReport = null;
+
+    function mostrarReporte(rec) {
+        currentReport = rec;
+        document.getElementById('viewSetup').classList.remove('open');
+        document.getElementById('viewMain').classList.remove('open');
+        document.getElementById('viewHistory').classList.add('open');
+        
+        let summary = `AGRICACTUS\nFECHA:${rec.fecha}\nSUP:${rec.config.resp}\nTOTAL_PERS:${rec.config.totalStaff}`;
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), { text: summary, width: 128, height: 128 });
+        document.getElementById('hist_summary').innerText = `ID: ${rec.id} | ${rec.fecha}`;
+        renderHistoryList();
+    }
+
+    function descargarJSON(rec = currentReport) {
+        if(!rec) return;
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rec));
+        let dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", `BACKUP_${rec.config.resp}_${rec.id}.json`);
+        dlAnchorElem.click();
     }
 
     function descargarReporte(tipo) {
-        let data = DB.avance;
-        let csv = "ID_OBRERO,SUPERVISOR,CUADRO,FILA,HORA_INICIO,HORA_FIN\n";
-        
+        let data, conf;
+        if (tipo === 'HISTORICO' && currentReport) { data = currentReport.avance; conf = currentReport.config; }
+        else { data = DB.avance; conf = DB.globalConfig; }
+
+        let csv = "ID_OBRERO,SUPERVISOR,ACT_SUPERVISOR,CUADRO,FILA,HORA_INICIO,HORA_FIN\n";
         data.sort((a,b) => a.ts_inicio - b.ts_inicio);
-        
         data.forEach(r => {
             let fin = r.fin || "EN PROCESO";
-            csv += `${r.obrero},${r.responsable},${r.nomCuadro},${r.fila},${r.inicio},${fin}\n`;
+            let supAct = r.supAct || conf.supAct;
+            csv += `${r.obrero},${r.responsable},${supAct},${r.nomCuadro},${r.fila},${r.inicio},${fin}\n`;
         });
         
         let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `REPORTE_${tipo}_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; l.click();
+        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `REPORTE_${tipo}.csv`; l.click();
     }
-    
-    // Editor simple
+
+    function cerrarHistorial() {
+        document.getElementById('viewHistory').classList.remove('open');
+        if(DB.sesiones.length > 0) document.getElementById('viewMain').classList.add('open');
+        else document.getElementById('viewSetup').classList.add('open');
+    }
+
     function abrirEditor() {
+        let s = DB.sesiones[DB.currentSessionId];
         const list = document.getElementById('editorList'); list.innerHTML = "";
-        let activos = DB.staff.filter(s => s.fila !== null);
-        if(activos.length === 0) list.innerHTML = "<p>Nadie activo.</p>";
-        activos.forEach((s) => {
-            list.innerHTML += `<div class="edit-item"><div><b>${s.id}</b><br><small>Fila: ${s.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual('${s.id}')">CAMBIAR</button></div></div>`;
+        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        if(activos.length === 0) list.innerHTML = "<p>Nadie activo en este cuadro.</p>";
+        activos.forEach((st) => {
+            list.innerHTML += `<div class="edit-item"><div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual('${st.id}')">CAMBIAR</button></div></div>`;
         });
         document.getElementById('modalEditor').classList.add('open');
     }
     function cambiarFilaManual(id) {
+        let s = DB.sesiones[DB.currentSessionId];
         let n = prompt("Nueva fila:");
         if(n && !isNaN(n)) {
-            let s = DB.staff.find(x=>x.id===id);
-            cerrarTarea(s);
-            asignarFilaEspecifica(s, parseInt(n));
+            let st = DB.staff.find(x=>x.id===id);
+            cerrarTarea(st);
+            asignarFilaEspecifica(st, parseInt(n), s);
             guardarTodo(); renderMapa(); abrirEditor();
         }
     }
