@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V46 - Control Total</title>
+    <title>AgriCactus V47 - Final</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; }
+        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
         
         /* UI Elements */
@@ -15,6 +15,7 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
+        .btn-i { background: var(--info); }
         .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
 
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
@@ -42,8 +43,7 @@
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
         
-        /* QR Container */
-        #qrcode { background: white; padding: 10px; display: flex; justify-content: center; border-radius: 10px; margin: 10px auto; width: fit-content; }
+        #qrcode, #qrcode_partial { background: white; padding: 10px; display: flex; justify-content: center; border-radius: 10px; margin: 10px auto; width: fit-content; }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
@@ -51,7 +51,7 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V46</h2>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirDB()" style="padding:10px;">📂 CARGAR BD</button>
         <button class="btn btn-p" onclick="abrirHistorial()" style="padding:10px;">📜 HISTORIAL</button>
@@ -67,7 +67,7 @@
         <input type="text" id="conf_sup_act" placeholder="Ej: Supervisión..." list="lista_actividades">
         
         <label style="color:var(--danger); font-size:12px; margin-top:10px;">👥 TOTAL PERSONAL (GLOBAL)</label>
-        <input type="number" id="conf_total_global" placeholder="Ej: 20 (Límite máximo del día)">
+        <input type="number" id="conf_total_global" placeholder="Ej: 20 (Límite máximo)">
     </div>
 
     <div class="card">
@@ -96,7 +96,7 @@
             Sup: <b id="disp_resp" style="color:var(--main);">--</b><br>
             <span id="disp_count_global" style="color:var(--sec);">0/0 Personal</span>
         </div>
-        <button class="btn btn-r btn-sm" onclick="confirmarFinDia()">🏁 CERRAR DÍA</button>
+        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="background:var(--info); color:white;">📡 CORTE PARCIAL</button>
     </div>
 
     <div class="tabs-container" id="tabsContainer"></div>
@@ -125,13 +125,26 @@
     
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
-        <button class="btn btn-p" onclick="descargarReporte('PARCIAL')">📊 REPORTE CSV</button>
+        <button class="btn btn-p" onclick="descargarReporte('PARCIAL')">📊 CSV PARCIAL</button>
+        <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR DÍA</button>
     </div>
+</div>
+
+<div id="viewPartial" class="modal" style="background:#111;">
+    <h2 style="color:var(--info); text-align:center;">📡 AVANCE EN VIVO</h2>
+    <p style="text-align:center; color:#ccc; font-size:12px;">Muestra este QR al Supervisor General para revisión rápida.</p>
+    <div class="card" style="text-align:center;">
+        <div id="qrcode_partial"></div>
+        <p id="partial_summary" style="font-size:12px; color:#aaa;"></p>
+        <div class="flex-row">
+            <button class="btn btn-g" onclick="descargarJSON(currentPartialRecord, 'PARCIAL')">📲 ENVIAR JSON (WhatsApp)</button>
+        </div>
+    </div>
+    <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 SEGUIR TRABAJANDO</button>
 </div>
 
 <div id="viewHistory" class="modal" style="background:#111;">
     <h2 style="color:var(--purple); text-align:center;">📜 HISTORIAL & CIERRE</h2>
-    
     <div class="card" style="text-align:center;">
         <h3 style="margin:0;">Resumen del Día</h3>
         <div id="qrcode"></div>
@@ -141,10 +154,8 @@
             <button class="btn btn-sm btn-p" onclick="descargarReporte('HISTORICO')">📊 BAJAR CSV</button>
         </div>
     </div>
-
     <h3 style="border-bottom:1px solid #333;">Días Anteriores</h3>
     <div id="historyList" style="max-height:300px; overflow-y:auto;"></div>
-
     <button class="btn btn-r" onclick="cerrarHistorial()">VOLVER AL INICIO</button>
 </div>
 
@@ -167,19 +178,15 @@
 <script>
     // --- ESTRUCTURA DE DATOS ---
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v46_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v46_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v46_jornadas')) || [],
-        
-        sesiones: JSON.parse(localStorage.getItem('v46_sesiones')) || [], 
+        cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v47_jornadas')) || [],
+        sesiones: JSON.parse(localStorage.getItem('v47_sesiones')) || [], 
         currentSessionId: 0,
-        avance: JSON.parse(localStorage.getItem('v46_avance')) || [], 
-        staff: JSON.parse(localStorage.getItem('v46_staff')) || [], // { id, fila, cuadroUid }
-        
-        // Configuración Global incluyendo Total Staff
-        globalConfig: JSON.parse(localStorage.getItem('v46_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
-
-        archive: JSON.parse(localStorage.getItem('v46_archive')) || []
+        avance: JSON.parse(localStorage.getItem('v47_avance')) || [], 
+        staff: JSON.parse(localStorage.getItem('v47_staff')) || [], 
+        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
+        archive: JSON.parse(localStorage.getItem('v47_archive')) || []
     };
     
     let scanner = null, lastScanTime = {};
@@ -198,7 +205,6 @@
         if(data) {
             document.getElementById(prefix+'_info_total').innerText = data.max;
             document.getElementById(prefix+'_inicio').value = 1; document.getElementById(prefix+'_fin').value = data.max;
-            
             let lado = 'COMPLETA';
             let ori = (data.ori || "").toUpperCase();
             if(ori.includes('NORTE') || ori === 'N') lado = 'NORTE';
@@ -214,7 +220,7 @@
         if(txtC.trim()) DB.cuadros = txtC.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=5) ? {id:c[0].trim(), nombre:c[1].trim(), ori:c[3].trim(), max:parseInt(c[5])} : null }).filter(x=>x&&x.id);
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-        localStorage.setItem('v46_cuadros', JSON.stringify(DB.cuadros)); localStorage.setItem('v46_act', JSON.stringify(DB.actividades)); localStorage.setItem('v46_jornadas', JSON.stringify(DB.jornadas));
+        localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros)); localStorage.setItem('v47_act', JSON.stringify(DB.actividades)); localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores(); alert("✅ Datos Actualizados"); document.getElementById('modalDB').classList.remove('open');
     }
 
@@ -226,7 +232,6 @@
         document.getElementById('conf_jornada').innerHTML = optsJ;
     }
 
-    // --- INICIO SISTEMA ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const supId = document.getElementById('conf_sup_id').value;
@@ -235,15 +240,8 @@
 
         if(!resp || !supAct || isNaN(total) || total <= 0) return alert("Falta Datos Supervisor, Actividad o Total Personal válido.");
         
-        DB.globalConfig = { 
-            resp: resp, 
-            supId: supId, 
-            supAct: supAct,
-            jornada: document.getElementById('conf_jornada').value,
-            totalStaff: total // ALMACENAR TOTAL GLOBAL
-        };
+        DB.globalConfig = { resp: resp, supId: supId, supAct: supAct, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
         DB.sesiones = []; DB.staff = []; DB.avance = [];
-        
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
@@ -266,13 +264,10 @@
         guardarTodo();
     }
 
-    // --- VISTA PRINCIPAL ---
     function irAlMapa() {
-        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalAddCuadro').classList.remove('open'); document.getElementById('viewHistory').classList.remove('open');
+        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalAddCuadro').classList.remove('open'); document.getElementById('viewHistory').classList.remove('open'); document.getElementById('viewPartial').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
-        
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
-        
         renderTabs();
         renderSession();
         if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
@@ -300,13 +295,13 @@
         document.getElementById('disp_act').innerText = s.act;
         document.getElementById('disp_rango').innerText = `${s.lado} | Filas ${s.inicio}-${s.fin}`;
         
-        // Mostrar contador global
+        // CONTADOR GLOBAL
         let total = DB.staff.length;
         let limit = DB.globalConfig.totalStaff;
         document.getElementById('disp_count_global').innerText = `${total}/${limit} Personal (Global)`;
         if(total >= limit) document.getElementById('disp_count_global').style.color = "var(--danger)";
         else document.getElementById('disp_count_global').style.color = "var(--active-tab)";
-
+        
         renderMapa();
     }
 
@@ -317,7 +312,6 @@
         irAlMapa();
     }
 
-    // --- CORE SCANNING (CON LÍMITE GLOBAL) ---
     function registrarManual() {
         let id = document.getElementById('manual_id').value.toUpperCase().trim();
         if(id) { onScan(id); document.getElementById('manual_id').value = ''; }
@@ -333,7 +327,7 @@
         let trabajador = DB.staff.find(s => s.id === id);
 
         if(trabajador) {
-            // Trabajador ya existe en el sistema (no cuenta para el límite, ya está dentro)
+            // Trabajador existe
             if(trabajador.fila) {
                 if(trabajador.cuadroUid !== sesionActual.uid) {
                     let otraSesion = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
@@ -362,7 +356,6 @@
                 alert(`⛔ LÍMITE ALCANZADO (${DB.globalConfig.totalStaff}). No se puede agregar a ${id}.`);
                 return;
             }
-
             trabajador = { id: id, fila: null, cuadroUid: null };
             DB.staff.push(trabajador);
             asignarNuevaTareaAuto(trabajador, sesionActual);
@@ -370,34 +363,23 @@
         }
         guardarTodo();
         renderMapa();
-        renderSession(); // Actualizar contador global
+        renderSession();
     }
 
-    // --- LÓGICA FILA VACÍA (NO REPETIR HISTÓRICO) ---
+    // --- FILA VACÍA Y QUEMADA ---
     function buscarSiguienteFilaVacia(sesion, filaInicioBusqueda = null) {
         let inicio = filaInicioBusqueda || sesion.inicio;
+        // Obtener filas terminadas (quemadas) en esta sesión
+        let filasQuemadas = new Set(DB.avance.filter(a => a.cuadroUid === sesion.uid && a.fin !== null).map(a => a.fila));
         
-        // Obtener filas que YA SE TERMINARON en esta sesión (Histórico de 'fin' !== null)
-        let filasQuemadas = new Set(
-            DB.avance
-                .filter(a => a.cuadroUid === sesion.uid && a.fin !== null)
-                .map(a => a.fila)
-        );
-
         for(let i = inicio; i <= sesion.fin; i++) {
-            // 1. REGLA DE ORO: Si ya se terminó, NO se sugiere.
-            if(filasQuemadas.has(i)) continue;
-
-            // 2. Verificar ocupación actual
-            let ocupantes = DB.staff.filter(s => s.cuadroUid === sesion.uid && s.fila === i).length;
+            if(filasQuemadas.has(i)) continue; // SALTAR SI ESTÁ QUEMADA
             
-            if(sesion.modo === 'PAREJAS') { 
-                if(ocupantes < 2) return i; 
-            } else { 
-                if(ocupantes === 0) return i; 
-            }
+            let ocupantes = DB.staff.filter(s => s.cuadroUid === sesion.uid && s.fila === i).length;
+            if(sesion.modo === 'PAREJAS') { if(ocupantes < 2) return i; }
+            else { if(ocupantes === 0) return i; }
         }
-        return sesion.fin + 1; // Lleno
+        return sesion.fin + 1;
     }
 
     function cerrarTarea(trabajador) {
@@ -430,41 +412,33 @@
     function ejecutarAvanceMasivoFix() {
         let s = DB.sesiones[DB.currentSessionId];
         if(!confirm(`¿AVANZAR GRUPOS EN CUADRO ${s.cuadro}?`)) return;
-
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
         if(activos.length === 0) return alert("Nadie para mover.");
-
+        
         let maxFilaOcupada = 0;
         activos.forEach(t => { if(t.fila > maxFilaOcupada) maxFilaOcupada = t.fila; });
-
+        
         let grupos = {};
         activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-        activos.forEach(t => cerrarTarea(t)); // Cerrar libera las filas, añadiéndolas a 'filasQuemadas' implícitamente
-
+        activos.forEach(t => cerrarTarea(t));
+        
         let filasOrdenadas = Object.keys(grupos).map(Number).sort((a,b)=>a-b);
         let punteroBusqueda = maxFilaOcupada + 1;
-        
         let movidos = 0;
+        
         for(let viejaFila of filasOrdenadas) {
             let grupo = grupos[viejaFila];
-            
-            // Usamos la nueva función buscarSiguienteFilaVacia que evita las quemadas
-            // PERO debemos asegurarnos de que el grupo quepa junto.
-            // Simplificación: Buscamos filas vacías consecutivas para el grupo.
-            
             let nuevaFila = -1;
             
-            // Búsqueda manual respetando la lógica de "Siguiente Bloque Vacío"
+            // Buscar espacio, saltando quemadas
             for(let f = punteroBusqueda; f <= s.fin; f++) {
-                // Verificar si está quemada
                 let esQuemada = DB.avance.some(a => a.cuadroUid === s.uid && a.fila === f && a.fin !== null);
                 if(esQuemada) continue;
-
-                // Verificar ocupantes
+                
                 let ocupantes = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === f).length;
                 if(ocupantes === 0) { nuevaFila = f; break; }
             }
-
+            
             if(nuevaFila !== -1) {
                 grupo.forEach(t => asignarFilaEspecifica(t, nuevaFila, s));
                 movidos += grupo.length;
@@ -497,92 +471,77 @@
     }
 
     function guardarTodo() {
-        localStorage.setItem('v46_sesiones', JSON.stringify(DB.sesiones));
-        localStorage.setItem('v46_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v46_staff', JSON.stringify(DB.staff));
-        localStorage.setItem('v46_config', JSON.stringify(DB.globalConfig));
-        localStorage.setItem('v46_archive', JSON.stringify(DB.archive));
+        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
+        localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
     }
 
-    // --- CIERRE DEL DÍA ---
-    function confirmarFinDia() {
-        if(!confirm("🛑 ¿FINALIZAR DÍA?")) return;
-        let ahora = new Date().toLocaleTimeString('es-MX');
-        DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-        
-        let record = {
+    // --- CORTE PARCIAL ---
+    let currentPartialRecord = null;
+    function generarCorteParcial() {
+        currentPartialRecord = {
             id: Date.now(),
             fecha: new Date().toLocaleDateString(),
             config: DB.globalConfig,
             avance: [...DB.avance],
             sesiones: [...DB.sesiones]
         };
+        document.getElementById('viewMain').classList.remove('open');
+        document.getElementById('viewPartial').classList.add('open');
         
-        DB.archive.unshift(record);
-        if(DB.archive.length > 10) DB.archive.pop();
-        
+        let summary = `AGRICACTUS\nFECHA:${currentPartialRecord.fecha}\nSUP:${currentPartialRecord.config.resp}\nTOTAL_PERS:${currentPartialRecord.config.totalStaff}`;
+        document.getElementById('qrcode_partial').innerHTML = "";
+        new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 150, height: 150 });
+        document.getElementById('partial_summary').innerText = `Corte: ${new Date().toLocaleTimeString()}`;
+    }
+
+    function cerrarCorteParcial() {
+        document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
+    }
+
+    // --- CIERRE ---
+    function confirmarFinDia() {
+        if(!confirm("🛑 ¿FINALIZAR DÍA?")) return;
+        DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+        let record = { id: Date.now(), fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance], sesiones: [...DB.sesiones] };
+        DB.archive.unshift(record); if(DB.archive.length > 10) DB.archive.pop();
         DB.sesiones = []; DB.avance = []; DB.staff = [];
-        guardarTodo();
-        descargarJSON(record);
-        mostrarReporte(record);
+        guardarTodo(); descargarJSON(record); mostrarReporte(record);
     }
 
-    function abrirHistorial() {
-        document.getElementById('viewSetup').classList.remove('open');
-        document.getElementById('viewHistory').classList.add('open');
-        renderHistoryList();
-    }
-
+    function abrirHistorial() { document.getElementById('viewSetup').classList.remove('open'); document.getElementById('viewHistory').classList.add('open'); renderHistoryList(); }
     function renderHistoryList() {
         let div = document.getElementById('historyList'); div.innerHTML = "";
         if(DB.archive.length === 0) div.innerHTML = "<p style='text-align:center;color:#555;'>No hay días guardados.</p>";
-        DB.archive.forEach(rec => {
-            div.innerHTML += `<div class="card" onclick='mostrarReportePorId(${rec.id})' style="cursor:pointer; border-left:4px solid var(--purple);"><div style="font-weight:bold;">📅 ${rec.fecha} | ${rec.config.resp}</div><div style="font-size:11px; color:#aaa;">Total Pers: ${rec.config.totalStaff}</div></div>`;
-        });
+        DB.archive.forEach(rec => { div.innerHTML += `<div class="card" onclick='mostrarReportePorId(${rec.id})' style="cursor:pointer; border-left:4px solid var(--purple);"><div style="font-weight:bold;">📅 ${rec.fecha} | ${rec.config.resp}</div><div style="font-size:11px; color:#aaa;">Total Pers: ${rec.config.totalStaff}</div></div>`; });
     }
-
     function mostrarReportePorId(id) { let rec = DB.archive.find(r => r.id === id); if(rec) mostrarReporte(rec); }
     let currentReport = null;
-
     function mostrarReporte(rec) {
         currentReport = rec;
-        document.getElementById('viewSetup').classList.remove('open');
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewHistory').classList.add('open');
-        
+        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('viewMain').classList.remove('open'); document.getElementById('viewHistory').classList.add('open');
         let summary = `AGRICACTUS\nFECHA:${rec.fecha}\nSUP:${rec.config.resp}\nTOTAL_PERS:${rec.config.totalStaff}`;
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: summary, width: 128, height: 128 });
+        document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById("qrcode"), { text: summary, width: 128, height: 128 });
         document.getElementById('hist_summary').innerText = `ID: ${rec.id} | ${rec.fecha}`;
         renderHistoryList();
     }
-
-    function descargarJSON(rec = currentReport) {
+    function descargarJSON(rec = currentReport, prefix='BACKUP') {
         if(!rec) return;
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rec));
-        let dlAnchorElem = document.createElement('a');
-        dlAnchorElem.setAttribute("href", dataStr);
-        dlAnchorElem.setAttribute("download", `BACKUP_${rec.config.resp}_${rec.id}.json`);
-        dlAnchorElem.click();
+        let dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${prefix}_${rec.config.resp}_${rec.id}.json`); dlAnchorElem.click();
     }
-
     function descargarReporte(tipo) {
         let data, conf;
         if (tipo === 'HISTORICO' && currentReport) { data = currentReport.avance; conf = currentReport.config; }
         else { data = DB.avance; conf = DB.globalConfig; }
-
         let csv = "ID_OBRERO,SUPERVISOR,ACT_SUPERVISOR,CUADRO,FILA,HORA_INICIO,HORA_FIN\n";
         data.sort((a,b) => a.ts_inicio - b.ts_inicio);
-        data.forEach(r => {
-            let fin = r.fin || "EN PROCESO";
-            let supAct = r.supAct || conf.supAct;
-            csv += `${r.obrero},${r.responsable},${supAct},${r.nomCuadro},${r.fila},${r.inicio},${fin}\n`;
-        });
-        
-        let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `REPORTE_${tipo}.csv`; l.click();
+        data.forEach(r => { let fin = r.fin || "EN PROCESO"; let supAct = r.supAct || conf.supAct; csv += `${r.obrero},${r.responsable},${supAct},${r.nomCuadro},${r.fila},${r.inicio},${fin}\n`; });
+        let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `REPORTE_${tipo}.csv`; l.click();
     }
-
     function cerrarHistorial() {
         document.getElementById('viewHistory').classList.remove('open');
         if(DB.sesiones.length > 0) document.getElementById('viewMain').classList.add('open');
@@ -594,9 +553,7 @@
         const list = document.getElementById('editorList'); list.innerHTML = "";
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
         if(activos.length === 0) list.innerHTML = "<p>Nadie activo en este cuadro.</p>";
-        activos.forEach((st) => {
-            list.innerHTML += `<div class="edit-item"><div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual('${st.id}')">CAMBIAR</button></div></div>`;
-        });
+        activos.forEach((st) => { list.innerHTML += `<div class="edit-item"><div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual('${st.id}')">CAMBIAR</button></div></div>`; });
         document.getElementById('modalEditor').classList.add('open');
     }
     function cambiarFilaManual(id) {
@@ -604,8 +561,7 @@
         let n = prompt("Nueva fila:");
         if(n && !isNaN(n)) {
             let st = DB.staff.find(x=>x.id===id);
-            cerrarTarea(st);
-            asignarFilaEspecifica(st, parseInt(n), s);
+            cerrarTarea(st); asignarFilaEspecifica(st, parseInt(n), s);
             guardarTodo(); renderMapa(); abrirEditor();
         }
     }
