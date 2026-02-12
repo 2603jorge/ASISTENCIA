@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V36 - Manual & Auto-Move</title>
+    <title>AgriCactus V40 - Mass Move & Auto</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; }
@@ -33,14 +33,6 @@
         .manual-box input { margin: 0; flex: 1; }
         .manual-box button { width: auto; padding: 0 20px; margin: 0; }
 
-        .toggle-container { display: flex; align-items: center; justify-content: space-between; background: #333; padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #555; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--main); }
-        input:checked + .slider:before { transform: translateX(26px); }
-
         .edit-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #444; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
@@ -51,14 +43,19 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V36</h2>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V40</h2>
     <button class="btn btn-b" style="padding:10px;" onclick="abrirDB()">📂 CARGAR CATÁLOGOS</button>
 
     <div class="card">
-        <label>Supervisor</label>
-        <input type="text" id="conf_resp" placeholder="Nombre Responsable">
+        <h3 style="margin-top:0; color:var(--sec);">👷 SUPERVISOR</h3>
+        <label>Número de Credencial (Supervisor)</label>
+        <input type="text" id="conf_sup_id" placeholder="ID Credencial Supervisor">
+        <label>Nombre (Supervisor)</label>
+        <input type="text" id="conf_resp" placeholder="Nombre Completo">
 
-        <label>🔍 Buscar Cuadro</label>
+        <hr style="border-color:#333; margin: 15px 0;">
+
+        <label>🔍 Buscar Cuadro Inicial</label>
         <input type="text" id="conf_cuadro" list="lista_cuadros" placeholder="Escribe ID o Nombre..." oninput="alEscribirCuadro('conf')">
         <datalist id="lista_cuadros"></datalist>
         <div style="font-size:10px; color:#aaa; margin-bottom:10px; text-align:right;">Total Hileras: <b id="conf_info_total">--</b></div>
@@ -76,7 +73,7 @@
         <select id="conf_modo" onchange="toggleModoInput('conf')"><option value="INDIVIDUAL">👤 INDIVIDUAL</option><option value="PAREJAS">👥 PAREJAS</option></select>
         <div id="div_tarea_conf"><label>Filas por Tarea</label><input type="number" id="conf_tarea_size" value="1" min="1"></div>
     </div>
-    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR</button>
+    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR DÍA</button>
 </div>
 
 <div id="viewMain" class="modal">
@@ -84,13 +81,9 @@
         <div style="line-height:1.2;">
             <b id="disp_cuadro" style="font-size:16px; color:white;">--</b>
             <div style="font-size:11px; color:#aaa;"><span id="disp_act">--</span> | <span id="disp_jornada" style="color:var(--sec);">--</span></div>
+            <div style="font-size:10px; color:var(--main);">Sup: <span id="disp_sup_name">--</span></div>
         </div>
         <div style="text-align:right;"><span style="font-size:10px; color:#888;">RANGO:</span><br><b id="disp_rango" style="font-size:12px;">--</b></div>
-    </div>
-
-    <div class="toggle-container">
-        <div><b style="font-size:14px;">🔄 MODO CONTINUO</b><br><small style="color:#aaa;">Re-scan = Nueva Tarea</small></div>
-        <label class="switch"><input type="checkbox" id="toggle_continuo" checked><span class="slider"></span></label>
     </div>
 
     <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
@@ -106,33 +99,37 @@
     </div>
     
     <div class="card" style="padding:5px;"><div id="mapGrid" class="grid-map"></div></div>
-    <button class="btn btn-b" style="margin-bottom:15px;" onclick="abrirEditor()">✏️ EDITAR / CORREGIR</button>
-
+    
     <div class="flex-row">
-        <button class="btn btn-g" onclick="abrirSiguienteCuadro()">⏩ SIGUIENTE CUADRO<br><small>(Mover a todos)</small></button>
-        <button class="btn btn-o" onclick="abrirCambioActividad()">🔄 CAMBIO ACTIVIDAD<br><small>(Configurar Todo)</small></button>
+        <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
+        <button class="btn btn-p" onclick="descargarReporte('PARCIAL')">📊 REPORTE</button>
     </div>
 
     <div class="flex-row">
-        <button class="btn btn-p" onclick="descargarReporte('ASISTENCIA')">📊 PARCIAL</button>
-        <button class="btn btn-r" onclick="finalizarDia()">🏁 CERRAR DÍA</button>
+        <button class="btn btn-g" onclick="abrirCambioMasivo()">🚚 CAMBIO MASIVO<br><small>(Mover a todos al sig. cuadro)</small></button>
     </div>
+    <button class="btn btn-r" onclick="confirmarFinDia()">🏁 FINALIZAR DÍA (Cerrar todo)</button>
 </div>
 
-<div id="modalNext" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--main); text-align:center;">⏩ SIGUIENTE CUADRO</h2>
-    <p style="text-align:center; font-size:12px; color:#ccc;">Moveremos a TODOS (hayan terminado o no) al nuevo cuadro.</p>
+<div id="modalMassive" class="modal" style="background:rgba(0,0,0,0.95);">
+    <h2 style="color:var(--main); text-align:center;">🚚 CAMBIO MASIVO</h2>
+    <p style="text-align:center; font-size:12px; color:#ccc;">
+        1. Se cerrarán las filas actuales.<br>
+        2. Se moverá a <b>TODO EL PERSONAL</b> al nuevo cuadro.<br>
+        3. Se les asignarán nuevas filas automáticamente.
+    </p>
     <div class="card">
-        <label>Nuevo Cuadro</label><input type="text" id="next_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('next')">
-        <div class="flex-row"><div style="flex:1"><label>Lado</label><select id="next_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div><div style="flex:1"><label>Total BD</label><input type="text" id="next_info_total" readonly style="background:#444; color:#aaa;"></div></div>
-        <label>Nuevo Rango</label><div class="flex-row"><input type="number" id="next_inicio"><input type="number" id="next_fin"></div>
+        <label>Nuevo Cuadro / Bloque</label><input type="text" id="mas_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('mas')">
+        <div class="flex-row"><div style="flex:1"><label>Lado</label><select id="mas_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div><div style="flex:1"><label>Total BD</label><input type="text" id="mas_info_total" readonly style="background:#444; color:#aaa;"></div></div>
+        <label>Nuevo Rango</label><div class="flex-row"><input type="number" id="mas_inicio"><input type="number" id="mas_fin"></div>
     </div>
-    <button class="btn btn-g" onclick="ejecutarSiguienteCuadro()">✅ CONFIRMAR Y MOVER</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalNext').classList.remove('open')">CANCELAR</button>
+    <button class="btn btn-g" onclick="ejecutarCambioMasivo()">✅ EJECUTAR MOVIMIENTO</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalMassive').classList.remove('open')">CANCELAR</button>
 </div>
 
-<div id="modalChange" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--sec); text-align:center;">🔄 CAMBIO ACTIVIDAD</h2>
+<div id="modalNextAct" class="modal" style="background:rgba(0,0,0,0.95);">
+    <h2 style="color:var(--sec); text-align:center;">🔄 SIGUIENTE ACTIVIDAD</h2>
+    <p style="text-align:center; color:#fff;">El cuadro anterior se completó. Configura el siguiente paso.</p>
     <div class="card">
         <label>Nuevo Cuadro</label><input type="text" id="chg_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('chg')">
         <label>Actividad</label><input type="text" id="chg_act" list="lista_actividades">
@@ -141,8 +138,8 @@
         <label>Modo</label><select id="chg_modo" onchange="toggleModoInput('chg')"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="PAREJAS">PAREJAS</option></select>
         <div id="div_tarea_chg"><label>Filas</label><input type="number" id="chg_tarea_size" value="1"></div>
     </div>
-    <button class="btn btn-o" onclick="ejecutarCambioTotal()">✅ INICIAR</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalChange').classList.remove('open')">CANCELAR</button>
+    <button class="btn btn-o" onclick="ejecutarCambioActividad()">✅ INICIAR NUEVO CUADRO</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalNextAct').classList.remove('open')">CANCELAR</button>
 </div>
 
 <div id="modalEditor" class="modal" style="background:#111;"><h2>✏️ CORRECCIÓN</h2><div id="editorList" style="max-height: 400px; overflow-y: auto;"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">VOLVER</button></div>
@@ -150,13 +147,13 @@
 
 <script>
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v36_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v36_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v36_jornadas')) || [],
-        sesion: JSON.parse(localStorage.getItem('v36_sesion')) || null,
-        avance: JSON.parse(localStorage.getItem('v36_avance')) || [],
-        historial: JSON.parse(localStorage.getItem('v36_historial')) || [],
-        staff: JSON.parse(localStorage.getItem('v36_staff')) || []
+        cuadros: JSON.parse(localStorage.getItem('v40_cuadros')) || [],
+        actividades: JSON.parse(localStorage.getItem('v40_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v40_jornadas')) || [],
+        sesion: JSON.parse(localStorage.getItem('v40_sesion')) || null,
+        avance: JSON.parse(localStorage.getItem('v40_avance')) || [],
+        historial: JSON.parse(localStorage.getItem('v40_historial')) || [],
+        staff: JSON.parse(localStorage.getItem('v40_staff')) || []
     };
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -183,9 +180,9 @@
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
 
-        localStorage.setItem('v36_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v36_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v36_jornadas', JSON.stringify(DB.jornadas));
+        localStorage.setItem('v40_cuadros', JSON.stringify(DB.cuadros));
+        localStorage.setItem('v40_act', JSON.stringify(DB.actividades));
+        localStorage.setItem('v40_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         alert("✅ Datos Actualizados");
         document.getElementById('modalDB').classList.remove('open');
@@ -204,7 +201,7 @@
         const data = DB.cuadros.find(c => c.nombre === val);
         if(data) {
             if(prefix==='conf') document.getElementById('conf_info_total').innerText = data.max;
-            if(prefix==='next') document.getElementById('next_info_total').value = data.max;
+            if(prefix==='mas') document.getElementById('mas_info_total').value = data.max;
             document.getElementById(prefix+'_inicio').value = 1; document.getElementById(prefix+'_fin').value = data.max;
             let lado = 'COMPLETA';
             if(data.ori && data.ori.toUpperCase().includes('SUR')) lado = 'SUR';
@@ -214,7 +211,12 @@
     }
 
     // --- SESIÓN ---
-    function iniciarJornada() { configurarSesion('conf'); }
+    function iniciarJornada() { 
+        const supId = document.getElementById('conf_sup_id').value;
+        const supNom = document.getElementById('conf_resp').value;
+        if(!supId || !supNom) return alert("❌ Debes ingresar ID y Nombre del Supervisor");
+        configurarSesion('conf'); 
+    }
 
     function configurarSesion(prefix) {
         const cNombre = document.getElementById(prefix+'_cuadro').value;
@@ -226,22 +228,26 @@
         
         let aNombre, jNombre, modo, tarea, totalStaff;
         
-        if (prefix === 'next') {
+        // Heredar o leer inputs
+        if (prefix === 'mas') { // Cambio Masivo hereda actividad/jornada
             aNombre = DB.sesion.nomActividad; jNombre = DB.sesion.jornada; modo = DB.sesion.modo; tarea = DB.sesion.tareaSize; totalStaff = DB.sesion.totalStaff;
         } else {
             aNombre = document.getElementById(prefix+'_act').value; jNombre = document.getElementById(prefix+'_jornada').value;
             modo = document.getElementById(prefix+'_modo').value; tarea = parseInt(document.getElementById(prefix+'_tarea_size').value) || 1;
-            totalStaff = parseInt(document.getElementById('conf_total_staff').value) || 0;
+            totalStaff = parseInt(document.getElementById('conf_total_staff').value) || (DB.sesion ? DB.sesion.totalStaff : 0);
         }
         
         const aObj = DB.actividades.find(x => x.desc === aNombre);
+        // Persistir Supervisor
+        const supId = document.getElementById('conf_sup_id').value || (DB.sesion ? DB.sesion.supId : '');
+        const supNom = document.getElementById('conf_resp').value || (DB.sesion ? DB.sesion.responsable : '');
 
         DB.sesion = {
             idCuadro: cObj ? cObj.id : "??", nomCuadro: cNombre,
             idActividad: aObj ? aObj.id : "??", nomActividad: aNombre,
             jornada: jNombre, lado: document.getElementById(prefix+'_lado').value,
             modo: modo, tareaSize: tarea, inicio: ini, fin: fin, totalStaff: totalStaff,
-            responsable: document.getElementById('conf_resp').value || DB.sesion?.responsable || "Admin",
+            supId: supId, responsable: supNom,
             activo: true
         };
         
@@ -251,11 +257,12 @@
     }
 
     function irAlMapa() {
-        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalNext').classList.remove('open'); document.getElementById('modalChange').classList.remove('open');
+        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalMassive').classList.remove('open'); document.getElementById('modalNextAct').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_cuadro').innerText = `${DB.sesion.nomCuadro}`;
         document.getElementById('disp_act').innerText = DB.sesion.nomActividad;
         document.getElementById('disp_jornada').innerText = DB.sesion.jornada;
+        document.getElementById('disp_sup_name').innerText = DB.sesion.responsable;
         document.getElementById('disp_rango').innerText = `Hileras ${DB.sesion.inicio} - ${DB.sesion.fin}`;
         renderMapa();
         if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
@@ -264,13 +271,10 @@
     // --- ENTRADA MANUAL ---
     function registrarManual() {
         let id = document.getElementById('manual_id').value.toUpperCase().trim();
-        if(id) {
-            onScan(id);
-            document.getElementById('manual_id').value = ''; // Limpiar campo
-        }
+        if(id) { onScan(id); document.getElementById('manual_id').value = ''; }
     }
 
-    // --- ESCANEO ---
+    // --- LÓGICA DE ESCANEO / ASIGNACIÓN ---
     function onScan(id) {
         id = id.trim();
         let now = Date.now();
@@ -278,18 +282,19 @@
         lastScanTime[id] = now;
 
         let trabajador = DB.staff.find(s => s.id === id);
-        let modoContinuo = document.getElementById('toggle_continuo').checked;
 
+        // LOGICA DE "RE-ESCANEO" = MOVER A NUEVA LINEA
         if(trabajador && trabajador.fila) {
+            // El trabajador ya tiene fila -> La cerramos y asignamos una nueva
             cerrarTarea(trabajador);
-            if(modoContinuo) {
-                asignarNuevaTarea(trabajador);
-                audioBeep.play();
-            } else {
-                alert(`⏸️ ${id} pausado.`);
-                audioBeep.play();
+            // Inmediatamente asignar nueva
+            let resultado = asignarNuevaTarea(trabajador);
+            if (resultado) {
+                alert(`🔄 ${id} movido a nueva fila: ${trabajador.fila}`);
             }
+            audioBeep.play();
         } else {
+            // Trabajador nuevo o sin fila activa
             if(!trabajador) { trabajador = { id: id, fila: null }; DB.staff.push(trabajador); }
             asignarNuevaTarea(trabajador);
             audioBeep.play();
@@ -306,6 +311,7 @@
 
     function asignarNuevaTarea(trabajador) {
         let filaInicio = 0, filasAsignadas = [];
+        // Buscar hueco
         if (DB.sesion.modo === 'PAREJAS') {
             for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
                 let activos = DB.avance.filter(a => a.fila === i && !a.fin).length;
@@ -320,44 +326,72 @@
                 if(bloqueLibre) { filaInicio = i; for(let k=0; k<size; k++) filasAsignadas.push(i+k); break; }
             }
         }
+
         if(filasAsignadas.length > 0) {
             trabajador.fila = filaInicio;
             filasAsignadas.forEach(f => {
                 DB.avance.push({
                     fila: f, obrero: trabajador.id, inicio: new Date().toLocaleTimeString(), ts_inicio: Date.now(), fin: null,
-                    idCuadro: DB.sesion.idCuadro, nomCuadro: DB.sesion.nomCuadro, idActividad: DB.sesion.idActividad, jornada: DB.sesion.jornada, lado: DB.sesion.lado
+                    idCuadro: DB.sesion.idCuadro, nomCuadro: DB.sesion.nomCuadro, idActividad: DB.sesion.idActividad, jornada: DB.sesion.jornada, lado: DB.sesion.lado, responsable: DB.sesion.responsable
                 });
             });
-        } else alert("⚠️ Rango lleno.");
+            return true;
+        } else {
+            // RANGO LLENO - Preguntar si terminó el día
+            preguntaFinDeDia();
+            return false;
+        }
     }
 
-    // --- MASIVOS ---
-    function abrirSiguienteCuadro() { document.getElementById('modalNext').classList.add('open'); }
-    function ejecutarSiguienteCuadro() { moverMasivo('next'); }
-    function abrirCambioActividad() { document.getElementById('chg_jornada').value = DB.sesion.jornada; document.getElementById('modalChange').classList.add('open'); }
-    function ejecutarCambioTotal() { moverMasivo('chg'); }
+    function preguntaFinDeDia() {
+        if(confirm("⚠️ ¡CUADRO COMPLETADO! \n\n¿El día de trabajo se terminó? \n\n[ACEPTAR] = SÍ, Generar Reporte. \n[CANCELAR] = NO, Siguiente Actividad.")) {
+            confirmarFinDia(); // El usuario dijo Aceptar (El día terminó)
+        } else {
+            // El usuario dijo Cancelar (El día NO terminó)
+            abrirSiguienteActividad();
+        }
+    }
+
+    // --- CAMBIO MASIVO Y FLUJO ---
+    function abrirCambioMasivo() { document.getElementById('modalMassive').classList.add('open'); }
+    function ejecutarCambioMasivo() { 
+        if(!document.getElementById('mas_cuadro').value) return alert("Selecciona cuadro");
+        moverMasivo('mas'); 
+    }
+    
+    function abrirSiguienteActividad() { 
+        document.getElementById('chg_jornada').value = DB.sesion.jornada; 
+        document.getElementById('modalNextAct').classList.add('open'); 
+    }
+    function ejecutarCambioActividad() { 
+        if(!document.getElementById('chg_cuadro').value) return alert("Selecciona cuadro");
+        // No es masivo, solo cambia configuración, pero si hay gente activa, ¿qué hacemos?
+        // Asumiremos que si cambian actividad, mueven a la gente (es un tipo de masivo logico)
+        moverMasivo('chg'); 
+    }
 
     function moverMasivo(prefix) {
-        if(!confirm("¿Mover a todos?")) return;
         let ahora = new Date().toLocaleTimeString(), ts = Date.now();
-        // CERRAR A TODOS AUNQUE NO HAYAN TERMINADO
+        
+        // 1. Cerrar todo lo actual
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
         DB.historial = DB.historial.concat(DB.avance);
         DB.avance = [];
         
+        // 2. Configurar nueva sesión
         configurarSesion(prefix);
         
-        // ORDENAR POR FILA ANTERIOR (MANTENER ORDEN)
+        // 3. Reasignar a todos (Staff ordenado por su ultima fila para mantener orden logico)
         DB.staff.sort((a, b) => (a.fila || 0) - (b.fila || 0));
         
         let moved = 0;
         DB.staff.forEach(s => { 
-            s.fila = null; // Resetear
-            asignarNuevaTarea(s); // Forzar asignación en nuevo cuadro
+            s.fila = null; 
+            asignarNuevaTarea(s); // Asigna fila automáticamente en el nuevo cuadro
             moved++;
         });
         
-        alert(`✅ ${moved} personas movidas.`);
+        alert(`✅ ${moved} Credenciales movidas y reasignadas.`);
         guardarTodo();
         renderMapa();
     }
@@ -376,15 +410,15 @@
     function cambiarFilaManual(idx) { let n = prompt("Nueva fila:"); if(n && !isNaN(n)) { DB.avance[idx].fila = parseInt(n); guardarTodo(); abrirEditor(); renderMapa(); } }
     function borrarRegistro(idx, id) { if(confirm("¿Borrar?")) { DB.avance.splice(idx, 1); let st=DB.staff.find(s=>s.id===id); if(st)st.fila=null; guardarTodo(); abrirEditor(); renderMapa(); } }
 
-    // --- CIERRE ---
-    function finalizarDia() {
-        if(!confirm("🛑 ¿FINALIZAR DÍA?")) return;
+    // --- CIERRE DEL DÍA ---
+    function confirmarFinDia() {
+        if(!confirm("🛑 ¿CONFIRMAS QUE EL DÍA TERMINÓ? \nSe cerrarán registros y descargará el reporte.")) return;
         let ahora = new Date().toLocaleTimeString(), ts = Date.now();
         DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
         DB.historial = DB.historial.concat(DB.avance);
         DB.avance = [];
-        descargarReporte('ASISTENCIA');
-        setTimeout(() => location.reload(), 2000);
+        descargarReporte('FINAL');
+        setTimeout(() => location.reload(), 3000);
     }
 
     function renderMapa() {
@@ -407,27 +441,33 @@
     }
 
     function guardarTodo() {
-        localStorage.setItem('v36_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v36_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v36_historial', JSON.stringify(DB.historial));
-        localStorage.setItem('v36_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v40_sesion', JSON.stringify(DB.sesion));
+        localStorage.setItem('v40_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v40_historial', JSON.stringify(DB.historial));
+        localStorage.setItem('v40_staff', JSON.stringify(DB.staff));
     }
 
     function descargarReporte(tipo) {
         let data = DB.historial.concat(DB.avance);
-        let csv = "CREDENCIAL,ID_CUADRO,ID_ACTIVIDAD,JORNADA,HORA_ENTRADA,HORA_SALIDA\n";
+        // Formato CSV con Supervisor incluido
+        let csv = "CREDENCIAL,SUPERVISOR,ID_CUADRO,ID_ACTIVIDAD,JORNADA,HORA_ENTRADA,HORA_SALIDA\n";
         let unicos = []; 
         data.forEach(r => { let k = `${r.obrero}|${r.idCuadro}|${r.idActividad}|${r.jornada}`; if(!unicos.includes(k)) unicos.push(k); });
+        
         unicos.forEach(k => {
             let p = k.split('|');
             let recs = data.filter(r => r.obrero==p[0] && r.idCuadro==p[1] && r.jornada==p[3]);
             recs.sort((a,b) => a.ts_inicio - b.ts_inicio);
             let ent = recs[0].inicio, sal = recs[recs.length-1].fin || "ACTIVO";
-            csv += `${p[0]},${p[1]},${p[2]},${p[3]},${ent},${sal}\n`;
+            // Obtenemos responsable del primer registro o del actual
+            let resp = recs[0].responsable || "Admin";
+            csv += `${p[0]},${resp},${p[1]},${p[2]},${p[3]},${ent},${sal}\n`;
         });
+        
         let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `ASISTENCIA_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; l.click();
+        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `ASISTENCIA_${tipo}_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; l.click();
     }
 </script>
 </body>
 </html>
+
