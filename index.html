@@ -528,11 +528,25 @@
         document.getElementById('hist_summary').innerText = `ID: ${rec.id} | ${rec.fecha}`;
         renderHistoryList();
     }
-    function descargarJSON(rec = currentReport, prefix='BACKUP') {
-        if(!rec) return;
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rec));
-        let dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `${prefix}_${rec.config.resp}_${rec.id}.json`); dlAnchorElem.click();
-    }
+    function descargarJSON(rec = currentReport, prefix='REPORTE') {
+    if(!rec) return;
+    
+    // ESTA ES LA PARTE CLAVE: Incluimos los catálogos de la memoria DB
+    let dataFinal = {
+        ...rec,
+        catalogos: {
+            cuadros: DB.cuadros,
+            actividades: DB.actividades,
+            jornadas: DB.jornadas
+        }
+    };
+
+    let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataFinal));
+    let dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `${prefix}_${rec.config.resp}.json`);
+    dlAnchorElem.click();
+}
     function descargarReporte(tipo) {
         let data, conf;
         if (tipo === 'HISTORICO' && currentReport) { data = currentReport.avance; conf = currentReport.config; }
@@ -568,3 +582,4 @@
 </script>
 </body>
 </html>
+
