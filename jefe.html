@@ -3,152 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriCactus Admin V3 - Centro de Mando</title>
+    <title>AgriCactus Admin V4 - Análisis Comparativo</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --warn: #f59e0b; --danger: #ef4444; --purple: #a855f7; }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --warn: #f59e0b; --danger: #ef4444; --purple: #a855f7; --gray: #64748b; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .grid-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-bottom: 20px; }
         
         .card { background-color: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid #334155; }
         .kpi-value { font-size: 2.2em; font-weight: bold; color: var(--accent); }
-        .kpi-label { font-size: 0.9em; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .kpi-label { font-size: 0.8em; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Botones */
-        .btn { padding: 12px 25px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; transition: 0.2s; }
-        .btn-purple { background: var(--purple); } .btn-purple:hover { background: #9333ea; }
-        .btn-blue { background: var(--blue); } .btn-blue:hover { background: #2563eb; }
+        /* Progress Bars */
+        .progress-container { margin-bottom: 15px; }
+        .progress-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+        .progress-bar-bg { background: #334155; height: 12px; border-radius: 6px; overflow: hidden; position: relative; }
+        .progress-bar-fill { background: var(--accent); height: 100%; transition: width 0.5s ease; width: 0%; }
+        
+        .btn { padding: 12px 25px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+        .btn-purple { background: var(--purple); }
+        .btn-blue { background: var(--blue); }
         .file-input { display: none; }
 
-        /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #334155; }
-        th { background-color: #0f172a; color: var(--accent); font-weight: 600; }
-        tr:hover { background-color: #334155; }
-        
-        /* Badges */
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-        .b-qr { background: var(--purple); color: white; }
-        .b-json { background: var(--blue); color: white; }
-        .b-slow { color: var(--danger); font-weight: bold; }
-        .b-fast { color: var(--accent); font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85em; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+        th { background-color: #0f172a; color: var(--accent); }
 
-        /* Scanner Modal */
-        #scannerModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #scannerModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         #reader { width: 400px; height: 400px; border: 4px solid var(--accent); border-radius: 15px; background: #000; }
-        .close-scan { margin-top: 20px; background: var(--danger); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div>
-            <h1 style="margin:0; color:var(--accent);">AgriCactus Admin V3 📊</h1>
-            <small style="color:#94a3b8;">Centro de Inteligencia y Recepción</small>
+            <h1 style="margin:0; color:var(--accent);">AgriCactus Monitor V4 🚀</h1>
+            <small style="color:var(--gray);">Comparativa de Rendimiento y Metas de Campo</small>
         </div>
         <div style="display:flex; gap: 10px;">
             <button class="btn btn-purple" onclick="startScanner()">📷 ESCANEAR QR</button>
-            <label for="jsonInput" class="btn btn-blue">📂 CARGAR JSON (Detallado)</label>
+            <label for="jsonInput" class="btn btn-blue">📂 CARGAR JSONs</label>
             <input type="file" id="jsonInput" class="file-input" multiple accept=".json" onchange="procesarArchivosJSON()">
         </div>
     </div>
 
     <div class="card" style="margin-bottom: 20px;">
-        <h3 style="margin-top:0;">📌 Bitácora de Recepción (En Vivo)</h3>
-        <table id="tableCheckin">
-            <thead>
-                <tr>
-                    <th>Origen</th>
-                    <th>Hora</th>
-                    <th>Supervisor</th>
-                    <th>Total Personal</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr><td colspan="5" style="text-align:center; color:#555;">Esperando escaneos o archivos...</td></tr>
-            </tbody>
-        </table>
+        <h3 style="margin-top:0;">🏁 Cumplimiento de Metas (Avance de Hileras)</h3>
+        <div id="progress_list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <p style="color:var(--gray);">Carga archivos JSON para ver el progreso real...</p>
+        </div>
     </div>
 
     <div id="dashboard" style="display:none;">
-        
         <div class="grid-kpi">
+            <div class="card"><div class="kpi-label">Cuadrillas Activas</div><div class="kpi-value" id="kpi_crews">0</div></div>
+            <div class="card"><div class="kpi-label">Hileras Terminadas</div><div class="kpi-value" id="kpi_rows">0</div></div>
+            <div class="card"><div class="kpi-label">Hileras Pendientes</div><div class="kpi-value" style="color:var(--warn);" id="kpi_pending">0</div></div>
+            <div class="card"><div class="kpi-label">Eficiencia Global</div><div class="kpi-value" style="color:var(--blue);" id="kpi_efficiency">0%</div></div>
+        </div>
+
+        <div class="grid-charts">
             <div class="card">
-                <div class="kpi-label">Cuadrillas</div>
-                <div class="kpi-value" id="kpi_crews">0</div>
+                <h3>⚖️ Comparativa de Velocidad por Actividad</h3>
+                <p style="font-size:11px; color:var(--gray); margin-bottom:15px;">Compara qué supervisor es más rápido realizando la misma tarea (min/hilera).</p>
+                <canvas id="chartActivityComp"></canvas>
             </div>
+            
             <div class="card">
-                <div class="kpi-label">Personal Activo</div>
-                <div class="kpi-value" id="kpi_staff">0</div>
-            </div>
-            <div class="card">
-                <div class="kpi-label">Filas Terminadas</div>
-                <div class="kpi-value" id="kpi_rows">0</div>
-            </div>
-            <div class="card">
-                <div class="kpi-label">Tiempo Promedio</div>
-                <div class="kpi-value" style="color:var(--warn);" id="kpi_avg_time">-- min</div>
+                <h3>🏆 Ranking de Supervisores (Velocidad)</h3>
+                <table id="tableCrewRanking">
+                    <thead><tr><th>Supervisor</th><th>Actividad</th><th>Promedio Min/Hilera</th><th>Estado</th></tr></thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
 
         <div class="grid-charts">
             <div class="card">
-                <h3>⚡ Velocidad por Cuadrilla (Min/Fila)</h3>
-                <canvas id="chartSpeed"></canvas>
-                <small style="color:#64748b;">*Barra más baja = Más rápido (Mejor)</small>
-            </div>
-            <div class="card">
-                <h3>📦 Volumen por Cuadrilla</h3>
+                <h3>📊 Volumen de Trabajo (Hileras por Cuadrilla)</h3>
                 <canvas id="chartVolume"></canvas>
             </div>
-        </div>
-
-        <div class="grid-charts">
             <div class="card">
-                <h3>🏆 Top 5 Rápidos</h3>
-                <table id="tableTop5">
-                    <thead><tr><th>ID</th><th>Cuadrilla</th><th>Tiempo Prom.</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+                <h3>📈 Rendimiento Histórico (Durante el día)</h3>
+                <canvas id="chartTimeLine"></canvas>
             </div>
-
-            <div class="card">
-                <h3 style="color:var(--danger);">⚠️ Alertas (Lentos > 30%)</h3>
-                <table id="tableSlow">
-                    <thead><tr><th>ID</th><th>Cuadrilla</th><th>Tiempo Prom.</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h3>🗺️ Avance por Cuadro (Global)</h3>
-            <table id="tableCuadros">
-                <thead><tr><th>Cuadro</th><th>Filas Hechas</th><th>Promedio</th><th>Cuadrillas</th></tr></thead>
-                <tbody></tbody>
-            </table>
         </div>
     </div>
 
     <div id="scannerModal">
-        <h2 style="color:white;">Escaneando Supervisor...</h2>
+        <h2 style="color:white;">Escaneando...</h2>
         <div id="reader"></div>
-        <button class="btn close-scan" onclick="stopScanner()">CERRAR ESCÁNER</button>
+        <button class="btn btn-blue" onclick="stopScanner()" style="margin-top:20px; background:var(--danger);">CERRAR</button>
     </div>
 
     <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let checkIns = []; 
-        let jsonData = []; 
+        let jsonData = [];
         let html5QrcodeScanner = null;
 
-        // --- ESCÁNER QR ---
+        // --- LÓGICA DE CARGA ---
+        function procesarArchivosJSON() {
+            const files = document.getElementById('jsonInput').files;
+            if (files.length === 0) return;
+            jsonData = []; 
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        jsonData.push(json);
+                        if(jsonData.length === files.length) actualizarDashboard();
+                    } catch (err) { console.error(err); }
+                };
+                reader.readAsText(file);
+            });
+        }
+
         function startScanner() {
             document.getElementById('scannerModal').style.display = 'flex';
             html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
@@ -160,174 +135,147 @@
             document.getElementById('scannerModal').style.display = 'none';
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            // Lee formato V47: "AGRICACTUS\nFECHA:...\nSUP:...\nTOTAL_PERS:..."
-            if(decodedText.includes("AGRICACTUS")) {
+        function onScanSuccess(text) {
+            if(text.includes("AGRICACTUS")) {
                 document.getElementById('beep').play();
-                let lines = decodedText.split('\n');
-                let data = {};
-                lines.forEach(l => { let p = l.split(':'); if(p.length===2) data[p[0]] = p[1]; });
-
-                agregarCheckIn({
-                    source: 'QR',
-                    supervisor: data['SUP'] || '?',
-                    total: data['TOTAL_PERS'] || '0'
-                });
+                alert("QR de Supervisor detectado: " + text.split('\n')[2]);
                 stopScanner();
             }
         }
 
-        // --- CARGA JSON ---
-        function procesarArchivosJSON() {
-            const files = document.getElementById('jsonInput').files;
-            if (files.length === 0) return;
-            
-            // Limpiar datos previos si es nueva carga masiva
-            // jsonData = []; // Descomentar si quieres limpiar al cargar nuevos
-
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const json = JSON.parse(e.target.result);
-                        agregarCheckIn({
-                            source: 'JSON',
-                            supervisor: json.config.resp,
-                            total: json.config.totalStaff
-                        });
-                        jsonData.push(json);
-                        actualizarDashboard();
-                    } catch (err) { console.error(err); }
-                };
-                reader.readAsText(file);
-            });
-        }
-
-        // --- INTERFAZ ---
-        function agregarCheckIn(info) {
-            checkIns.push(info);
-            const tbody = document.querySelector('#tableCheckin tbody');
-            tbody.innerHTML = "";
-            checkIns.slice().reverse().forEach(row => {
-                let badge = row.source === 'QR' ? '<span class="badge b-qr">QR</span>' : '<span class="badge b-json">JSON</span>';
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${badge}</td>
-                        <td>${new Date().toLocaleTimeString()}</td>
-                        <td><b>${row.supervisor}</b></td>
-                        <td>${row.total} pers.</td>
-                        <td style="color:var(--accent);">✔ Recibido</td>
-                    </tr>`;
-            });
-        }
-
-        // --- ANALÍTICA ---
-        let chartSpeed = null;
-        let chartVol = null;
-
+        // --- CÁLCULOS DE VISUALES ---
         function actualizarDashboard() {
-            if(jsonData.length === 0) return;
             document.getElementById('dashboard').style.display = 'block';
+            const progressList = document.getElementById('progress_list');
+            progressList.innerHTML = "";
 
-            let globalData = { crews: {}, workers: {}, cuadros: {}, totalRows: 0, totalMin: 0, countedRows: 0 };
+            let totalAssigned = 0;
+            let totalFinished = 0;
+            let activities = {}; // { Actividad: { Sup: Time } }
+            let crewStats = [];
 
-            jsonData.forEach(rep => {
-                let sup = rep.config.resp;
-                if(!globalData.crews[sup]) globalData.crews[sup] = { time:0, count:0, staff: new Set() };
+            jsonData.forEach(data => {
+                const sup = data.config.resp;
+                const act = data.config.supAct || "N/A";
+                
+                // 1. Calcular Meta de Hileras
+                let supAssigned = 0;
+                data.sesiones.forEach(s => supAssigned += (s.fin - s.inicio + 1));
+                
+                let supFinished = data.avance.filter(a => a.fin !== null).length;
+                let pct = supAssigned > 0 ? Math.round((supFinished / supAssigned) * 100) : 0;
+                
+                totalAssigned += supAssigned;
+                totalFinished += supFinished;
 
-                rep.avance.forEach(av => {
-                    if(av.fin) { // Solo terminados
-                        let min = calcMin(av.inicio, av.fin);
-                        if(min > 0 && min < 240) { // Filtro anti-error (>0 y <4 horas)
-                            globalData.totalRows++;
-                            globalData.totalMin += min;
-                            globalData.countedRows++;
+                // Render Barra Progreso
+                progressList.innerHTML += `
+                    <div class="progress-container">
+                        <div class="progress-info">
+                            <b>${sup}</b> <span>${pct}% (${supFinished}/${supAssigned} hileras)</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width: ${pct}%; background: ${pct > 80 ? 'var(--accent)' : pct > 40 ? 'var(--warn)' : 'var(--danger)'}"></div>
+                        </div>
+                        <small style="color:var(--gray)">Actividad: ${act}</small>
+                    </div>
+                `;
 
-                            // Crew
-                            globalData.crews[sup].time += min;
-                            globalData.crews[sup].count++;
-                            globalData.crews[sup].staff.add(av.obrero);
-
-                            // Worker
-                            if(!globalData.workers[av.obrero]) globalData.workers[av.obrero] = { time:0, count:0, sup: sup };
-                            globalData.workers[av.obrero].time += min;
-                            globalData.workers[av.obrero].count++;
-
-                            // Cuadro
-                            let cKey = av.nomCuadro;
-                            if(!globalData.cuadros[cKey]) globalData.cuadros[cKey] = { time:0, count:0, sups: new Set() };
-                            globalData.cuadros[cKey].time += min;
-                            globalData.cuadros[cKey].count++;
-                            globalData.cuadros[cKey].sups.add(sup);
-                        }
+                // 2. Calcular Velocidad para Comparativa
+                let totalMin = 0;
+                data.avance.forEach(a => {
+                    if(a.fin) {
+                        let d1 = new Date("2000/01/01 " + a.inicio);
+                        let d2 = new Date("2000/01/01 " + a.fin);
+                        let diff = (d2 - d1) / 60000;
+                        if(diff > 0 && diff < 200) totalMin += diff;
                     }
                 });
+                let avg = supFinished > 0 ? (totalMin / supFinished).toFixed(1) : 0;
+
+                crewStats.push({ sup, act, avg, finished: supFinished });
+
+                if(!activities[act]) activities[act] = [];
+                activities[act].push({ sup, avg });
             });
 
             // KPIs
-            document.getElementById('kpi_crews').innerText = Object.keys(globalData.crews).length;
-            document.getElementById('kpi_staff').innerText = Object.keys(globalData.workers).length;
-            document.getElementById('kpi_rows').innerText = globalData.totalRows;
-            let globAvg = globalData.countedRows > 0 ? (globalData.totalMin/globalData.countedRows).toFixed(1) : 0;
-            document.getElementById('kpi_avg_time').innerText = globAvg + " min";
+            document.getElementById('kpi_crews').innerText = jsonData.length;
+            document.getElementById('kpi_rows').innerText = totalFinished;
+            document.getElementById('kpi_pending').innerText = totalAssigned - totalFinished;
+            document.getElementById('kpi_efficiency').innerText = Math.round((totalFinished / totalAssigned) * 100) + "%";
 
-            // Gráficas
-            renderCharts(globalData.crews);
-
-            // Tablas
-            renderTables(globalData.workers, globalData.cuadros, globAvg);
+            renderActivityChart(activities);
+            renderCrewRanking(crewStats);
+            renderVolumeChart(crewStats);
         }
 
-        function calcMin(ini, fin) {
-            let d1 = new Date("2000/01/01 " + ini);
-            let d2 = new Date("2000/01/01 " + fin);
-            return (d2 - d1) / 60000;
-        }
+        let chartActivityComp = null;
+        function renderActivityChart(activities) {
+            const ctx = document.getElementById('chartActivityComp').getContext('2d');
+            if(chartActivityComp) chartActivityComp.destroy();
 
-        function renderCharts(crews) {
-            const ctxSpeed = document.getElementById('chartSpeed').getContext('2d');
-            const ctxVol = document.getElementById('chartVolume').getContext('2d');
-            let labels = Object.keys(crews);
-            let dataSpeed = labels.map(k => (crews[k].count > 0 ? (crews[k].time/crews[k].count).toFixed(1) : 0));
-            let dataVol = labels.map(k => crews[k].count);
+            // Preparar datos: Queremos ver por cada actividad, las barras de los supervisores
+            let labels = Object.keys(activities);
+            let datasets = [];
+            
+            // Colores dinámicos
+            const colors = ['#3b82f6', '#22c55e', '#a855f7', '#f59e0b', '#ef4444'];
 
-            if(chartSpeed) chartSpeed.destroy();
-            chartSpeed = new Chart(ctxSpeed, {
+            labels.forEach((act, i) => {
+                activities[act].forEach((item, j) => {
+                    datasets.push({
+                        label: `${item.sup} (${act})`,
+                        data: labels.map(l => l === act ? item.avg : 0),
+                        backgroundColor: colors[j % colors.length]
+                    });
+                });
+            });
+
+            chartActivityComp = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: labels, datasets: [{ label: 'Minutos Promedio', data: dataSpeed, backgroundColor: '#3b82f6' }] }
-            });
-
-            if(chartVol) chartVol.destroy();
-            chartVol = new Chart(ctxVol, {
-                type: 'doughnut',
-                data: { labels: labels, datasets: [{ data: dataVol, backgroundColor: ['#22c55e','#eab308','#ef4444','#a855f7','#3b82f6'] }] }
+                data: { labels, datasets },
+                options: { 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Minutos por Hilera' } } }
+                }
             });
         }
 
-        function renderTables(workers, cuadros, globAvg) {
-            // Workers Array
-            let wArr = Object.keys(workers).map(k => ({ id:k, ...workers[k], avg: (workers[k].time/workers[k].count).toFixed(1) }));
-            wArr.sort((a,b) => a.avg - b.avg);
+        function renderCrewRanking(stats) {
+            const tbody = document.querySelector('#tableCrewRanking tbody');
+            tbody.innerHTML = "";
+            stats.sort((a,b) => a.avg - b.avg); // Los más rápidos arriba
 
-            // Top 5
-            let tbTop = document.querySelector('#tableTop5 tbody'); tbTop.innerHTML = "";
-            wArr.slice(0,5).forEach(w => {
-                tbTop.innerHTML += `<tr><td class="b-fast">${w.id} ⚡</td><td>${w.sup}</td><td>${w.avg} min</td></tr>`;
+            stats.forEach(s => {
+                let status = s.avg < 10 ? '🚀 Excelente' : s.avg < 18 ? '👌 Normal' : '🐢 Lento';
+                let color = s.avg < 10 ? 'var(--accent)' : s.avg < 18 ? 'var(--warn)' : 'var(--danger)';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${s.sup}</b></td>
+                        <td>${s.act}</td>
+                        <td style="color:${color}; font-weight:bold;">${s.avg} min</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
             });
+        }
 
-            // Slow (Alerts > 30% above avg)
-            let tbSlow = document.querySelector('#tableSlow tbody'); tbSlow.innerHTML = "";
-            let limit = globAvg * 1.3;
-            wArr.filter(w => w.avg > limit).forEach(w => {
-                tbSlow.innerHTML += `<tr><td class="b-slow">${w.id}</td><td>${w.sup}</td><td>${w.avg} min</td></tr>`;
-            });
+        let chartVolume = null;
+        function renderVolumeChart(stats) {
+            const ctx = document.getElementById('chartVolume').getContext('2d');
+            if(chartVolume) chartVolume.destroy();
 
-            // Cuadros
-            let tbC = document.querySelector('#tableCuadros tbody'); tbC.innerHTML = "";
-            Object.keys(cuadros).forEach(k => {
-                let c = cuadros[k];
-                let avg = (c.time/c.count).toFixed(1);
-                tbC.innerHTML += `<tr><td><b>${k}</b></td><td>${c.count}</td><td>${avg} min</td><td>${Array.from(c.sups).join(', ')}</td></tr>`;
+            chartVolume = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: stats.map(s => s.sup),
+                    datasets: [{
+                        data: stats.map(s => s.finished),
+                        backgroundColor: ['#3b82f6', '#22c55e', '#a855f7', '#f59e0b', '#ef4444']
+                    }]
+                }
             });
         }
     </script>
