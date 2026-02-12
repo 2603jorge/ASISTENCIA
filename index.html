@@ -3,469 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V40 - Mass Move & Auto</title>
+    <title>AgriCactus V42 - MultiZona & Tiempos</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; }
+        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --highlight: #00e676; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
         
         /* UI Elements */
-        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
-        .btn-g { background: var(--main); }
-        .btn-o { background: var(--sec); color: black; }
-        .btn-b { background: var(--blue); }
-        .btn-r { background: var(--danger); }
-        .btn-p { background: var(--purple); }
+        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 13px; margin-bottom: 5px; cursor: pointer; text-transform: uppercase; color: white; }
+        .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
+        .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
         
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
-        label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
+        label { font-size: 10px; color: #aaa; text-transform: uppercase; display: block; font-weight: bold; }
 
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; max-height: 280px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
-        .row-item { height: 45px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 1px solid #444; position: relative; overflow: hidden; }
-        .done { background: var(--main); border-color: #66bb6a; opacity: 0.6; }
-        .active { background: var(--sec); border-color: #ffca28; color: black; animation: pulse 2s infinite; }
-        .row-tag { font-size: 8px; position: absolute; bottom: 1px; width: 100%; text-align: center; }
-        .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 8px; padding: 2px 4px; border-radius: 0 0 0 5px; }
+        /* MULTI-ZONA STYLES */
+        .zone-card { border-left: 5px solid #555; transition: 0.3s; opacity: 0.7; }
+        .zone-card.selected { border-left: 5px solid var(--highlight); opacity: 1; background: #252525; box-shadow: 0 0 10px rgba(0, 230, 118, 0.1); }
+        .zone-header { display: flex; justify-content: space-between; align-items: center; }
+        .zone-stats { font-size: 11px; color: #ccc; margin-top: 5px; }
+
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 3px; max-height: 150px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.3); border-radius: 5px; margin-top: 5px; }
+        .row-item { height: 35px; background: #333; border-radius: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 1px solid #444; position: relative; }
+        .done { background: var(--main); opacity: 0.5; }
+        .active { background: var(--sec); color: black; animation: pulse 2s infinite; }
         
-        /* Contenedor Entrada Manual */
-        .manual-box { display: flex; gap: 5px; background: #222; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #444; }
-        .manual-box input { margin: 0; flex: 1; }
-        .manual-box button { width: auto; padding: 0 20px; margin: 0; }
-
-        .edit-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #444; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
-        .flex-row { display: flex; gap: 10px; }
+        .flex-row { display: flex; gap: 5px; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V40</h2>
-    <button class="btn btn-b" style="padding:10px;" onclick="abrirDB()">📂 CARGAR CATÁLOGOS</button>
-
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V42</h2>
     <div class="card">
-        <h3 style="margin-top:0; color:var(--sec);">👷 SUPERVISOR</h3>
-        <label>Número de Credencial (Supervisor)</label>
-        <input type="text" id="conf_sup_id" placeholder="ID Credencial Supervisor">
-        <label>Nombre (Supervisor)</label>
-        <input type="text" id="conf_resp" placeholder="Nombre Completo">
-
-        <hr style="border-color:#333; margin: 15px 0;">
-
-        <label>🔍 Buscar Cuadro Inicial</label>
-        <input type="text" id="conf_cuadro" list="lista_cuadros" placeholder="Escribe ID o Nombre..." oninput="alEscribirCuadro('conf')">
-        <datalist id="lista_cuadros"></datalist>
-        <div style="font-size:10px; color:#aaa; margin-bottom:10px; text-align:right;">Total Hileras: <b id="conf_info_total">--</b></div>
-
-        <div class="flex-row">
-            <div style="flex:1"><label>Lado</label><select id="conf_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div>
-            <div style="flex:1"><label>Actividad</label><input type="text" id="conf_act" list="lista_actividades"><datalist id="lista_actividades"></datalist></div>
-        </div>
-        
-        <label>🕒 JORNADA</label><select id="conf_jornada"><option value="">-- Cargar Lista --</option></select>
-        <label style="color:var(--sec);">👥 TOTAL PERSONAL</label><input type="number" id="conf_total_staff" placeholder="Ej: 20">
-        <label>RANGO DE TRABAJO</label><div class="flex-row"><input type="number" id="conf_inicio" placeholder="Desde"><input type="number" id="conf_fin" placeholder="Hasta"></div>
-
-        <label>🛠️ MODO ASIGNACIÓN</label>
-        <select id="conf_modo" onchange="toggleModoInput('conf')"><option value="INDIVIDUAL">👤 INDIVIDUAL</option><option value="PAREJAS">👥 PAREJAS</option></select>
-        <div id="div_tarea_conf"><label>Filas por Tarea</label><input type="number" id="conf_tarea_size" value="1" min="1"></div>
+        <label>👷 SUPERVISOR</label>
+        <input type="text" id="conf_resp" placeholder="Nombre Supervisor">
+        <label>🕒 JORNADA</label><select id="conf_jornada"><option>MAÑANA</option><option>TARDE</option><option>EXTRA</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarJornada()">🚀 INICIAR DÍA</button>
+    
+    <h3 style="color:var(--sec); margin:5px 0;">AGREGAR PRIMER CUADRO</h3>
+    <div class="card">
+        <label>Cuadro</label><input type="text" id="init_cuadro" placeholder="Ej: 201">
+        <label>Actividad</label><input type="text" id="init_act" placeholder="Ej: Cosecha">
+        <div class="flex-row">
+            <div style="flex:1"><label>Inicio Fila</label><input type="number" id="init_inicio" value="1"></div>
+            <div style="flex:1"><label>Fin Fila</label><input type="number" id="init_fin" value="50"></div>
+        </div>
+        <label>Modo</label><select id="init_modo"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="PAREJAS">PAREJAS</option></select>
+    </div>
+    
+    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR SISTEMA</button>
 </div>
 
 <div id="viewMain" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <div style="line-height:1.2;">
-            <b id="disp_cuadro" style="font-size:16px; color:white;">--</b>
-            <div style="font-size:11px; color:#aaa;"><span id="disp_act">--</span> | <span id="disp_jornada" style="color:var(--sec);">--</span></div>
-            <div style="font-size:10px; color:var(--main);">Sup: <span id="disp_sup_name">--</span></div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+        <div style="font-size:12px;"><b style="color:var(--sec);">SUPERVISOR:</b> <span id="disp_resp">--</span></div>
+        <button class="btn btn-b" style="width:auto; padding:5px 10px;" onclick="abrirAddZona()">➕ ZONA</button>
+    </div>
+
+    <div id="reader" style="width:100%; border-radius:10px; overflow:hidden; border:2px solid #444; height:180px; background:black; margin-bottom:10px;"></div>
+    <div class="flex-row">
+        <input type="text" id="manual_id" placeholder="Entrada Manual ID">
+        <button class="btn btn-b" style="width:50px;" onclick="registrarManual()">OK</button>
+    </div>
+
+    <div style="text-align:center; font-size:11px; color:#aaa; margin-bottom:5px;">👇 SELECCIONA EN QUÉ ZONA ENTRARÁN LOS NUEVOS 👇</div>
+
+    <div id="zonesContainer"></div>
+
+    <hr style="border-color:#333;">
+
+    <div class="flex-row">
+        <button class="btn btn-g" onclick="ejecutarAvanceMasivo()">⏩ AVANCE MASIVO<br><small>(En Zona Seleccionada)</small></button>
+    </div>
+    <div class="flex-row">
+        <button class="btn btn-p" onclick="descargarReporte('DETALLADO')">📊 REPORTE DETALLADO</button>
+        <button class="btn btn-r" onclick="finalizarDia()">🏁 CERRAR TODO</button>
+    </div>
+</div>
+
+<div id="modalAddZone" class="modal" style="background:rgba(0,0,0,0.95);">
+    <h3 style="color:var(--highlight); text-align:center;">➕ AGREGAR OTRA ZONA</h3>
+    <p style="text-align:center; font-size:12px;">Esto permite trabajar dos cuadros simultáneos.</p>
+    <div class="card">
+        <label>Nuevo Cuadro</label><input type="text" id="new_cuadro" placeholder="Ej: 701">
+        <label>Actividad</label><input type="text" id="new_act" placeholder="Misma o Nueva">
+        <div class="flex-row">
+            <div style="flex:1"><label>Desde Fila</label><input type="number" id="new_inicio"></div>
+            <div style="flex:1"><label>Hasta Fila</label><input type="number" id="new_fin"></div>
         </div>
-        <div style="text-align:right;"><span style="font-size:10px; color:#888;">RANGO:</span><br><b id="disp_rango" style="font-size:12px;">--</b></div>
+        <label>Modo</label><select id="new_modo"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="PAREJAS">PAREJAS</option></select>
     </div>
-
-    <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
-    
-    <div class="manual-box">
-        <input type="text" id="manual_id" placeholder="⌨️ Entrada Manual (ID)">
-        <button class="btn btn-b" onclick="registrarManual()">OK</button>
-    </div>
-
-    <div class="card" style="display:grid; grid-template-columns:1fr 1fr; text-align:center; padding:10px; gap:5px; margin-bottom:10px;">
-        <div style="background:#333; border-radius:8px; padding:5px;"><small>HECHO</small><br><b id="stat_done" style="font-size:20px; color:var(--main);">0%</b></div>
-        <div style="background:#333; border-radius:8px; padding:5px;"><small>ASISTENCIA</small><br><b id="stat_active" style="font-size:20px; color:var(--sec);">0/0</b></div>
-    </div>
-    
-    <div class="card" style="padding:5px;"><div id="mapGrid" class="grid-map"></div></div>
-    
-    <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
-        <button class="btn btn-p" onclick="descargarReporte('PARCIAL')">📊 REPORTE</button>
-    </div>
-
-    <div class="flex-row">
-        <button class="btn btn-g" onclick="abrirCambioMasivo()">🚚 CAMBIO MASIVO<br><small>(Mover a todos al sig. cuadro)</small></button>
-    </div>
-    <button class="btn btn-r" onclick="confirmarFinDia()">🏁 FINALIZAR DÍA (Cerrar todo)</button>
+    <button class="btn btn-g" onclick="confirmarAddZona()">✅ AGREGAR</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalAddZone').classList.remove('open')">CANCELAR</button>
 </div>
-
-<div id="modalMassive" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--main); text-align:center;">🚚 CAMBIO MASIVO</h2>
-    <p style="text-align:center; font-size:12px; color:#ccc;">
-        1. Se cerrarán las filas actuales.<br>
-        2. Se moverá a <b>TODO EL PERSONAL</b> al nuevo cuadro.<br>
-        3. Se les asignarán nuevas filas automáticamente.
-    </p>
-    <div class="card">
-        <label>Nuevo Cuadro / Bloque</label><input type="text" id="mas_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('mas')">
-        <div class="flex-row"><div style="flex:1"><label>Lado</label><select id="mas_lado"><option value="COMPLETA">COMPLETA</option><option value="NORTE">NORTE</option><option value="SUR">SUR</option></select></div><div style="flex:1"><label>Total BD</label><input type="text" id="mas_info_total" readonly style="background:#444; color:#aaa;"></div></div>
-        <label>Nuevo Rango</label><div class="flex-row"><input type="number" id="mas_inicio"><input type="number" id="mas_fin"></div>
-    </div>
-    <button class="btn btn-g" onclick="ejecutarCambioMasivo()">✅ EJECUTAR MOVIMIENTO</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalMassive').classList.remove('open')">CANCELAR</button>
-</div>
-
-<div id="modalNextAct" class="modal" style="background:rgba(0,0,0,0.95);">
-    <h2 style="color:var(--sec); text-align:center;">🔄 SIGUIENTE ACTIVIDAD</h2>
-    <p style="text-align:center; color:#fff;">El cuadro anterior se completó. Configura el siguiente paso.</p>
-    <div class="card">
-        <label>Nuevo Cuadro</label><input type="text" id="chg_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('chg')">
-        <label>Actividad</label><input type="text" id="chg_act" list="lista_actividades">
-        <label>Jornada</label><select id="chg_jornada"></select>
-        <label>Rango</label><div class="flex-row"><input type="number" id="chg_inicio"><input type="number" id="chg_fin"></div>
-        <label>Modo</label><select id="chg_modo" onchange="toggleModoInput('chg')"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="PAREJAS">PAREJAS</option></select>
-        <div id="div_tarea_chg"><label>Filas</label><input type="number" id="chg_tarea_size" value="1"></div>
-    </div>
-    <button class="btn btn-o" onclick="ejecutarCambioActividad()">✅ INICIAR NUEVO CUADRO</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalNextAct').classList.remove('open')">CANCELAR</button>
-</div>
-
-<div id="modalEditor" class="modal" style="background:#111;"><h2>✏️ CORRECCIÓN</h2><div id="editorList" style="max-height: 400px; overflow-y: auto;"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">VOLVER</button></div>
-<div id="modalDB" class="modal" style="background:#111;"><h3>📂 Catálogos</h3><label>1. CUADROS</label><textarea id="csv_cuadros" rows="2"></textarea><label>2. ACTIVIDADES</label><textarea id="csv_act" rows="2"></textarea><label>3. JORNADAS</label><textarea id="csv_jor" rows="2"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
 
 <script>
+    // --- ESTADO GLOBAL ---
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v40_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v40_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v40_jornadas')) || [],
-        sesion: JSON.parse(localStorage.getItem('v40_sesion')) || null,
-        avance: JSON.parse(localStorage.getItem('v40_avance')) || [],
-        historial: JSON.parse(localStorage.getItem('v40_historial')) || [],
-        staff: JSON.parse(localStorage.getItem('v40_staff')) || []
+        config: { resp: "", jornada: "" },
+        zonas: [], // Array de objetos { id, cuadro, act, inicio, fin, modo, activeRows: [] }
+        avance: [], // { obrero, zonaId, cuadro, fila, inicio, fin, ts_ini, ts_fin }
+        staff: [] // { id, zonaActual, filaActual }
     };
-    let scanner = null, lastScanTime = {};
+    
+    let activeZoneIndex = 0; // Índice de la zona seleccionada en pantalla (Target)
+    let scanner = null;
+    let lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
-    window.onload = () => {
-        actualizarSelectores();
-        toggleModoInput('conf');
-        if (DB.sesion && DB.sesion.activo) irAlMapa();
-    };
+    // --- INICIO ---
+    function iniciarSistema() {
+        const resp = document.getElementById('conf_resp').value;
+        const cuadro = document.getElementById('init_cuadro').value;
+        const inicio = parseInt(document.getElementById('init_inicio').value);
+        const fin = parseInt(document.getElementById('init_fin').value);
 
-    function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
-    function toggleModoInput(prefix) {
-        let modo = document.getElementById(prefix + '_modo').value;
-        let d = document.getElementById('div_tarea_' + prefix);
-        if(d) d.style.display = (modo === 'INDIVIDUAL') ? 'block' : 'none';
-    }
+        if(!resp || !cuadro || isNaN(inicio)) return alert("Datos incompletos");
 
-    function procesarYGuardar() {
-        const txtC = document.getElementById('csv_cuadros').value;
-        const txtA = document.getElementById('csv_act').value;
-        const txtJ = document.getElementById('csv_jor').value;
+        DB.config.resp = resp;
+        DB.config.jornada = document.getElementById('conf_jornada').value;
 
-        if(txtC.trim()) DB.cuadros = txtC.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=5) ? {id:c[0].trim(), nombre:c[1].trim(), ori:c[3].trim(), max:parseInt(c[5])} : null }).filter(x=>x&&x.id);
-        if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-        if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
+        // Crear Zona 0
+        agregarZonaObjeto(cuadro, document.getElementById('init_act').value, inicio, fin, document.getElementById('init_modo').value);
 
-        localStorage.setItem('v40_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v40_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v40_jornadas', JSON.stringify(DB.jornadas));
-        actualizarSelectores();
-        alert("✅ Datos Actualizados");
-        document.getElementById('modalDB').classList.remove('open');
-    }
-
-    function actualizarSelectores() {
-        const listaC = document.getElementById('lista_cuadros'), listaA = document.getElementById('lista_actividades');
-        if(DB.cuadros.length) listaC.innerHTML = DB.cuadros.map(c => `<option value="${c.nombre}">ID: ${c.id} | Ori: ${c.ori}</option>`).join('');
-        if(DB.actividades.length) listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">ID: ${a.id}</option>`).join('');
-        const optsJ = `<option value="">-- Seleccionar --</option>` + DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
-        document.getElementById('conf_jornada').innerHTML = optsJ; document.getElementById('chg_jornada').innerHTML = optsJ;
-    }
-
-    function alEscribirCuadro(prefix) {
-        const val = document.getElementById(prefix+'_cuadro').value;
-        const data = DB.cuadros.find(c => c.nombre === val);
-        if(data) {
-            if(prefix==='conf') document.getElementById('conf_info_total').innerText = data.max;
-            if(prefix==='mas') document.getElementById('mas_info_total').value = data.max;
-            document.getElementById(prefix+'_inicio').value = 1; document.getElementById(prefix+'_fin').value = data.max;
-            let lado = 'COMPLETA';
-            if(data.ori && data.ori.toUpperCase().includes('SUR')) lado = 'SUR';
-            if(data.ori && data.ori.toUpperCase().includes('NORTE')) lado = 'NORTE';
-            document.getElementById(prefix+'_lado').value = lado;
-        }
-    }
-
-    // --- SESIÓN ---
-    function iniciarJornada() { 
-        const supId = document.getElementById('conf_sup_id').value;
-        const supNom = document.getElementById('conf_resp').value;
-        if(!supId || !supNom) return alert("❌ Debes ingresar ID y Nombre del Supervisor");
-        configurarSesion('conf'); 
-    }
-
-    function configurarSesion(prefix) {
-        const cNombre = document.getElementById(prefix+'_cuadro').value;
-        const ini = parseInt(document.getElementById(prefix+'_inicio').value);
-        const fin = parseInt(document.getElementById(prefix+'_fin').value);
-
-        if(!cNombre || isNaN(ini)) return alert("Faltan datos obligatorios.");
-        const cObj = DB.cuadros.find(x => x.nombre === cNombre);
-        
-        let aNombre, jNombre, modo, tarea, totalStaff;
-        
-        // Heredar o leer inputs
-        if (prefix === 'mas') { // Cambio Masivo hereda actividad/jornada
-            aNombre = DB.sesion.nomActividad; jNombre = DB.sesion.jornada; modo = DB.sesion.modo; tarea = DB.sesion.tareaSize; totalStaff = DB.sesion.totalStaff;
-        } else {
-            aNombre = document.getElementById(prefix+'_act').value; jNombre = document.getElementById(prefix+'_jornada').value;
-            modo = document.getElementById(prefix+'_modo').value; tarea = parseInt(document.getElementById(prefix+'_tarea_size').value) || 1;
-            totalStaff = parseInt(document.getElementById('conf_total_staff').value) || (DB.sesion ? DB.sesion.totalStaff : 0);
-        }
-        
-        const aObj = DB.actividades.find(x => x.desc === aNombre);
-        // Persistir Supervisor
-        const supId = document.getElementById('conf_sup_id').value || (DB.sesion ? DB.sesion.supId : '');
-        const supNom = document.getElementById('conf_resp').value || (DB.sesion ? DB.sesion.responsable : '');
-
-        DB.sesion = {
-            idCuadro: cObj ? cObj.id : "??", nomCuadro: cNombre,
-            idActividad: aObj ? aObj.id : "??", nomActividad: aNombre,
-            jornada: jNombre, lado: document.getElementById(prefix+'_lado').value,
-            modo: modo, tareaSize: tarea, inicio: ini, fin: fin, totalStaff: totalStaff,
-            supId: supId, responsable: supNom,
-            activo: true
-        };
-        
-        if(prefix === 'conf') { DB.avance = []; DB.historial = []; DB.staff = []; }
-        guardarTodo();
-        irAlMapa();
-    }
-
-    function irAlMapa() {
-        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalMassive').classList.remove('open'); document.getElementById('modalNextAct').classList.remove('open');
+        document.getElementById('disp_resp').innerText = resp;
+        document.getElementById('viewSetup').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
-        document.getElementById('disp_cuadro').innerText = `${DB.sesion.nomCuadro}`;
-        document.getElementById('disp_act').innerText = DB.sesion.nomActividad;
-        document.getElementById('disp_jornada').innerText = DB.sesion.jornada;
-        document.getElementById('disp_sup_name').innerText = DB.sesion.responsable;
-        document.getElementById('disp_rango').innerText = `Hileras ${DB.sesion.inicio} - ${DB.sesion.fin}`;
-        renderMapa();
-        if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
+        
+        renderZonas();
+        if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 }); scanner.render(onScan); }
     }
 
-    // --- ENTRADA MANUAL ---
+    // --- GESTIÓN DE ZONAS (Split Crews) ---
+    function abrirAddZona() { document.getElementById('modalAddZone').classList.add('open'); }
+    
+    function confirmarAddZona() {
+        const c = document.getElementById('new_cuadro').value;
+        const i = parseInt(document.getElementById('new_inicio').value);
+        const f = parseInt(document.getElementById('new_fin').value);
+        if(!c || isNaN(i)) return alert("Faltan datos");
+        
+        agregarZonaObjeto(c, document.getElementById('new_act').value, i, f, document.getElementById('new_modo').value);
+        
+        document.getElementById('modalAddZone').classList.remove('open');
+        renderZonas();
+    }
+
+    function agregarZonaObjeto(cuadro, act, inicio, fin, modo) {
+        DB.zonas.push({
+            id: Date.now(), // ID único para la zona
+            cuadro: cuadro,
+            act: act,
+            inicio: inicio,
+            fin: fin,
+            modo: modo
+        });
+        // Seleccionar automáticamente la nueva zona
+        activeZoneIndex = DB.zonas.length - 1;
+    }
+
+    function seleccionarZona(idx) {
+        activeZoneIndex = idx;
+        renderZonas(); // Para actualizar estilos (borde verde)
+    }
+
+    // --- CORE: ESCANEO Y ASIGNACIÓN ---
     function registrarManual() {
         let id = document.getElementById('manual_id').value.toUpperCase().trim();
         if(id) { onScan(id); document.getElementById('manual_id').value = ''; }
     }
 
-    // --- LÓGICA DE ESCANEO / ASIGNACIÓN ---
     function onScan(id) {
         id = id.trim();
         let now = Date.now();
-        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
+        if (lastScanTime[id] && (now - lastScanTime[id] < 2000)) return;
         lastScanTime[id] = now;
 
         let trabajador = DB.staff.find(s => s.id === id);
 
-        // LOGICA DE "RE-ESCANEO" = MOVER A NUEVA LINEA
-        if(trabajador && trabajador.fila) {
-            // El trabajador ya tiene fila -> La cerramos y asignamos una nueva
-            cerrarTarea(trabajador);
-            // Inmediatamente asignar nueva
-            let resultado = asignarNuevaTarea(trabajador);
-            if (resultado) {
-                alert(`🔄 ${id} movido a nueva fila: ${trabajador.fila}`);
-            }
+        if(trabajador && trabajador.filaActual !== null) {
+            // == YA ESTÁ TRABAJANDO ==
+            // 1. Cerramos su fila actual (independiente de la zona)
+            cerrarFilaTrabajador(trabajador);
+            
+            // 2. Decisión de zona:
+            // Si la zona seleccionada manualmente es DISTINTA a donde él estaba, lo movemos.
+            // Si es la misma, sigue avanzando en esa zona.
+            let zonaDestinoIdx = activeZoneIndex;
+            
+            // Lógica Smart: Si yo no he tocado el selector (está en default) pero él estaba en la Zona B,
+            // ¿debería seguir en la B o venir a la A?
+            // REGLA DE NEGOCIO: El selector en pantalla MANDA.
+            // Si tengo seleccionado Cuadro 701, todos los que escanee van al 701.
+            
+            asignarFila(trabajador, zonaDestinoIdx);
             audioBeep.play();
+
         } else {
-            // Trabajador nuevo o sin fila activa
-            if(!trabajador) { trabajador = { id: id, fila: null }; DB.staff.push(trabajador); }
-            asignarNuevaTarea(trabajador);
+            // == NUEVO INGRESO (O estaba libre) ==
+            if(!trabajador) { 
+                trabajador = { id: id, zonaActual: null, filaActual: null }; 
+                DB.staff.push(trabajador); 
+            }
+            asignarFila(trabajador, activeZoneIndex); // Va a la zona seleccionada
             audioBeep.play();
         }
-        guardarTodo();
-        renderMapa();
+        renderZonas();
     }
 
-    function cerrarTarea(trabajador) {
-        let regs = DB.avance.filter(a => a.obrero === trabajador.id && !a.fin);
-        regs.forEach(r => { r.fin = new Date().toLocaleTimeString(); r.ts_fin = Date.now(); });
-        trabajador.fila = null;
+    function cerrarFilaTrabajador(trabajador) {
+        // Buscar el registro abierto en DB.avance
+        let reg = DB.avance.find(a => a.obrero === trabajador.id && !a.fin);
+        if(reg) {
+            reg.fin = obtenerHora();
+            reg.ts_fin = Date.now();
+        }
+        trabajador.filaActual = null;
+        trabajador.zonaActual = null;
     }
 
-    function asignarNuevaTarea(trabajador) {
-        let filaInicio = 0, filasAsignadas = [];
+    function asignarFila(trabajador, zonaIdx) {
+        let zona = DB.zonas[zonaIdx];
+        if(!zona) return alert("Error de Zona");
+
+        let filasOcupadas = DB.avance
+            .filter(a => a.zonaId === zona.id && !a.fin) // Solo activas
+            .map(a => a.fila);
+        
+        let filaAsignada = null;
+
         // Buscar hueco
-        if (DB.sesion.modo === 'PAREJAS') {
-            for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
-                let activos = DB.avance.filter(a => a.fila === i && !a.fin).length;
-                if(activos < 2) { filaInicio = i; filasAsignadas = [i]; break; }
+        if(zona.modo === 'PAREJAS') {
+            for(let f = zona.inicio; f <= zona.fin; f++) {
+                // Contar cuántos hay en esta fila
+                let conteo = filasOcupadas.filter(x => x === f).length;
+                if(conteo < 2) { filaAsignada = f; break; }
             }
         } else {
-            let size = DB.sesion.tareaSize;
-            for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
-                if ((i + size - 1) > DB.sesion.fin) continue;
-                let bloqueLibre = true;
-                for(let k=0; k<size; k++) if(DB.avance.some(a => a.fila === (i+k))) { bloqueLibre=false; break; }
-                if(bloqueLibre) { filaInicio = i; for(let k=0; k<size; k++) filasAsignadas.push(i+k); break; }
+            // Individual
+            for(let f = zona.inicio; f <= zona.fin; f++) {
+                if(!filasOcupadas.includes(f)) { filaAsignada = f; break; }
             }
         }
 
-        if(filasAsignadas.length > 0) {
-            trabajador.fila = filaInicio;
-            filasAsignadas.forEach(f => {
-                DB.avance.push({
-                    fila: f, obrero: trabajador.id, inicio: new Date().toLocaleTimeString(), ts_inicio: Date.now(), fin: null,
-                    idCuadro: DB.sesion.idCuadro, nomCuadro: DB.sesion.nomCuadro, idActividad: DB.sesion.idActividad, jornada: DB.sesion.jornada, lado: DB.sesion.lado, responsable: DB.sesion.responsable
-                });
+        if(filaAsignada !== null) {
+            // Crear registro detallado
+            DB.avance.push({
+                obrero: trabajador.id,
+                zonaId: zona.id,
+                cuadro: zona.cuadro,
+                act: zona.act,
+                fila: filaAsignada,
+                inicio: obtenerHora(),
+                ts_ini: Date.now(),
+                fin: null,
+                ts_fin: null
             });
-            return true;
+            // Actualizar estado trabajador
+            trabajador.zonaActual = zona.id;
+            trabajador.filaActual = filaAsignada;
         } else {
-            // RANGO LLENO - Preguntar si terminó el día
-            preguntaFinDeDia();
-            return false;
+            alert(`⚠️ CUADRO ${zona.cuadro} LLENO. No se asignó fila.`);
         }
     }
 
-    function preguntaFinDeDia() {
-        if(confirm("⚠️ ¡CUADRO COMPLETADO! \n\n¿El día de trabajo se terminó? \n\n[ACEPTAR] = SÍ, Generar Reporte. \n[CANCELAR] = NO, Siguiente Actividad.")) {
-            confirmarFinDia(); // El usuario dijo Aceptar (El día terminó)
-        } else {
-            // El usuario dijo Cancelar (El día NO terminó)
-            abrirSiguienteActividad();
-        }
-    }
+    // --- AVANCE MASIVO (POR ZONA) ---
+    function ejecutarAvanceMasivo() {
+        let zonaTarget = DB.zonas[activeZoneIndex];
+        if(!confirm(`¿Avanzar a todos los del Cuadro ${zonaTarget.cuadro} a sus siguientes filas?`)) return;
 
-    // --- CAMBIO MASIVO Y FLUJO ---
-    function abrirCambioMasivo() { document.getElementById('modalMassive').classList.add('open'); }
-    function ejecutarCambioMasivo() { 
-        if(!document.getElementById('mas_cuadro').value) return alert("Selecciona cuadro");
-        moverMasivo('mas'); 
-    }
-    
-    function abrirSiguienteActividad() { 
-        document.getElementById('chg_jornada').value = DB.sesion.jornada; 
-        document.getElementById('modalNextAct').classList.add('open'); 
-    }
-    function ejecutarCambioActividad() { 
-        if(!document.getElementById('chg_cuadro').value) return alert("Selecciona cuadro");
-        // No es masivo, solo cambia configuración, pero si hay gente activa, ¿qué hacemos?
-        // Asumiremos que si cambian actividad, mueven a la gente (es un tipo de masivo logico)
-        moverMasivo('chg'); 
-    }
+        // 1. Identificar trabajadores activos EN ESTA ZONA
+        let activosEnZona = DB.staff.filter(s => s.zonaActual === zonaTarget.id && s.filaActual !== null);
+        
+        // Ordenar por fila (para que avancen ordenadamente)
+        activosEnZona.sort((a,b) => a.filaActual - b.filaActual);
 
-    function moverMasivo(prefix) {
-        let ahora = new Date().toLocaleTimeString(), ts = Date.now();
-        
-        // 1. Cerrar todo lo actual
-        DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
-        DB.historial = DB.historial.concat(DB.avance);
-        DB.avance = [];
-        
-        // 2. Configurar nueva sesión
-        configurarSesion(prefix);
-        
-        // 3. Reasignar a todos (Staff ordenado por su ultima fila para mantener orden logico)
-        DB.staff.sort((a, b) => (a.fila || 0) - (b.fila || 0));
-        
-        let moved = 0;
-        DB.staff.forEach(s => { 
-            s.fila = null; 
-            asignarNuevaTarea(s); // Asigna fila automáticamente en el nuevo cuadro
-            moved++;
+        let count = 0;
+        activosEnZona.forEach(t => {
+            cerrarFilaTrabajador(t);
+            asignarFila(t, activeZoneIndex); // Reasignar en la MISMA zona
+            count++;
         });
         
-        alert(`✅ ${moved} Credenciales movidas y reasignadas.`);
-        guardarTodo();
-        renderMapa();
+        alert(`✅ ${count} personas avanzadas en Cuadro ${zonaTarget.cuadro}.`);
+        renderZonas();
     }
 
-    // --- EDITOR ---
-    function abrirEditor() {
-        const list = document.getElementById('editorList'); list.innerHTML = "";
-        const activos = DB.avance.filter(a => !a.fin);
-        if(activos.length === 0) list.innerHTML = "<p>Nadie activo.</p>";
-        activos.forEach((rec) => {
-            let realIdx = DB.avance.indexOf(rec);
-            list.innerHTML += `<div class="edit-item"><div><b>${rec.obrero}</b><br><small>Fila: ${rec.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual(${realIdx})">CAMBIAR</button><button class="btn btn-sm btn-r" onclick="borrarRegistro(${realIdx}, '${rec.obrero}')">BORRAR</button></div></div>`;
+    // --- UI RENDERING ---
+    function renderZonas() {
+        const container = document.getElementById('zonesContainer');
+        container.innerHTML = "";
+
+        DB.zonas.forEach((z, idx) => {
+            // Calcular estadísticas
+            let terminadas = new Set(DB.avance.filter(a => a.zonaId === z.id && a.fin).map(a => a.fila));
+            let activas = DB.avance.filter(a => a.zonaId === z.id && !a.fin);
+            let totalFilas = z.fin - z.inicio + 1;
+            let pct = Math.round((terminadas.size / totalFilas) * 100);
+
+            // Crear HTML de la tarjeta
+            let div = document.createElement('div');
+            div.className = `card zone-card ${idx === activeZoneIndex ? 'selected' : ''}`;
+            div.onclick = () => seleccionarZona(idx);
+            
+            let htmlMap = "";
+            for(let f = z.inicio; f <= z.fin; f++) {
+                let statusClass = "";
+                let label = f;
+                
+                // Check status
+                if(terminadas.has(f)) statusClass = "done";
+                
+                // Buscar gente activa en esta fila
+                let gente = activas.filter(a => a.fila === f).map(a => a.obrero);
+                if(gente.length > 0) {
+                    statusClass = "active";
+                    // Si hay gente, mostramos ID pequeño
+                    label += `<br><span style="font-size:7px;">${gente[0]}</span>`; 
+                }
+
+                htmlMap += `<div class="row-item ${statusClass}">${label}</div>`;
+            }
+
+            div.innerHTML = `
+                <div class="zone-header">
+                    <div>
+                        <b style="font-size:14px; color:var(--highlight);">CUADRO ${z.cuadro}</b>
+                        <br><span style="font-size:10px; color:#aaa;">${z.act}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <b style="font-size:18px;">${pct}%</b>
+                        <br><small style="color:${activas.length > 0 ? 'var(--sec)' : '#555'}">👥 ${activas.length} Activos</small>
+                    </div>
+                </div>
+                <div class="grid-map">${htmlMap}</div>
+            `;
+            container.appendChild(div);
         });
-        document.getElementById('modalEditor').classList.add('open');
-    }
-    function cambiarFilaManual(idx) { let n = prompt("Nueva fila:"); if(n && !isNaN(n)) { DB.avance[idx].fila = parseInt(n); guardarTodo(); abrirEditor(); renderMapa(); } }
-    function borrarRegistro(idx, id) { if(confirm("¿Borrar?")) { DB.avance.splice(idx, 1); let st=DB.staff.find(s=>s.id===id); if(st)st.fila=null; guardarTodo(); abrirEditor(); renderMapa(); } }
-
-    // --- CIERRE DEL DÍA ---
-    function confirmarFinDia() {
-        if(!confirm("🛑 ¿CONFIRMAS QUE EL DÍA TERMINÓ? \nSe cerrarán registros y descargará el reporte.")) return;
-        let ahora = new Date().toLocaleTimeString(), ts = Date.now();
-        DB.avance.forEach(a => { if(!a.fin) { a.fin = ahora; a.ts_fin = ts; } });
-        DB.historial = DB.historial.concat(DB.avance);
-        DB.avance = [];
-        descargarReporte('FINAL');
-        setTimeout(() => location.reload(), 3000);
     }
 
-    function renderMapa() {
-        const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
-        let terminadas = new Set(); DB.avance.forEach(a => { if(a.fin) terminadas.add(a.fila); });
+    // --- REPORTES ---
+    function obtenerHora() {
+        let d = new Date();
+        return d.toLocaleTimeString('es-MX', { hour12: false });
+    }
+
+    function finalizarDia() {
+        if(!confirm("¿Cerrar todas las filas abiertas y descargar reporte final?")) return;
         
-        let presentes = DB.staff.length; 
-        document.getElementById('stat_active').innerText = `${presentes}/${DB.sesion.totalStaff || '?'}`;
-
-        for(let i = DB.sesion.inicio; i <= DB.sesion.fin; i++) {
-            let div = document.createElement('div'); div.className = "row-item";
-            let gente = DB.avance.filter(a => a.fila === i && !a.fin).map(a => a.obrero);
-            div.innerHTML = `<span>${i}</span>`;
-            if(terminadas.has(i) && !gente.length) div.className += " done";
-            else if(gente.length) { div.className += " active"; div.innerHTML += `<span class="row-tag">${gente.join(',')}</span><div class="badge">${gente.length}</div>`; }
-            grid.appendChild(div);
-        }
-        let total = DB.sesion.fin - DB.sesion.inicio + 1;
-        document.getElementById('stat_done').innerText = Math.round((terminadas.size/total)*100) + "%";
-    }
-
-    function guardarTodo() {
-        localStorage.setItem('v40_sesion', JSON.stringify(DB.sesion));
-        localStorage.setItem('v40_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v40_historial', JSON.stringify(DB.historial));
-        localStorage.setItem('v40_staff', JSON.stringify(DB.staff));
+        // Cerrar todo
+        DB.staff.forEach(t => {
+            if(t.filaActual !== null) cerrarFilaTrabajador(t);
+        });
+        
+        descargarReporte('FINAL_DIA');
+        setTimeout(() => location.reload(), 2000);
     }
 
     function descargarReporte(tipo) {
-        let data = DB.historial.concat(DB.avance);
-        // Formato CSV con Supervisor incluido
-        let csv = "CREDENCIAL,SUPERVISOR,ID_CUADRO,ID_ACTIVIDAD,JORNADA,HORA_ENTRADA,HORA_SALIDA\n";
-        let unicos = []; 
-        data.forEach(r => { let k = `${r.obrero}|${r.idCuadro}|${r.idActividad}|${r.jornada}`; if(!unicos.includes(k)) unicos.push(k); });
+        // CSV Headers: DETALLADO fila por fila
+        let csv = "ID_OBRERO,SUPERVISOR,JORNADA,CUADRO,ACTIVIDAD,NUM_FILA,HORA_INICIO_FILA,HORA_FIN_FILA\n";
         
-        unicos.forEach(k => {
-            let p = k.split('|');
-            let recs = data.filter(r => r.obrero==p[0] && r.idCuadro==p[1] && r.jornada==p[3]);
-            recs.sort((a,b) => a.ts_inicio - b.ts_inicio);
-            let ent = recs[0].inicio, sal = recs[recs.length-1].fin || "ACTIVO";
-            // Obtenemos responsable del primer registro o del actual
-            let resp = recs[0].responsable || "Admin";
-            csv += `${p[0]},${resp},${p[1]},${p[2]},${p[3]},${ent},${sal}\n`;
+        // Recorremos todo el historial de avance
+        // Ordenamos por hora de inicio para cronología
+        let datos = DB.avance.sort((a,b) => a.ts_ini - b.ts_ini);
+
+        datos.forEach(r => {
+            // Manejo de nulos si está activo
+            let hFin = r.fin ? r.fin : "EN_PROCESO";
+            
+            csv += `${r.obrero},${DB.config.resp},${DB.config.jornada},${r.cuadro},${r.act},${r.fila},${r.inicio},${hFin}\n`;
         });
-        
-        let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `ASISTENCIA_${tipo}_${new Date().toLocaleDateString().replace(/\//g,'-')}.csv`; l.click();
+
+        let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement("a");
+        let fecha = new Date().toLocaleDateString().replace(/\//g, '-');
+        link.href = URL.createObjectURL(blob);
+        link.download = `REPORTE_${tipo}_${fecha}.csv`;
+        link.click();
     }
 </script>
 </body>
