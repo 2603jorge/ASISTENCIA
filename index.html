@@ -48,29 +48,28 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         /* ESTILOS PARA CENTRAR LA CÁMARA */
         #reader { 
-            width: 100% !important; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            border: 2px solid #555; 
-            background: black; 
-            margin-bottom: 10px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+           width: 100% !important; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    border: 2px solid #555; 
+    background: black; 
+    margin-bottom: 10px;
+    position: relative;
         }
 
         /* Fuerza al video a centrarse y cubrir el espacio */
         #reader video {
             width: 100% !important;
-            height: auto !important;
-            object-fit: cover;
+            height: 100% !important;
+            object-fit: cover !important;
         }
 
         /* Centra el recuadro de escaneo blanco */
-        #reader__scan_region {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        #reader__dashboard {
+    padding: 10px !important;
+    background: #1a1a1a !important;
+    color: white !important;
+}
         }
         
     </style>
@@ -297,11 +296,12 @@
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs();
         renderSession();
-        if(!scanner) { 
+       if(!scanner) { 
     scanner = new Html5QrcodeScanner("reader", { 
         fps: 20, 
-        qrbox: { width: 250, height: 250 }, 
-        aspectRatio: 1.0 // Esto fuerza a que la cámara sea cuadrada y esté centrada
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.777778, // Esto es formato 16:9 (el de la mayoría de los celulares)
+        disableFlip: false
     }); 
     scanner.render(onScan); 
 }
@@ -710,6 +710,7 @@ new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 25
 </script>
 </body>
 </html>
+
 
 
 
