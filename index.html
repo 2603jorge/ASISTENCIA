@@ -557,12 +557,44 @@
 }
     function descargarReporte(tipo) {
         let data, conf;
-        if (tipo === 'HISTORICO' && currentReport) { data = currentReport.avance; conf = currentReport.config; }
-        else { data = DB.avance; conf = DB.globalConfig; }
-        let csv = "ID_OBRERO,SUPERVISOR,ACT_SUPERVISOR,CUADRO,FILA,HORA_INICIO,HORA_FIN\n";
-        data.sort((a,b) => a.ts_inicio - b.ts_inicio);
-        data.forEach(r => { let fin = r.fin || "EN PROCESO"; let supAct = r.supAct || conf.supAct; csv += `${r.obrero},${r.responsable},${supAct},${r.nomCuadro},${r.fila},${r.inicio},${fin}\n`; });
-        let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'}); let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `REPORTE_${tipo}.csv`; l.click();
+        // Elegimos si es el avance de hoy o uno del historial
+        if (tipo === 'HISTORICO' && currentReport) { 
+            data = currentReport.avance; 
+            conf = currentReport.config; 
+        } else { 
+            data = DB.avance; 
+            conf = DB.globalConfig; 
+        }
+
+        // --- NUEVA CABECERA DETALLADA ---
+        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUADRO,CUADRO,ID_JORNADA,DESC_JORNADA,TOTAL_LINEAS,TIPO\n";
+        
+        // Obtenemos lista de personas únicas para contar sus líneas
+        let obrerosUnicos = [...new Set(data.map(a => a.obrero))];
+        
+        // 1. Agregar fila del Supervisor (ID 135 o el que definas)
+        let jorSup = DB.jornadas.find(j => j.desc === conf.jornada) || {id: "N/A", desc: conf.jornada};
+        let actSup = DB.actividades.find(a => a.desc === conf.supAct) || {id: "N/A", desc: conf.supAct};
+        csv += `${conf.supId},${actSup.id},${actSup.desc},N/A,N/A,${jorSup.id},${jorSup.desc},0,SUPERVISOR\n`;
+
+        // 2. Agregar cada Trabajador con su ID de actividad REAL
+        obrerosUnicos.forEach(id => {
+            let filasObrero = data.filter(a => a.obrero === id);
+            let ultimo = filasObrero[filasObrero.length - 1]; // Datos de su última ubicación
+
+            // Buscamos IDs en los catálogos cargados en el botón "CARGAR BD"
+            let cInfo = DB.cuadros.find(c => c.nombre === ultimo.nomCuadro) || {id: "N/A", nombre: ultimo.nomCuadro};
+            let aInfo = DB.actividades.find(a => a.desc === ultimo.supAct) || {id: "N/A", desc: ultimo.supAct};
+
+            csv += `${id},${aInfo.id},${aInfo.desc},${cInfo.id},${cInfo.nombre},${jorSup.id},${jorSup.desc},${filasObrero.length},TRABAJADOR\n`;
+        });
+
+        // Descarga del archivo
+        let b = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+        let l = document.createElement("a");
+        l.href = URL.createObjectURL(b);
+        l.download = `REPORTE_NOMINA_${conf.resp}_${tipo}.csv`;
+        l.click();
     }
     function cerrarHistorial() {
         document.getElementById('viewHistory').classList.remove('open');
@@ -590,6 +622,7 @@
 </script>
 </body>
 </html>
+
 
 
 
