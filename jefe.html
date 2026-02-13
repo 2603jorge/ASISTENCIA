@@ -135,31 +135,42 @@
             document.getElementById('scannerModal').style.display = 'none';
         }
 
-       function onScanSuccess(text) {
+      function onScanSuccess(text) {
     try {
-        // Buscamos si el texto contiene el JSON (ajusta si el QR tiene texto extra antes)
-        // Si el QR es puramente el JSON, usamos 'text' directamente
-        let rawData = text;
+        // 1. Limpieza de seguridad: buscamos el primer '{' y el último '}' 
+        // por si el QR trae texto basura al inicio o al final.
+        const inicioJson = text.indexOf('{');
+        const finJson = text.lastIndexOf('}');
+
+        if (inicioJson === -1 || finJson === -1) {
+            throw new Error("No se encontró un objeto JSON válido en el QR");
+        }
+
+        const textoLimpio = text.substring(inicioJson, finJson + 1);
         
-        // Si tu QR tiene encabezados como "AGRICACTUS...", intenta limpiar el texto 
-        // o asegúrate de que el QR solo contenga el objeto JSON.
-        const objetoJson = JSON.parse(rawData);
+        // 2. Intentar convertir a objeto
+        const objetoJson = JSON.parse(textoLimpio);
+
+        // 3. Validar que tenga la estructura de AgriCactus (evitar errores de carga)
+        if (!objetoJson.config || !objetoJson.avance) {
+            alert("El QR es válido pero no pertenece al formato de AgriCactus.");
+            return;
+        }
 
         document.getElementById('beep').play();
         
-        // Agregamos el nuevo dato al array global
+        // 4. Agregar y actualizar
         jsonData.push(objetoJson);
-        
-        // Refrescamos los gráficos y tablas
         actualizarDashboard();
-        
-        // Cerramos el escáner
         stopScanner();
         
-        console.log("Datos cargados desde QR con éxito");
+        console.log("QR procesado con éxito.");
+
     } catch (err) {
-        console.error("Error al procesar el QR:", err);
-        alert("El código QR no contiene un formato JSON válido o está dañado.");
+        console.error("Error detallado:", err);
+        alert("Error: El código QR no contiene datos válidos. Asegúrate de que el generador de QR no esté añadiendo texto extra.");
+    }
+}
     }
 }
 
@@ -301,4 +312,5 @@
     </script>
 </body>
 </html>
+
 
