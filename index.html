@@ -398,14 +398,22 @@
         asignarFilaEspecifica(trabajador, filaDestino, sesion);
     }
 
-    function asignarFilaEspecifica(trabajador, filaNum, sesion) {
+   function asignarFilaEspecifica(trabajador, filaNum, sesion, idAct, idCuadro) {
+        if(filaNum > sesion.fin) return alert("⛔ CUADRO LLENO");
         trabajador.fila = filaNum;
         trabajador.cuadroUid = sesion.uid;
         DB.avance.push({
-            fila: filaNum, obrero: trabajador.id,
-            inicio: new Date().toLocaleTimeString('es-MX'), ts_inicio: Date.now(), fin: null,
-            nomCuadro: sesion.cuadro, cuadroUid: sesion.uid,
-            responsable: DB.globalConfig.resp, supAct: DB.globalConfig.supAct
+            fila: filaNum, 
+            obrero: trabajador.id,
+            inicio: new Date().toLocaleTimeString('es-MX'), 
+            ts_inicio: Date.now(), 
+            fin: null,
+            nomCuadro: sesion.cuadro, 
+            idCuadro: idCuadro, // <--- GUARDAMOS ID CUADRO
+            cuadroUid: sesion.uid,
+            responsable: DB.globalConfig.resp, 
+            supAct: sesion.act,
+            idAct: idAct       // <--- GUARDAMOS ID ACTIVIDAD
         });
     }
 
@@ -582,5 +590,6 @@
 </script>
 </body>
 </html>
+
 
 
