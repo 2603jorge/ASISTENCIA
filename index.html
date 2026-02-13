@@ -504,12 +504,22 @@
         let activosAhora = DB.staff.filter(st => st.fila !== null).length;
         let cuadrosActivos = DB.sesiones.length;
 
-        let summary = `AGRICACTUS - CORTE PARCIAL\n` +
-                      `FECHA: ${currentPartialRecord.fecha}\n` +
-                      `SUP: ${currentPartialRecord.config.resp}\n` +
-                      `ACTIVOS: ${activosAhora}/${currentPartialRecord.config.totalStaff}\n` +
-                      `AVANCE: ${filasTerminadas} filas term.\n` +
-                      `CUADROS: ${cuadrosActivos} tabs act.`;
+        // Creamos un objeto simplificado para que el QR no sea demasiado denso
+let qrData = {
+    config: { 
+        resp: currentPartialRecord.config.resp, 
+        supAct: currentPartialRecord.config.supAct 
+    },
+    avance: DB.avance.filter(a => a.fin !== null), // Solo enviamos lo terminado
+    sesiones: currentPartialRecord.sesiones,
+    isPartial: true
+};
+
+// Convertimos el objeto a texto JSON para el generador de QR
+let summary = JSON.stringify(qrData); 
+
+document.getElementById('qrcode_partial').innerHTML = "";
+new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 250, height: 250 });
         document.getElementById('qrcode_partial').innerHTML = "";
         new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 150, height: 150 });
         document.getElementById('partial_summary').innerText = `Corte: ${new Date().toLocaleTimeString()}`;
@@ -666,6 +676,7 @@
 </script>
 </body>
 </html>
+
 
 
 
