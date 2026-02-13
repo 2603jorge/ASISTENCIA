@@ -317,7 +317,7 @@
         if(id) { onScan(id); document.getElementById('manual_id').value = ''; }
     }
 
-    function onScan(id) {
+   function onScan(id) {
         id = id.trim();
         let now = Date.now();
         if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
@@ -326,44 +326,44 @@
         let sesionActual = DB.sesiones[DB.currentSessionId];
         let trabajador = DB.staff.find(s => s.id === id);
 
+        // --- NUEVA LÓGICA DE IDs ---
+        // Buscamos los IDs en los catálogos antes de registrar
+        let actInfo = DB.actividades.find(a => a.desc === sesionActual.act) || {id: "N/A"};
+        let cuadroInfo = DB.cuadros.find(c => c.nombre === sesionActual.cuadro) || {id: "N/A"};
+        // ---------------------------
+
         if(trabajador) {
-            // Trabajador existe
             if(trabajador.fila) {
                 if(trabajador.cuadroUid !== sesionActual.uid) {
                     let otraSesion = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
                     let nombreOtra = otraSesion ? otraSesion.cuadro : "Otro";
-                    if(confirm(`⚠️ ${id} está activo en CUADRO ${nombreOtra}.\n¿Moverlo a este cuadro (${sesionActual.cuadro})?`)) {
+                    if(confirm(`⚠️ ${id} activo en ${nombreOtra}. ¿Mover a este cuadro?`)) {
                         cerrarTarea(trabajador);
-                        asignarNuevaTareaAuto(trabajador, sesionActual);
+                        asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
                         audioBeep.play();
                     }
                 } else {
                     let sugerencia = buscarSiguienteFilaVacia(sesionActual);
-                    let nuevaFila = prompt(`⚠️ ${id} en fila ${trabajador.fila}.\n¿Mover a?`, sugerencia);
+                    let nuevaFila = prompt(`Mover a?`, sugerencia);
                     if(nuevaFila && !isNaN(nuevaFila)) {
                          cerrarTarea(trabajador);
-                         asignarFilaEspecifica(trabajador, parseInt(nuevaFila), sesionActual);
+                         asignarFilaEspecifica(trabajador, parseInt(nuevaFila), sesionActual, actInfo.id, cuadroInfo.id);
                          audioBeep.play();
                     }
                 }
             } else {
-                asignarNuevaTareaAuto(trabajador, sesionActual);
+                asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
                 audioBeep.play();
             }
         } else {
-            // NUEVO TRABAJADOR - VERIFICAR LÍMITE GLOBAL
-            if (DB.staff.length >= DB.globalConfig.totalStaff) {
-                alert(`⛔ LÍMITE ALCANZADO (${DB.globalConfig.totalStaff}). No se puede agregar a ${id}.`);
-                return;
-            }
+            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ LÍMITE ALCANZADO");
             trabajador = { id: id, fila: null, cuadroUid: null };
             DB.staff.push(trabajador);
-            asignarNuevaTareaAuto(trabajador, sesionActual);
+            asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
             audioBeep.play();
         }
-        guardarTodo();
-        renderMapa();
-        renderSession();
+        guardarTodo(); renderMapa(); renderSession();
+    
     }
 
     // --- FILA VACÍA Y QUEMADA ---
@@ -582,4 +582,5 @@
 </script>
 </body>
 </html>
+
 
