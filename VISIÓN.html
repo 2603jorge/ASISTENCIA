@@ -2,82 +2,185 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriCactus VISIÓN V2.0</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>AgriCactus V5.3 - Extractor de IDs Inteligente</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; margin: 0; padding: 15px; }
-        .card { background: #1e293b; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        h1, h2 { margin: 0 0 15px 0; color: #38bdf8; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: #38bdf8; color: #0f172a; text-transform: uppercase; margin-bottom: 10px; }
+        :root { --primary: #1565c0; --accent: #00e676; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); padding: 15px; margin: 0; }
+        .container { max-width: 1100px; margin: auto; }
+        .card { background: var(--card); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; font-size: 14px; }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-green { background: var(--accent); color: #000; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; border: 2px solid #334155; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+        th { background: #0f172a; color: var(--accent); white-space: nowrap; }
+        .sup-row { background: rgba(21, 101, 192, 0.3); font-weight: bold; color: #90caf9; }
         .hidden { display: none; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        td, th { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
     </style>
 </head>
 <body>
-    <h1 style="text-align:center;">👁️ VISIÓN SUPERVISOR</h1>
+
+<div class="container">
+    <h2 style="text-align:center; color: var(--primary);">📋 Extractor de Asistencia V5.3</h2>
+
     <div class="card">
-        <h2>📥 Recibir Datos</h2>
-        <button class="btn" onclick="activarEscaner()">📷 ESCANEAR QR</button>
-        <label class="btn" style="display:block; text-align:center; background:#e91e63; color:white;">
-            📂 CARGAR ARCHIVO DATOS (.JSON)
-            <input type="file" style="display:none;" onchange="cargarArchivo(this)">
-        </label>
+        <div id="reader"></div>
+        <p style="text-align:center; font-size:10px; color:#94a3b8;">Lector QR para reportes parciales</p>
     </div>
 
-    <div id="dashboard" class="hidden">
-        <div class="card">
-            <h2 id="lblCuadro">CUADRO: --</h2>
-            <div style="height:200px; display:flex; justify-content:center;"><canvas id="chartProgreso"></canvas></div>
+    <div class="card">
+        <input type="file" id="fileInput" class="hidden" accept=".json" onchange="procesarArchivo(this)">
+        <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR REPORTE .JSON</button>
+        
+        <div id="tablaArea" class="hidden">
+            <div style="overflow-x: auto;">
+                <table id="tablaAsistencia">
+                    <thead>
+                        <tr>
+                            <th>CREDENTIAL</th>
+                            <th>ID_ACT</th>
+                            <th>NAME_ACT</th>
+                            <th>ID_CUADRO</th>
+                            <th>CUADRO</th>
+                            <th>ID_JOR</th>
+                            <th>DESC_JOR</th>
+                            <th>LÍNEAS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn btn-green" onclick="descargarCSV()" style="margin-top:20px;">💾 DESCARGAR EXCEL (CSV)</button>
+            <button class="btn" onclick="limpiarDatos()" style="background: #c62828; color: white;">🗑️ BORRAR ACUMULADO</button>
         </div>
-        <div class="card">
-            <h2>🏆 Rendimiento</h2>
-            <canvas id="chartRendimiento"></canvas>
-            <br>
-            <table><thead><tr><th>ID</th><th>Filas</th><th>Min/Fila</th></tr></thead><tbody id="tblStaff"></tbody></table>
-        </div>
-        <button class="btn" style="background:#ef4444; color:white;" onclick="location.reload()">LIMPIAR</button>
     </div>
-
-    <div id="scannerModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:black;">
-        <button onclick="document.getElementById('scannerModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; z-index:1000; padding:10px; background:red; color:white;">CERRAR</button>
-        <div id="reader" style="width:100%; height:100%;"></div>
-    </div>
+</div>
 
 <script>
-    let myPie, myBar;
-    function activarEscaner(){ document.getElementById('scannerModal').classList.remove('hidden'); new Html5QrcodeScanner("reader",{fps:10,qrbox:250}).render((t)=>{document.getElementById('scannerModal').classList.add('hidden'); procesar(JSON.parse(t));}); }
-    
-    // NUEVA FUNCION PARA LEER EL ARCHIVO
-    function cargarArchivo(input) {
-        let file = input.files[0];
-        let reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = function() { procesar(JSON.parse(reader.result)); };
+    let BASE_DATOS = JSON.parse(localStorage.getItem('agri_v53_data')) || [];
+
+    // Función de limpieza profunda: Quita espacios, comas, puntos y pasa a mayúsculas
+    const normalizar = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
+
+    const scanner = new Html5Qrcode("reader");
+    scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+        try { procesar(JSON.parse(text)); } catch(e) { alert("QR inválido"); }
+    }).catch(e => console.log("Cámara off"));
+
+    function procesarArchivo(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try { procesar(JSON.parse(e.target.result)); } 
+            catch(err) { alert("Error al leer archivo"); }
+        };
+        reader.readAsText(input.files[0]);
     }
 
-    function procesar(data) {
-        document.getElementById('dashboard').classList.remove('hidden');
-        document.getElementById('lblCuadro').innerText = `📍 ${data.c} (${data.r})`;
-        
-        if(myPie) myPie.destroy();
-        myPie = new Chart(document.getElementById('chartProgreso'), {
-            type: 'doughnut',
-            data: { labels: ['Listo', 'Falta'], datasets: [{ data: [data.h, data.t-data.h], backgroundColor: ['#38bdf8', '#1e293b'], borderWidth:0 }] }
+    function procesar(json) {
+        const cat = json.catalogos;
+        const conf = json.config;
+
+        // 1. JORNADA
+        const jorData = cat.jornadas.find(j => normalizar(j.desc) === normalizar(conf.jornada)) || { id: "N/A", desc: conf.jornada };
+
+        // 2. SUPERVISOR
+        const supAct = cat.actividades.find(a => normalizar(a.desc) === normalizar(conf.supAct)) || { id: "N/A", desc: conf.supAct };
+        const supCName = json.sesiones[0]?.cuadro || "N/A";
+        const supCData = cat.cuadros.find(c => normalizar(c.nombre) === normalizar(supCName)) || { id: "N/A", nombre: supCName };
+
+        actualizar({
+            credencial: String(conf.supId || "135"),
+            id_act: supAct.id,
+            name_act: supAct.desc,
+            id_cuadro: supCData.id,
+            cuadro: supCData.nombre,
+            id_jor: jorData.id,
+            desc_jor: jorData.desc,
+            lineas: 0
         });
 
-        let sorted = data.s.sort((a,b)=>b.n-a.n), labels=sorted.map(s=>s.id), vals=sorted.map(s=>s.n);
-        document.getElementById('tblStaff').innerHTML = sorted.map(s=>`<tr><td>${s.id}</td><td>${s.n}</td><td>${s.n>0?(s.m/s.n).toFixed(1):'--'} min</td></tr>`).join('');
+        // 3. TRABAJADORES
+        const obrerosIds = [...new Set(json.avance.map(a => String(a.obrero)))];
 
-        if(myBar) myBar.destroy();
-        myBar = new Chart(document.getElementById('chartRendimiento'), {
-            type: 'bar',
-            data: { labels: labels, datasets: [{ label:'Filas', data: vals, backgroundColor: '#f59e0b', borderRadius:5 }] },
-            options: { scales: { y: { beginAtZero: true, grid:{color:'#334155'} }, x: { display: false } }, plugins: { legend: { display: false } } }
+        obrerosIds.forEach(id => {
+            const historial = json.avance.filter(a => String(a.obrero) === id);
+            const u = historial[historial.length - 1];
+
+            // Búsqueda inteligente: normalizamos antes de comparar
+            const actData = cat.actividades.find(a => normalizar(a.desc) === normalizar(u.supAct)) || { id: "N/A", desc: u.supAct };
+            const cuadroData = cat.cuadros.find(c => normalizar(c.nombre) === normalizar(u.nomCuadro)) || { id: "N/A", nombre: u.nomCuadro };
+
+            actualizar({
+                credencial: id,
+                id_act: actData.id,
+                name_act: actData.desc,
+                id_cuadro: cuadroData.id,
+                cuadro: cuadroData.nombre,
+                id_jor: jorData.id,
+                desc_jor: jorData.desc,
+                lineas: historial.length
+            });
         });
+        render();
     }
+
+    function actualizar(n) {
+        let idx = BASE_DATOS.findIndex(r => r.credencial === n.credencial);
+        if (idx > -1) {
+            BASE_DATOS[idx].lineas += n.lineas;
+            BASE_DATOS[idx].id_act = n.id_act;
+            BASE_DATOS[idx].name_act = n.name_act;
+            BASE_DATOS[idx].id_cuadro = n.id_cuadro;
+            BASE_DATOS[idx].cuadro = n.cuadro;
+        } else {
+            BASE_DATOS.push(n);
+        }
+        localStorage.setItem('agri_v53_data', JSON.stringify(BASE_DATOS));
+    }
+
+    function render() {
+        const tbody = document.querySelector('#tablaAsistencia tbody');
+        tbody.innerHTML = "";
+        BASE_DATOS.forEach(d => {
+            const tr = document.createElement('tr');
+            if(d.id_act == "45" || d.name_act.includes("SUPERVISOR")) tr.className = "sup-row";
+            tr.innerHTML = `
+                <td>${d.credencial}</td>
+                <td>${d.id_act}</td>
+                <td>${d.name_act}</td>
+                <td>${d.id_cuadro}</td>
+                <td>${d.cuadro}</td>
+                <td>${d.id_jor}</td>
+                <td>${d.desc_jor}</td>
+                <td style="font-weight:bold; color:var(--accent);">${d.lineas}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        if(BASE_DATOS.length > 0) document.getElementById('tablaArea').classList.remove('hidden');
+    }
+
+    function descargarCSV() {
+        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUADRO,CUADRO,ID_JORNADA,DESC_JORNADA,TOTAL_LINEAS\n";
+        BASE_DATOS.forEach(d => {
+            csv += `${d.credencial},${d.id_act},${d.name_act},${d.id_cuadro},${d.cuadro},${d.id_jor},${d.desc_jor},${d.lineas}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `ASISTENCIA_SISTEMA.csv`;
+        link.click();
+    }
+
+    function limpiarDatos() {
+        if(confirm("¿Borrar acumulado?")) {
+            localStorage.removeItem('agri_v53_data');
+            BASE_DATOS = [];
+            location.reload();
+        }
+    }
+    window.onload = render;
 </script>
 </body>
 </html>
