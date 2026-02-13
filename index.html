@@ -46,6 +46,33 @@
         #qrcode, #qrcode_partial { background: white; padding: 10px; display: flex; justify-content: center; border-radius: 10px; margin: 10px auto; width: fit-content; }
         
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        /* ESTILOS PARA CENTRAR LA CÁMARA */
+        #reader { 
+            width: 100% !important; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 2px solid #555; 
+            background: black; 
+            margin-bottom: 10px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Fuerza al video a centrarse y cubrir el espacio */
+        #reader video {
+            width: 100% !important;
+            height: auto !important;
+            object-fit: cover;
+        }
+
+        /* Centra el recuadro de escaneo blanco */
+        #reader__scan_region {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
     </style>
 </head>
 <body>
@@ -270,7 +297,14 @@
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs();
         renderSession();
-        if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
+        if(!scanner) { 
+    scanner = new Html5QrcodeScanner("reader", { 
+        fps: 20, 
+        qrbox: { width: 250, height: 250 }, 
+        aspectRatio: 1.0 // Esto fuerza a que la cámara sea cuadrada y esté centrada
+    }); 
+    scanner.render(onScan); 
+}
     }
 
     function renderTabs() {
@@ -676,6 +710,7 @@ new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 25
 </script>
 </body>
 </html>
+
 
 
 
