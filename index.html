@@ -626,10 +626,37 @@
             cerrarTarea(st); asignarFilaEspecifica(st, parseInt(n), s);
             guardarTodo(); renderMapa(); abrirEditor();
         }
+    }function borrarRegistroManual(id) {
+    if(!confirm(`¿ELIMINAR A ${id} DE ESTE CUADRO?\n(Se borrará su registro actual y liberará la fila)`)) return;
+    
+    let st = DB.staff.find(x => x.id === id);
+    if(st) {
+        // Elimina el registro de avance que no tiene fin (el actual)
+        let indexAvance = DB.avance.findIndex(a => a.obrero === id && a.fin === null);
+        if(indexAvance !== -1) {
+            DB.avance.splice(indexAvance, 1);
+        }
+        
+        // Limpia la posición del trabajador
+        st.fila = null;
+        st.cuadroUid = null;
+        
+        // Si no tiene ningún otro registro en el día, lo quita del staff global
+        let tieneMasRegistros = DB.avance.some(a => a.obrero === id);
+        if(!tieneMasRegistros) {
+            DB.staff = DB.staff.filter(x => x.id !== id);
+        }
+        
+        guardarTodo(); 
+        renderMapa(); 
+        renderSession();
+        abrirEditor(); // Refresca la lista del editor
     }
+}
 </script>
 </body>
 </html>
+
 
 
 
