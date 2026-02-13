@@ -71,7 +71,14 @@
     position: relative;
     z-index: 10; 
 }
-        
+     #reader {
+    pointer-events: auto; /* Permite interacción solo dentro del cuadro */
+}
+
+.manual-box {
+    position: relative;
+    z-index: 999 !important; /* Pone los botones por encima de cualquier error de la cámara */
+}   
     </style>
 </head>
 <body>
@@ -138,7 +145,7 @@
         </div>
     </div>
 
-    <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; height:200px;"></div>
+    <div id="reader" style="width:100%; border-radius:12px; overflow:hidden; border:2px solid #555; background:black; margin-bottom:10px; min-height:250px;"></div>
     
     <div class="manual-box">
         <input type="text" id="manual_id" placeholder="⌨️ ID Manual">
@@ -291,21 +298,23 @@
     }
 
     function irAlMapa() {
-        document.getElementById('viewSetup').classList.remove('open'); document.getElementById('modalAddCuadro').classList.remove('open'); document.getElementById('viewHistory').classList.remove('open'); document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewSetup').classList.remove('open'); 
+        document.getElementById('modalAddCuadro').classList.remove('open'); 
+        document.getElementById('viewHistory').classList.remove('open'); 
+        document.getElementById('viewPartial').classList.remove('open');
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs();
         renderSession();
-   if(!scanner) { 
-    scanner = new Html5QrcodeScanner("reader", { 
-        fps: 15, 
-        qrbox: { width: 250, height: 250 },
-        // Eliminamos el aspectRatio fijo que causaba el desplazamiento
-        rememberLastUsedCamera: true
-    }); 
-    scanner.render(onScan); 
-}
-
+        if(!scanner) { 
+            scanner = new Html5QrcodeScanner("reader", { 
+                fps: 15, 
+                qrbox: { width: 250, height: 250 },
+                rememberLastUsedCamera: true
+            }); 
+            scanner.render(onScan); 
+        }
+    } // <--- ESTA LLAVE FALTABA Y BLOQUEABA TODO
 
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
@@ -710,6 +719,7 @@ new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 25
 </script>
 </body>
 </html>
+
 
 
 
