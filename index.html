@@ -54,25 +54,22 @@
     border: 2px solid #555; 
     background: black; 
     margin-bottom: 10px;
-    display: block !important; /* Evita que se empuje a los lados */
+    position: relative;
+    display: block !important; /* Volvemos a block para liberar espacio */
+    z-index: 1; /* Asegura que no flote sobre otros menús */
 }
 
-/* Fuerza al video a llenar todo el ancho del cuadro negro */
+/* Centra el video sin estirarlo de forma que bloquee clics */
 #reader video {
     width: 100% !important;
     height: auto !important;
-    object-fit: cover !important;
+    object-fit: cover;
 }
 
-/* Centra el área de escaneo y oculta textos que estorban */
-#reader__scan_region {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#reader__status_span, #reader__dashboard_section_swaplink { 
-    display: none !important; 
+/* Esto asegura que los botones de abajo (ID Manual/OK) siempre sean cliqueables */
+.manual-box {
+    position: relative;
+    z-index: 10; 
 }
         
     </style>
@@ -299,18 +296,16 @@
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs();
         renderSession();
-     if(!scanner) { 
+   if(!scanner) { 
     scanner = new Html5QrcodeScanner("reader", { 
-        fps: 20, 
+        fps: 15, 
         qrbox: { width: 250, height: 250 },
-        rememberLastUsedCamera: true,
-        // Esto ayuda a que no aparezcan botones extra a los lados
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+        // Eliminamos el aspectRatio fijo que causaba el desplazamiento
+        rememberLastUsedCamera: true
     }); 
     scanner.render(onScan); 
 }
-}
-    }
+
 
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
@@ -715,6 +710,7 @@ new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 25
 </script>
 </body>
 </html>
+
 
 
 
