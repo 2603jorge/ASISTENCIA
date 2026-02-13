@@ -607,7 +607,15 @@
         const list = document.getElementById('editorList'); list.innerHTML = "";
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
         if(activos.length === 0) list.innerHTML = "<p>Nadie activo en este cuadro.</p>";
-        activos.forEach((st) => { list.innerHTML += `<div class="edit-item"><div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div><div><button class="btn btn-sm btn-b" onclick="cambiarFilaManual('${st.id}')">CAMBIAR</button></div></div>`; });
+        activos.forEach((st) => { 
+    list.innerHTML += `<div class="edit-item">
+        <div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div>
+        <div class="flex-row">
+            <button class="btn btn-sm btn-b" onclick="cambiarFilaManual('${st.id}')">EDITAR</button>
+            <button class="btn btn-sm btn-r" onclick="borrarRegistroManual('${st.id}')">BORRAR</button>
+        </div>
+    </div>`; 
+});
         document.getElementById('modalEditor').classList.add('open');
     }
     function cambiarFilaManual(id) {
@@ -622,6 +630,7 @@
 </script>
 </body>
 </html>
+
 
 
 
