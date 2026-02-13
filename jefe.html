@@ -135,13 +135,33 @@
             document.getElementById('scannerModal').style.display = 'none';
         }
 
-        function onScanSuccess(text) {
-            if(text.includes("AGRICACTUS")) {
-                document.getElementById('beep').play();
-                alert("QR de Supervisor detectado: " + text.split('\n')[2]);
-                stopScanner();
-            }
-        }
+       function onScanSuccess(text) {
+    try {
+        // Buscamos si el texto contiene el JSON (ajusta si el QR tiene texto extra antes)
+        // Si el QR es puramente el JSON, usamos 'text' directamente
+        let rawData = text;
+        
+        // Si tu QR tiene encabezados como "AGRICACTUS...", intenta limpiar el texto 
+        // o asegúrate de que el QR solo contenga el objeto JSON.
+        const objetoJson = JSON.parse(rawData);
+
+        document.getElementById('beep').play();
+        
+        // Agregamos el nuevo dato al array global
+        jsonData.push(objetoJson);
+        
+        // Refrescamos los gráficos y tablas
+        actualizarDashboard();
+        
+        // Cerramos el escáner
+        stopScanner();
+        
+        console.log("Datos cargados desde QR con éxito");
+    } catch (err) {
+        console.error("Error al procesar el QR:", err);
+        alert("El código QR no contiene un formato JSON válido o está dañado.");
+    }
+}
 
         // --- CÁLCULOS DE VISUALES ---
         function actualizarDashboard() {
@@ -281,3 +301,4 @@
     </script>
 </body>
 </html>
+
