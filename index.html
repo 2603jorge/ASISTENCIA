@@ -298,33 +298,67 @@
         if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
 
-    function ejecutarAvanceMasivoFix() {
-        let s_origen = DB.sesiones[DB.currentSessionId];
-        let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
+   function ejecutarAvanceMasivoFix() {
+    let s_origen = DB.sesiones[DB.currentSessionId];
+    let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
+    
+    if (!activos.length) return alert("Sin personal activo para avanzar.");
 
-        let ptr = buscarSiguienteFilaVacia(s_origen);
-        if (ptr > s_origen.fin) {
-            let s_destino = DB.sesiones.find(s => s.uid !== s_origen.uid);
-            if (s_destino) {
-                if (confirm(`¡CUADRO LLENO! ¿Pasar a todos automáticamente al cuadro ${s_destino.cuadro}?`)) {
-                    activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); });
-                    DB.currentSessionId = DB.sesiones.indexOf(s_destino);
-                    guardarTodo(); renderTabs(); renderSession();
-                }
-            } else { alert("⛔ CUADRO LLENO. Crea otra pestaña (+) para transferir."); }
-        } else {
-            if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
-                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-                let filas = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
-                filas.reverse().forEach(f => {
-                    let g = grupos[f]; let n = -1;
-                    for(let i=ptr; i<=s_origen.fin; i++) {
-                        if(!DB.avance.some(a=>a.cuadroUid===s_origen.uid && a.fila===i && a.fin!==null) && !DB.staff.some(st=>st.cuadroUid===s_origen.uid && st.fila===i)) { n=i; break; }
-                    }
-                    if(n!==-1) { g.forEach(t=>{ cerrarTarea(t); asignarFilaEspecifica(t, n, s_origen); }); ptr=n+1; }
+    // Calculamos dónde terminaría el primer trabajador si avanzamos
+    let ptr = buscarSiguienteFilaVacia(s_origen);
+
+    // ESCENARIO A: EL CUADRO ACTUAL ESTÁ LLENO (TRANSFERENCIA A OTRO CUADRO)
+    if (ptr > s_origen.fin) {
+        // Buscamos si existe una sesión posterior (la siguiente pestaña)
+        let siguienteIdx = DB.currentSessionId + 1;
+        let s_destino = DB.sesiones[siguienteIdx];
+
+        if (s_destino) {
+            if (confirm(`¡CUADRO ${s_origen.cuadro} COMPLETADO! ¿Transferir personal al cuadro ${s_destino.cuadro}?`)) {
+                activos.forEach(t => {
+                    cerrarTarea(t); // Termina la tarea en el cuadro viejo
+                    asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); // Inicia en el nuevo
                 });
-                guardarTodo(); renderMapa();
+                
+                // Cambiamos automáticamente a la pestaña del nuevo cuadro
+                DB.currentSessionId = siguienteIdx;
+                guardarTodo();
+                renderTabs();
+                renderSession();
+                alert(`Personal transferido a ${s_destino.cuadro} ✅`);
+            }
+        } else {
+            alert("⛔ CUADRO LLENO. Por favor, crea una nueva pestaña (+) para poder transferir al personal.");
+        }
+    } 
+    // ESCENARIO B: TODAVÍA HAY ESPACIO EN EL CUADRO ACTUAL (AVANCE NORMAL)
+    else {
+        if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
+            // Agrupamos por fila para mantener a las parejas o individuos juntos
+            let grupos = {};
+            activos.forEach(t => {
+                if(!grupos[t.fila]) grupos[t.fila] = [];
+                grupos[t.fila].push(t);
+            });
+
+            // Ordenamos las filas para avanzar de forma ordenada
+            let filas = Object.keys(grupos).map(Number).sort((a,b) => a - b);
+            
+            filas.forEach(f => {
+                let g = grupos[f];
+                let proximaFila = buscarSiguienteFilaVacia(s_origen);
+                
+                if(proximaFila <= s_origen.fin) {
+                    g.forEach(t => {
+                        cerrarTarea(t);
+                        asignarFilaEspecifica(t, proximaFila, s_origen);
+                    });
+                }
+            });
+            
+            guardarTodo();
+            renderMapa();
+            renderSession();
             }
         }
     }
@@ -489,6 +523,7 @@
 </script>
 </body>
 </html>
+
 
 
 
