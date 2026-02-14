@@ -319,20 +319,36 @@
     }
 
     // --- FUNCIONES CORTE PARCIAL ---
-    function generarCorteParcial() {
-        let qrData = {
-            sup: DB.globalConfig.resp,
-            total: DB.staff.length,
-            activos: DB.staff.filter(s => s.fila !== null).length,
-            avance: DB.avance.length,
+  function generarCorteParcial() {
+    // Creamos la estructura exacta que el Monitor V4 busca (config, sesiones, avance)
+    let qrData = {
+        config: {
+            resp: DB.globalConfig.resp,
+            supAct: DB.sesiones[DB.currentSessionId].act // Actividad actual
+        },
+        sesiones: DB.sesiones, // Enviamos las sesiones para que calcule la meta
+        avance: DB.avance,     // Enviamos el historial para que calcule velocidad
+        stats: {
+            totalStaff: DB.staff.length,
             time: new Date().toLocaleTimeString()
-        };
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewPartial').classList.add('open');
-        document.getElementById('qrcode_partial').innerHTML = "";
-        new QRCode(document.getElementById("qrcode_partial"), { text: JSON.stringify(qrData), width: 200, height: 200 });
-        document.getElementById('partial_summary').innerText = `Reporte generado a las ${qrData.time}`;
-    }
+        }
+    };
+
+    document.getElementById('viewMain').classList.remove('open');
+    document.getElementById('viewPartial').classList.add('open');
+    document.getElementById('qrcode_partial').innerHTML = "";
+    
+    // Generamos el QR con los datos completos
+    new QRCode(document.getElementById("qrcode_partial"), { 
+        text: JSON.stringify(qrData), 
+        width: 250, 
+        height: 250,
+        correctLevel: QRCode.CorrectLevel.L // Nivel bajo de error para que el QR no sea tan denso
+    });
+    
+    document.getElementById('partial_summary').innerText = 
+        `Supervisor: ${qrData.config.resp}\nHileras: ${qrData.avance.length}\nHora: ${qrData.stats.time}`;
+}
 
     function cerrarCorteParcial() {
         document.getElementById('viewPartial').classList.remove('open');
@@ -400,6 +416,7 @@
 </script>
 </body>
 </html>
+
 
 
 
