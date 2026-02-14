@@ -320,46 +320,44 @@
 
     // --- FUNCIONES CORTE PARCIAL ---
   function generarCorteParcial() {
-    // 1. Preparamos datos ultraligeros para que el QR no se sature
+    // 1. Reducimos el peso de los datos para que el QR siempre se genere
     let qrData = {
         config: {
             resp: DB.globalConfig.resp,
             supAct: DB.sesiones[DB.currentSessionId]?.act || "General"
         },
-        // Solo mandamos lo que el Monitor V4 necesita para calcular metas y velocidad
+        // Solo enviamos los puntos de tiempo necesarios para las gráficas del Monitor
         sesiones: DB.sesiones.map(s => ({ inicio: s.inicio, fin: s.fin })),
         avance: DB.avance.map(a => ({ inicio: a.inicio, fin: a.fin })),
-        meta: DB.staff.length
+        totalStaff: DB.staff.length
     };
 
-    // 2. Mostramos el modal
     document.getElementById('viewMain').classList.remove('open');
     document.getElementById('viewPartial').classList.add('open');
     
-    // 3. Limpiamos y generamos el QR
     const qrContainer = document.getElementById('qrcode_partial');
-    qrContainer.innerHTML = "";
+    qrContainer.innerHTML = ""; // Limpiar antes de generar
     
     try {
+        // 2. Generamos el QR con un nivel de corrección bajo (L) para permitir más datos
         new QRCode(qrContainer, { 
             text: JSON.stringify(qrData), 
-            width: 250, 
-            height: 250,
-            correctLevel: QRCode.CorrectLevel.M // Nivel medio para asegurar lectura
+            width: 260, 
+            height: 260,
+            correctLevel: QRCode.CorrectLevel.L 
         });
         
         document.getElementById('partial_summary').innerText = 
-            `Supervisor: ${qrData.config.resp}\nHileras: ${qrData.avance.length}\nPersonal: ${qrData.meta}`;
+            `Enviando datos de ${qrData.avance.length} hileras para análisis...`;
     } catch (e) {
-        console.error("Error al generar QR:", e);
-        qrContainer.innerHTML = "<p style='color:red;'>Error: Demasiados datos para un QR. Intenta cerrar algunas filas.</p>";
+        qrContainer.innerHTML = "<p style='color:red;padding:20px;'>Error: Demasiadas hileras para un solo QR. Descarga el JSON mejor.</p>";
     }
 }
 
-    function cerrarCorteParcial() {
-        document.getElementById('viewPartial').classList.remove('open');
-        document.getElementById('viewMain').classList.add('open');
-    }
+function cerrarCorteParcial() {
+    document.getElementById('viewPartial').classList.remove('open');
+    document.getElementById('viewMain').classList.add('open');
+}
 
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
@@ -422,6 +420,7 @@
 </script>
 </body>
 </html>
+
 
 
 
