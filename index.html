@@ -553,10 +553,43 @@
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
-    function abrirHistorial() { alert("Historial guardado localmente."); }
+    function abrirHistorial() { alert("Historial guardado localmente."); } 
+    function abrirHistorial() {
+    if (DB.archive.length === 0) return alert("No hay cierres guardados.");
+    
+    let html = `<h2>📜 CIERRES ANTERIORES</h2><div style="max-height:300px; overflow-y:auto;">`;
+    DB.archive.forEach((item, idx) => {
+        html += `<div class="card" style="margin-bottom:5px; font-size:12px;">
+            <b>Fecha:</b> ${item.fecha} - ${item.hora}<br>
+            <b>Sup:</b> ${item.config.resp}<br>
+            <button class="btn btn-b btn-sm" onclick="descargarHistorialIdx(${idx})">💾 BAJAR JSON</button>
+        </div>`;
+    });
+    html += `</div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button>`;
+    
+    // Reutilizamos el modal de editor para no crear más HTML
+    const modal = document.getElementById('modalEditor');
+    document.getElementById('editorList').innerHTML = html;
+    modal.classList.add('open');
+}
+
+function descargarHistorialIdx(idx) {
+    const item = DB.archive[idx];
+    const data = {
+        config: item.config,
+        avance: item.avance,
+        fecha_archivo: item.fecha
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `RECUPERADO_${item.config.resp}_${item.fecha.replace(/\//g,'-')}.json`;
+    a.click();
+}
 </script>
 </body>
 </html>
+
 
 
 
