@@ -320,34 +320,40 @@
 
     // --- FUNCIONES CORTE PARCIAL ---
   function generarCorteParcial() {
-    // Creamos la estructura exacta que el Monitor V4 busca (config, sesiones, avance)
+    // 1. Preparamos datos ultraligeros para que el QR no se sature
     let qrData = {
         config: {
             resp: DB.globalConfig.resp,
-            supAct: DB.sesiones[DB.currentSessionId].act // Actividad actual
+            supAct: DB.sesiones[DB.currentSessionId]?.act || "General"
         },
-        sesiones: DB.sesiones, // Enviamos las sesiones para que calcule la meta
-        avance: DB.avance,     // Enviamos el historial para que calcule velocidad
-        stats: {
-            totalStaff: DB.staff.length,
-            time: new Date().toLocaleTimeString()
-        }
+        // Solo mandamos lo que el Monitor V4 necesita para calcular metas y velocidad
+        sesiones: DB.sesiones.map(s => ({ inicio: s.inicio, fin: s.fin })),
+        avance: DB.avance.map(a => ({ inicio: a.inicio, fin: a.fin })),
+        meta: DB.staff.length
     };
 
+    // 2. Mostramos el modal
     document.getElementById('viewMain').classList.remove('open');
     document.getElementById('viewPartial').classList.add('open');
-    document.getElementById('qrcode_partial').innerHTML = "";
     
-    // Generamos el QR con los datos completos
-    new QRCode(document.getElementById("qrcode_partial"), { 
-        text: JSON.stringify(qrData), 
-        width: 250, 
-        height: 250,
-        correctLevel: QRCode.CorrectLevel.L // Nivel bajo de error para que el QR no sea tan denso
-    });
+    // 3. Limpiamos y generamos el QR
+    const qrContainer = document.getElementById('qrcode_partial');
+    qrContainer.innerHTML = "";
     
-    document.getElementById('partial_summary').innerText = 
-        `Supervisor: ${qrData.config.resp}\nHileras: ${qrData.avance.length}\nHora: ${qrData.stats.time}`;
+    try {
+        new QRCode(qrContainer, { 
+            text: JSON.stringify(qrData), 
+            width: 250, 
+            height: 250,
+            correctLevel: QRCode.CorrectLevel.M // Nivel medio para asegurar lectura
+        });
+        
+        document.getElementById('partial_summary').innerText = 
+            `Supervisor: ${qrData.config.resp}\nHileras: ${qrData.avance.length}\nPersonal: ${qrData.meta}`;
+    } catch (e) {
+        console.error("Error al generar QR:", e);
+        qrContainer.innerHTML = "<p style='color:red;'>Error: Demasiados datos para un QR. Intenta cerrar algunas filas.</p>";
+    }
 }
 
     function cerrarCorteParcial() {
@@ -416,6 +422,7 @@
 </script>
 </body>
 </html>
+
 
 
 
