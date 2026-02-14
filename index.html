@@ -306,6 +306,8 @@
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs();
         renderSession();
+       function irAlMapa() {
+        // ... (tus líneas de abrir modales)
         if(!scanner) { 
             scanner = new Html5QrcodeScanner("reader", { 
                 fps: 15, 
@@ -314,8 +316,7 @@
             }); 
             scanner.render(onScan); 
         }
-    } // <--- ESTA LLAVE FALTABA Y BLOQUEABA TODO
-
+    } // <--- Verifica que esta llave cierre bien la función
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
         container.innerHTML = "";
@@ -361,51 +362,49 @@
     }
 
    function onScan(id) {
-        id = id.trim();
-        let now = Date.now();
-        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
-        lastScanTime[id] = now;
+    id = id.trim();
+    let now = Date.now();
+    if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
+    lastScanTime[id] = now;
 
-        let sesionActual = DB.sesiones[DB.currentSessionId];
-        let trabajador = DB.staff.find(s => s.id === id);
+    let sesionActual = DB.sesiones[DB.currentSessionId];
+    let trabajador = DB.staff.find(s => s.id === id);
 
-        // --- NUEVA LÓGICA DE IDs ---
-        // Buscamos los IDs en los catálogos antes de registrar
-        let actInfo = DB.actividades.find(a => a.desc === sesionActual.act) || {id: "N/A"};
-        let cuadroInfo = DB.cuadros.find(c => c.nombre === sesionActual.cuadro) || {id: "N/A"};
-        // ---------------------------
+    let actInfo = DB.actividades.find(a => a.desc === sesionActual.act) || {id: "N/A"};
+    let cuadroInfo = DB.cuadros.find(c => c.nombre === sesionActual.cuadro) || {id: "N/A"};
 
-        if(trabajador) {
-            if(trabajador.fila) {
-                if(trabajador.cuadroUid !== sesionActual.uid) {
-                    let otraSesion = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
-                    let nombreOtra = otraSesion ? otraSesion.cuadro : "Otro";
-                    if(confirm(`⚠️ ${id} activo en ${nombreOtra}. ¿Mover a este cuadro?`)) {
-                        cerrarTarea(trabajador);
-                        asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
-                        audioBeep.play();
-                    }
-                } else {
-                    let sugerencia = buscarSiguienteFilaVacia(sesionActual);
-                    let nuevaFila = prompt(`Mover a?`, sugerencia);
-                    if(nuevaFila && !isNaN(nuevaFila)) {
-                         cerrarTarea(trabajador);
-                         asignarFilaEspecifica(trabajador, parseInt(nuevaFila), sesionActual, actInfo.id, cuadroInfo.id);
-                         audioBeep.play();
-                    }
-                }
-            } else {
+    if(trabajador) {
+        if(trabajador.fila) {
+            // --- MOVIMIENTO AUTOMÁTICO ---
+            // Si el trabajador está en un cuadro diferente al que estamos viendo ahora
+            if(trabajador.cuadroUid !== sesionActual.uid) {
+                // Cerramos su tarea en el cuadro viejo y lo metemos al nuevo automáticamente
+                cerrarTarea(trabajador);
                 asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
                 audioBeep.play();
+            } else {
+                // Si ya está en este cuadro, entonces sí preguntamos si quiere cambiar de fila
+                let sugerencia = buscarSiguienteFilaVacia(sesionActual);
+                let nuevaFila = prompt(`El trabajador ya está en este cuadro. ¿Mover a qué fila?`, sugerencia);
+                if(nuevaFila && !isNaN(nuevaFila)) {
+                     cerrarTarea(trabajador);
+                     asignarFilaEspecifica(trabajador, parseInt(nuevaFila), sesionActual, actInfo.id, cuadroInfo.id);
+                     audioBeep.play();
+                }
             }
         } else {
-            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ LÍMITE ALCANZADO");
-            trabajador = { id: id, fila: null, cuadroUid: null };
-            DB.staff.push(trabajador);
             asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
             audioBeep.play();
         }
-        guardarTodo(); renderMapa(); renderSession();
+    } else {
+        if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ LÍMITE ALCANZADO");
+        trabajador = { id: id, fila: null, cuadroUid: null };
+        DB.staff.push(trabajador);
+        asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual, actInfo.id, cuadroInfo.id);
+        audioBeep.play();
+    }
+    guardarTodo(); renderMapa(); renderSession();
+}
     
     }
 
@@ -719,6 +718,7 @@ new QRCode(document.getElementById("qrcode_partial"), { text: summary, width: 25
 </script>
 </body>
 </html>
+
 
 
 
