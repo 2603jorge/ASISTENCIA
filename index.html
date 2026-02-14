@@ -160,20 +160,29 @@
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
+function crearSesionDesdeForm(prefix) {
+    const cuadroInput = document.getElementById(prefix + '_cuadro');
+    const actInput = document.getElementById(prefix + '_act');
+    const inicioInput = document.getElementById(prefix + '_inicio');
+    const finInput = document.getElementById(prefix + '_fin');
+    const modoInput = document.getElementById(prefix + '_modo'); // Este es el que suele fallar
 
-    function crearSesionDesdeForm(prefix) {
-        let sesion = {
-            uid: Date.now(),
-            cuadro: document.getElementById(prefix+'_cuadro').value,
-            act: document.getElementById(prefix+'_act').value,
-            inicio: parseInt(document.getElementById(prefix+'_inicio').value),
-            fin: parseInt(document.getElementById(prefix+'_fin').value),
-            modo: document.getElementById(prefix+'_modo') ? document.getElementById(prefix+'_modo').value : 'PAREJAS'
-        };
-        DB.sesiones.push(sesion);
-        DB.currentSessionId = DB.sesiones.length - 1;
-        guardarTodo();
-    }
+    if (!cuadroInput.value) return alert("Debes seleccionar un Cuadro");
+
+    let sesion = {
+        uid: Date.now(),
+        cuadro: cuadroInput.value,
+        act: actInput.value,
+        inicio: parseInt(inicioInput.value) || 1,
+        fin: parseInt(finInput.value) || 10,
+        // Si el selector de modo no existe en el modal, usamos 'PAREJAS' por defecto
+        modo: modoInput ? modoInput.value : 'PAREJAS' 
+    };
+
+    DB.sesiones.push(sesion);
+    DB.currentSessionId = DB.sesiones.length - 1;
+    guardarTodo();
+}
 
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
@@ -420,6 +429,7 @@ function borrarRegistroManual(id) {
 </script>
 </body>
 </html>
+
 
 
 
