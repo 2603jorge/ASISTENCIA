@@ -77,10 +77,18 @@
     </div>
     <div id="mapGrid" class="grid-map"></div>
     <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
+    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
         <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
     </div>
+</div>
+
+<div id="modalReporte" class="modal">
+    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA PARA EXCEL</h2>
+    <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:5px; min-height:200px;"></div>
+    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV (EXCEL)</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER AL MAPA</button>
 </div>
 
 <div id="viewPartial" class="modal" style="background:#111;">
@@ -88,9 +96,7 @@
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
-        
         <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
-        
         <p style="font-size:11px; color:var(--info);">¿QR no escanea? Usa el archivo:</p>
         <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR REPORTE .JSON</button>
     </div>
@@ -137,7 +143,6 @@
         if (DB.sesiones.length > 0) irAlMapa();
     };
 
-    // --- FUNCIONES CORE ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
@@ -323,47 +328,33 @@
         }
     }
 
-    // --- CORTE PARCIAL Y REPORTES ---
     function generarCorteParcial() {
-        // Comprimimos para el Monitor V4
-        let avanceComprimido = DB.avance.map(a => ({
-            i: a.inicio,
-            f: a.fin
-        })).filter(a => a.f !== null);
-
+        let avanceComprimido = DB.avance.map(a => ({ i: a.inicio, f: a.fin })).filter(a => a.f !== null);
         let qrData = {
             config: { resp: DB.globalConfig.resp, supAct: DB.sesiones[DB.currentSessionId]?.act || "General" },
             sesiones: DB.sesiones.map(s => ({ i: s.inicio, f: s.fin })),
             avance: avanceComprimido,
             totalStaff: DB.staff.length
         };
-
         document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
         const qrContainer = document.getElementById('qrcode_partial');
         qrContainer.innerHTML = ""; 
-        
         try {
             new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
             document.getElementById('partial_summary').innerText = `Monitor V4: Enviando ${avanceComprimido.length} hileras.`;
         } catch (e) {
-            qrContainer.innerHTML = "<p style='color:red;'>QR Saturado. Usa el botón de abajo para descargar el archivo.</p>";
+            qrContainer.innerHTML = "<p style='color:red;'>QR Saturado.</p>";
         }
     }
 
     function descargarJSONReporte() {
-        let data = {
-            config: DB.globalConfig,
-            sesiones: DB.sesiones,
-            avance: DB.avance,
-            staff: DB.staff
-        };
+        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
         let a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `Reporte_${DB.globalConfig.resp}_${new Date().toLocaleDateString()}.json`;
+        a.download = `Reporte_${DB.globalConfig.resp}.json`;
         a.click();
-        alert("✅ Archivo .json descargado.");
     }
 
     function cerrarCorteParcial() {
@@ -371,7 +362,48 @@
         document.getElementById('viewMain').classList.add('open');
     }
 
-    // --- EDITOR ---
+    function abrirReporteAsistencia() {
+        const container = document.getElementById('tablaAsistenciaContainer');
+        const modal = document.getElementById('modalReporte');
+        let filas = [];
+        let supActObj = DB.actividades.find(a => a.desc === DB.globalConfig.supAct) || {id:"N/A"};
+        let supCName = DB.sesiones[0]?.cuadro || "N/A";
+        let supCObj = DB.cuadros.find(c => c.nombre === supCName) || {id:"N/A"};
+        let jorObj = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
+        filas.push({id: DB.globalConfig.supId, act: supActObj.id, nAct: DB.globalConfig.supAct, cId: supCObj.id, cNom: supCName, jId: jorObj.id, jNom: DB.globalConfig.jornada, l: 0});
+        let idsObreros = [...new Set(DB.avance.map(a => a.obrero))];
+        idsObreros.forEach(id => {
+            let hist = DB.avance.filter(a => a.obrero === id);
+            let u = hist[hist.length - 1];
+            let aObj = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"};
+            let cObj = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
+            filas.push({id: id, act: aObj.id, nAct: u.supAct, cId: cObj.id, cNom: u.nomCuadro, jId: jorObj.id, jNom: DB.globalConfig.jornada, l: hist.length});
+        });
+        let html = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:11px;">
+            <tr style="background:#eee;"><th>CREDENTIAL</th><th>ID_ACT</th><th>NAME_ACT</th><th>ID_CUA</th><th>CUADRO</th><th>ID_JOR</th><th>DESC_JOR</th><th>LÍNEAS</th></tr>`;
+        filas.forEach(f => {
+            html += `<tr><td>${f.id}</td><td>${f.act}</td><td>${f.nAct}</td><td>${f.cId}</td><td>${f.cNom}</td><td>${f.jId}</td><td>${f.jNom}</td><td><b>${f.l}</b></td></tr>`;
+        });
+        html += `</table>`;
+        container.innerHTML = html;
+        modal.classList.add('open');
+    }
+
+    function descargarCSVAsistencia() {
+        const rows = document.querySelectorAll("#tablaAsistenciaContainer tr");
+        let csv = [];
+        for (let i = 0; i < rows.length; i++) {
+            let row = [], cols = rows[i].querySelectorAll("td, th");
+            for (let j = 0; j < cols.length; j++) row.push(cols[j].innerText);
+            csv.push(row.join(","));
+        }
+        let blob = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Asistencia_${DB.globalConfig.resp}.csv`;
+        link.click();
+    }
+
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
         const list = document.getElementById('editorList'); list.innerHTML = "";
@@ -429,7 +461,7 @@
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
-    function abrirHistorial() { alert("Historial guardado en la memoria del navegador."); }
+    function abrirHistorial() { alert("Historial guardado localmente."); }
 </script>
 </body>
 </html>
