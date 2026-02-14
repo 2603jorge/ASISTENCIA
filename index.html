@@ -143,6 +143,7 @@
         if (DB.sesiones.length > 0) irAlMapa();
     };
 
+    // --- FUNCIONES CORE ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
@@ -328,32 +329,55 @@
         }
     }
 
+    // --- CORTE PARCIAL Y REPORTES (IMPORTANTE PARA EL EXTRACTOR V5.3) ---
     function generarCorteParcial() {
-        let avanceComprimido = DB.avance.map(a => ({ i: a.inicio, f: a.fin })).filter(a => a.f !== null);
+        // Estructura completa incluyendo Catálogos para que el Extractor V5.3 pueda cruzar IDs
         let qrData = {
-            config: { resp: DB.globalConfig.resp, supAct: DB.sesiones[DB.currentSessionId]?.act || "General" },
-            sesiones: DB.sesiones.map(s => ({ i: s.inicio, f: s.fin })),
-            avance: avanceComprimido,
-            totalStaff: DB.staff.length
+            config: { 
+                supId: DB.globalConfig.supId,
+                resp: DB.globalConfig.resp, 
+                supAct: DB.sesiones[DB.currentSessionId]?.act || "General",
+                jornada: DB.globalConfig.jornada
+            },
+            sesiones: DB.sesiones.map(s => ({ cuadro: s.cuadro })),
+            avance: DB.avance.map(a => ({ obrero: a.obrero, supAct: a.supAct, nomCuadro: a.nomCuadro })),
+            catalogos: {
+                cuadros: DB.cuadros.map(c => ({ id: c.id, nombre: c.nombre })),
+                actividades: DB.actividades.map(a => ({ id: a.id, desc: a.desc })),
+                jornadas: DB.jornadas.map(j => ({ id: j.id, desc: j.desc }))
+            }
         };
+
         document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
         const qrContainer = document.getElementById('qrcode_partial');
         qrContainer.innerHTML = ""; 
+        
         try {
             new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
-            document.getElementById('partial_summary').innerText = `Monitor V4: Enviando ${avanceComprimido.length} hileras.`;
+            document.getElementById('partial_summary').innerText = `Reporte compatible con Extractor V5.3`;
         } catch (e) {
-            qrContainer.innerHTML = "<p style='color:red;'>QR Saturado.</p>";
+            qrContainer.innerHTML = "<p style='color:red;'>QR Saturado. Usa el archivo JSON.</p>";
         }
     }
 
     function descargarJSONReporte() {
-        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
+        // Descarga el JSON con la estructura completa de Catálogos
+        let data = { 
+            config: DB.globalConfig, 
+            sesiones: DB.sesiones, 
+            avance: DB.avance, 
+            staff: DB.staff, 
+            catalogos: { 
+                cuadros: DB.cuadros, 
+                actividades: DB.actividades, 
+                jornadas: DB.jornadas 
+            } 
+        };
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
         let a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `Reporte_${DB.globalConfig.resp}.json`;
+        a.download = `Reporte_ASISTENCIA_${DB.globalConfig.resp}.json`;
         a.click();
     }
 
@@ -465,6 +489,7 @@
 </script>
 </body>
 </html>
+
 
 
 
