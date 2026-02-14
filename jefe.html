@@ -3,23 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriCactus Monitor V4.5 - Exportación Analítica</title>
+    <title>AgriCactus Monitor V5.0 - Ingeniería de Campo</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --warn: #f59e0b; --danger: #ef4444; --gray: #64748b; }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --accent: #22c55e; --blue: #3b82f6; --warn: #f59e0b; --danger: #ef4444; --purple: #a855f7; --gray: #64748b; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        .card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #334155; cursor: pointer; transition: 0.2s; }
-        .card:hover { border-color: var(--blue); transform: translateY(-2px); }
+        .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .grid-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #334155; }
         .kpi-value { font-size: 1.8em; font-weight: bold; color: var(--accent); }
-        .progress-bar-bg { background: #334155; height: 10px; border-radius: 5px; margin: 8px 0; overflow: hidden; }
-        .progress-bar-fill { background: var(--accent); height: 100%; transition: width 0.5s; max-width: 100%; }
-        .btn { padding: 10px 18px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; color: white; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+        .btn { padding: 10px 15px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; color: white; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+        
+        /* Progress Cards */
+        #progress_list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .sup-card { background: #161e2e; padding: 12px; border-radius: 10px; border-left: 4px solid var(--accent); cursor: pointer; }
+        .progress-bg { background: #334155; height: 8px; border-radius: 4px; margin: 8px 0; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s; }
+
+        /* Detail Modal */
         #detailModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.98); z-index: 2000; display: none; flex-direction: column; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #334155; }
+        
         #scannerModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
         #reader { width: 90%; max-width: 400px; border: 4px solid var(--accent); border-radius: 15px; }
     </style>
@@ -27,43 +34,60 @@
 <body>
 
     <div class="header">
-        <div><h1 style="margin:0; color:var(--accent); font-size: 20px;">Monitor V4.5 📊</h1></div>
+        <div><h1 style="margin:0; color:var(--accent); font-size: 18px;">AgriCactus Monitor V5.0 🚀</h1></div>
         <div style="display:flex; gap: 5px;">
             <button class="btn" style="background:var(--purple)" onclick="startScanner()">📷 QR</button>
-            <label for="jsonInput" class="btn" style="background:var(--blue)">📂 CARGAR</button>
+            <label for="jsonInput" class="btn" style="background:var(--blue)">📂 CARGAR</label>
             <input type="file" id="jsonInput" style="display:none" multiple accept=".json" onchange="procesarArchivosJSON()">
+            <button class="btn" style="background:var(--danger)" onclick="limpiarTodo()">🗑️</button>
         </div>
     </div>
 
     <div class="grid-kpi">
-        <div class="card"><div style="font-size:11px; color:var(--gray)">CUADRILLAS</div><div class="kpi-value" id="kpi_crews">0</div></div>
-        <div class="card"><div style="font-size:11px; color:var(--gray)">EFICIENCIA</div><div class="kpi-value" style="color:var(--blue);" id="kpi_efficiency">0%</div></div>
-        <button class="btn" style="background:var(--blue); height: 100%;" onclick="exportarExcelAnalitico()">💾 EXPORTAR EXCEL</button>
-        <button class="btn" style="background:var(--danger)" onclick="limpiarTodo()">🗑️ LIMPIAR</button>
+        <div class="card"><div style="font-size:10px; color:var(--gray)">CUADRILLAS</div><div class="kpi-value" id="kpi_crews">0</div></div>
+        <div class="card"><div style="font-size:10px; color:var(--gray)">HIL. LISTAS</div><div class="kpi-value" id="kpi_rows">0</div></div>
+        <div class="card"><div style="font-size:10px; color:var(--gray)">EFICIENCIA</div><div class="kpi-value" style="color:var(--blue);" id="kpi_efficiency">0%</div></div>
+        <button class="btn" style="background:var(--accent); color:#000;" onclick="exportarExcel()">💾 EXCEL</button>
     </div>
 
-    <div id="progress_list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-        <p style="color:var(--gray); text-align: center; grid-column: 1/-1;">Inicie cargando los archivos de campo...</p>
+    <h3 style="color:var(--gray); margin: 15px 0 10px 5px; font-size: 14px;">📈 AVANCE OPERATIVO</h3>
+    <div id="progress_list"></div>
+
+    <h3 style="color:var(--gray); margin: 20px 0 10px 5px; font-size: 14px;">🔬 ANÁLISIS DE INGENIERÍA</h3>
+    <div class="grid-charts">
+        <div class="card">
+            <h4 style="margin:0 0 10px 0;">⚖️ Rendimiento por Actividad (Min/Hil)</h4>
+            <canvas id="chartActivity"></canvas>
+        </div>
+        <div class="card">
+            <h4 style="margin:0 0 10px 0;">📍 Ocupación por Cuadro (Hileras)</h4>
+            <canvas id="chartBlocks"></canvas>
+        </div>
+        <div class="card">
+            <h4 style="margin:0 0 10px 0;">🎯 Avance de Avance (Global)</h4>
+            <canvas id="chartGlobalProgress" style="max-height: 250px;"></canvas>
+        </div>
+        <div class="card">
+            <h4 style="margin:0 0 10px 0;">🏆 Ranking de Obreros (Hileras)</h4>
+            <div id="worker_ranking" style="font-size:12px;">Cargue datos para ver el top...</div>
+        </div>
     </div>
 
     <div id="detailModal">
-        <div style="display:flex; justify-content:space-between;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
             <h2 id="det_name" style="color:var(--accent); margin:0;"></h2>
-            <button class="btn" style="background:var(--danger)" onclick="closeDetail()">X</button>
+            <button class="btn" style="background:var(--danger)" onclick="closeDetail()">CERRAR</button>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
-            <div class="card" style="cursor:default"><small>PROYECCIÓN FIN</small><div id="det_projection" style="font-size:1.5em; font-weight:bold; color:var(--warn);">--:--</div></div>
-            <div class="card" style="cursor:default"><small>MIN/HILERA</small><div id="det_pace" style="font-size:1.5em; font-weight:bold; color:var(--blue);">0.0</div></div>
-        </div>
-        <div style="overflow-x:auto;"><table id="det_table"><thead><tr><th>OBRERO</th><th>CUADRO</th><th>ESTADO</th><th>INICIO</th></tr></thead><tbody></tbody></table></div>
+        <div id="det_projection" style="margin-top:15px; padding:10px; background:rgba(59,130,246,0.1); border-radius:8px;"></div>
+        <div style="overflow-x:auto;"><table id="det_table"><thead><tr><th>OBRERO</th><th>CUADRO</th><th>ESTADO</th><th>INICIO</th><th>FIN</th></tr></thead><tbody></tbody></table></div>
     </div>
 
     <div id="scannerModal"><div id="reader"></div></div>
     <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
     <script>
-        let jsonData = JSON.parse(localStorage.getItem('agri_v45')) || [];
-        let scanner = null;
+        let jsonData = JSON.parse(localStorage.getItem('agri_v50')) || [];
+        let charts = {};
 
         function procesarArchivosJSON() {
             const files = document.getElementById('jsonInput').files;
@@ -78,14 +102,16 @@
             const id = nuevo.sesiones[0]?.uid || nuevo.config.resp + nuevo.config.supId;
             if (jsonData.some(e => (e.sesiones[0]?.uid || e.config.resp + e.config.supId) === id)) return;
             jsonData.push(nuevo);
-            localStorage.setItem('agri_v45', JSON.stringify(jsonData));
+            localStorage.setItem('agri_v50', JSON.stringify(jsonData));
             actualizarDashboard();
         }
 
         function actualizarDashboard() {
+            if (jsonData.length === 0) return;
+            
             const list = document.getElementById('progress_list');
             list.innerHTML = "";
-            let tAssigned = 0, tFinished = 0;
+            let tAssigned = 0, tFinished = 0, activityStats = {}, blockStats = {}, workerStats = {};
 
             jsonData.forEach((data, index) => {
                 let sAssigned = 0; data.sesiones.forEach(s => sAssigned += (s.fin - s.inicio + 1));
@@ -93,73 +119,128 @@
                 let pct = sAssigned > 0 ? Math.round((sFinished / sAssigned) * 100) : 0;
                 tAssigned += sAssigned; tFinished += sFinished;
 
-                list.innerHTML += `<div class="card" onclick="verDetalle(${index})">
-                    <div style="display:flex; justify-content:space-between; font-size:14px;"><b>${data.config.resp}</b> <span>${pct}%</span></div>
-                    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${Math.min(pct, 100)}%; background:${pct > 100 ? 'var(--blue)' : 'var(--accent)'}"></div></div>
-                    <small style="color:var(--gray)">${data.config.supAct} | ${sFinished}/${sAssigned}</small></div>`;
+                // Render cards
+                list.innerHTML += `
+                <div class="sup-card" onclick="verDetalle(${index})">
+                    <div style="display:flex; justify-content:space-between; font-size:12px;"><b>${data.config.resp}</b> <span>${pct}%</span></div>
+                    <div class="progress-bg"><div class="progress-fill" style="width:${Math.min(pct, 100)}%; background:${pct > 100 ? 'var(--blue)' : 'var(--accent)'}"></div></div>
+                    <div style="font-size:10px; color:var(--gray);">${data.config.supAct} | ${sFinished}/${sAssigned} Hil.</div>
+                </div>`;
+
+                // Calc Activity Speed
+                const act = data.config.supAct || "N/A";
+                let tMin = 0;
+                data.avance.forEach(a => { 
+                    if(a.fin) tMin += (new Date("2000/01/01 " + a.fin) - new Date("2000/01/01 " + a.inicio)) / 60000;
+                    // Worker ranking
+                    workerStats[a.obrero] = (workerStats[a.obrero] || 0) + (a.fin ? 1 : 0);
+                    // Block occupation
+                    blockStats[a.nomCuadro] = (blockStats[a.nomCuadro] || 0) + 1;
+                });
+                if(!activityStats[act]) activityStats[act] = { min: 0, count: 0 };
+                activityStats[act].min += tMin;
+                activityStats[act].count += sFinished;
             });
+
             document.getElementById('kpi_crews').innerText = jsonData.length;
-            document.getElementById('kpi_efficiency').innerText = (tAssigned > 0 ? Math.round((tFinished / tAssigned) * 100) : 0) + "%";
+            document.getElementById('kpi_rows').innerText = tFinished;
+            document.getElementById('kpi_efficiency').innerText = Math.round((tFinished / tAssigned) * 100) + "%";
+
+            renderCharts(activityStats, blockStats, tFinished, tAssigned);
+            renderWorkerRanking(workerStats);
+        }
+
+        function renderCharts(act, blk, fin, total) {
+            // Activity Chart
+            const ctxAct = document.getElementById('chartActivity').getContext('2d');
+            if(charts.act) charts.act.destroy();
+            charts.act = new Chart(ctxAct, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(act),
+                    datasets: [{ label: 'Minutos/Hilera', data: Object.values(act).map(v => (v.min/v.count || 0).toFixed(1)), backgroundColor: '#3b82f6' }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+
+            // Blocks Chart
+            const ctxBlk = document.getElementById('chartBlocks').getContext('2d');
+            if(charts.blk) charts.blk.destroy();
+            charts.blk = new Chart(ctxBlk, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(blk),
+                    datasets: [{ data: Object.values(blk), backgroundColor: ['#22c55e','#3b82f6','#a855f7','#f59e0b','#ef4444'] }]
+                }
+            });
+
+            // Global Progress
+            const ctxGlob = document.getElementById('chartGlobalProgress').getContext('2d');
+            if(charts.glob) charts.glob.destroy();
+            charts.glob = new Chart(ctxGlob, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Terminado', 'Pendiente'],
+                    datasets: [{ data: [fin, total - fin], backgroundColor: ['#22c55e', '#334155'] }]
+                },
+                options: { cutout: '70%' }
+            });
+        }
+
+        function renderWorkerRanking(stats) {
+            const div = document.getElementById('worker_ranking');
+            const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            div.innerHTML = sorted.map(([id, val], i) => `
+                <div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #334155;">
+                    <span>${i+1}. Obrero ${id}</span> <b>${val} Hileras</b>
+                </div>
+            `).join("");
         }
 
         function verDetalle(idx) {
             const data = jsonData[idx];
             document.getElementById('det_name').innerText = data.config.resp;
+            
+            // Proyección
             let tMin = 0, sFinished = data.avance.filter(a => a.fin !== null).length;
             data.avance.forEach(a => { if(a.fin) tMin += (new Date("2000/01/01 " + a.fin) - new Date("2000/01/01 " + a.inicio)) / 60000; });
             let pace = sFinished > 0 ? (tMin / sFinished).toFixed(1) : 0;
-            document.getElementById('det_pace').innerText = pace;
-
             let sAssigned = 0; data.sesiones.forEach(s => sAssigned += (s.fin - s.inicio + 1));
-            let pending = sAssigned - sFinished;
-            if (pace > 0 && pending > 0) {
-                let minToFin = (pending * pace) / (data.config.totalStaff || 1);
-                let fin = new Date(); fin.setMinutes(fin.getMinutes() + minToFin);
-                document.getElementById('det_projection').innerText = fin.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else { document.getElementById('det_projection').innerText = "Meta Lograda"; }
-
-            document.querySelector('#det_table tbody').innerHTML = data.avance.map(a => `<tr><td>${a.obrero}</td><td>${a.nomCuadro}</td><td>${a.fin?'LISTO':'PROCESO'}</td><td>${a.inicio}</td></tr>`).join("");
+            let pend = sAssigned - sFinished;
+            let proj = "Meta Lograda";
+            if(pace > 0 && pend > 0) {
+                let mToFin = (pend * pace) / (data.config.totalStaff || 1);
+                let f = new Date(); f.setMinutes(f.getMinutes() + mToFin);
+                proj = `Proyección de fin: <b>${f.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b> (a ${pace} min/hilera)`;
+            }
+            document.getElementById('det_projection').innerHTML = proj;
+            
+            document.querySelector('#det_table tbody').innerHTML = data.avance.map(a => `
+                <tr><td>${a.obrero}</td><td>${a.nomCuadro}</td><td>${a.fin?'✅':'⏳'}</td><td>${a.inicio}</td><td>${a.fin||'-'}</td></tr>
+            `).join("");
             document.getElementById('detailModal').style.display = 'flex';
         }
 
-        function exportarExcelAnalitico() {
-            if(jsonData.length === 0) return alert("No hay datos para exportar.");
-            const ahora = new Date();
-            const fechaStr = `${ahora.getDate()}_${ahora.getMonth()+1}_${ahora.getHours()}h${ahora.getMinutes()}`;
-            
-            let csv = "\uFEFFSUPERVISOR,ACTIVIDAD,HIL_TOTAL,HIL_LISTO,AVANCE_%,RITMO_MIN_HIL,PROYECCION_FIN\n";
-            
-            jsonData.forEach(data => {
-                let sAssigned = 0; data.sesiones.forEach(s => sAssigned += (s.fin - s.inicio + 1));
-                let sFinished = data.avance.filter(a => a.fin !== null).length;
-                let pct = sAssigned > 0 ? Math.round((sFinished / sAssigned) * 100) : 0;
-                let tMin = 0;
-                data.avance.forEach(a => { if(a.fin) tMin += (new Date("2000/01/01 " + a.fin) - new Date("2000/01/01 " + a.inicio)) / 60000; });
-                let pace = sFinished > 0 ? (tMin / sFinished).toFixed(1) : 0;
-                
-                let proj = "Meta Lograda";
-                if(pace > 0 && (sAssigned - sFinished) > 0) {
-                    let minToFin = ((sAssigned - sFinished) * pace) / (data.config.totalStaff || 1);
-                    let f = new Date(); f.setMinutes(f.getMinutes() + minToFin);
-                    proj = f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                }
-
-                csv += `${data.config.resp},${data.config.supAct},${sAssigned},${sFinished},${pct}%,${pace},${proj}\n`;
+        function exportarExcel() {
+            let csv = "\uFEFFSUPERVISOR,ACTIVIDAD,HIL_TOTAL,HIL_LISTAS,EFICIENCIA_%,RITMO_MIN_HIL\n";
+            jsonData.forEach(d => {
+                let sA = 0; d.sesiones.forEach(s => sA += (s.fin - s.inicio + 1));
+                let sF = d.avance.filter(a => a.fin !== null).length;
+                let tM = 0; d.avance.forEach(a => { if(a.fin) tM += (new Date("2000/01/01 " + a.fin) - new Date("2000/01/01 " + a.inicio)) / 60000; });
+                csv += `${d.config.resp},${d.config.supAct},${sA},${sF},${Math.round((sF/sA)*100)}%,${(tM/sF||0).toFixed(1)}\n`;
             });
-
-            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `ANALISIS_CAMPO_${fechaStr}.csv`;
+            link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+            link.download = `REPORTE_INGENIERIA_${new Date().toLocaleDateString()}.csv`;
             link.click();
         }
 
         function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
-        function limpiarTodo() { if(confirm("¿Limpiar historial de hoy?")) { jsonData = []; localStorage.removeItem('agri_v45'); actualizarDashboard(); } }
+        function limpiarTodo() { if(confirm("¿Limpiar tablero?")) { jsonData = []; localStorage.removeItem('agri_v50'); location.reload(); } }
         function startScanner() {
             document.getElementById('scannerModal').style.display = 'flex';
-            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
-            scanner.render(t => { const j = JSON.parse(t.substring(t.indexOf('{'), t.lastIndexOf('}') + 1)); document.getElementById('beep').play(); validarYAñadir(j); scanner.clear(); document.getElementById('scannerModal').style.display='none'; });
+            const s = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
+            s.render(t => { validarYAñadir(JSON.parse(t.substring(t.indexOf('{'), t.lastIndexOf('}') + 1))); document.getElementById('beep').play(); s.clear(); document.getElementById('scannerModal').style.display='none'; });
         }
         window.onload = actualizarDashboard;
     </script>
