@@ -274,16 +274,60 @@
     }
 
     function ejecutarAvanceMasivoFix() {
-        let s = DB.sesiones[DB.currentSessionId];
-        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-        if(!activos.length) return;
-        activos.sort((a,b) => b.fila - a.fila).forEach(t => {
-            let actual = t.fila;
-            cerrarTarea(t);
-            asignarFilaEspecifica(t, actual + 1, s);
-        });
-        guardarTodo(); renderMapa();
-    }
+    let s = DB.sesiones[DB.currentSessionId];
+    if(!confirm(`¿AVANZAR GRUPOS EN CUADRO ${s.cuadro}?`)) return;
+
+    // 1. Identificamos quiénes están trabajando en este cuadro ahorita
+    let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+    if(activos.length === 0) return alert("Nadie para mover.");
+
+    // 2. Agrupamos a las personas por su fila actual (para mover parejas juntas)
+    let grupos = {};
+    activos.forEach(t => {
+        if(!grupos[t.fila]) grupos[t.fila] = [];
+        grupos[t.fila].push(t);
+    });
+
+    // 3. Ordenamos las filas de mayor a menor para no "chocar" al movernos
+    let filasOcupadas = Object.keys(grupos).map(Number).sort((a, b) => b - a);
+    
+    // Determinamos desde dónde empezar a buscar espacio (después de la última fila ocupada)
+    let maxFilaActual = Math.max(...filasOcupadas);
+    let punteroBusqueda = maxFilaActual + 1;
+
+    let movidosCount = 0;
+
+    // 4. Procesamos cada grupo (fila por fila)
+    // Nota: Para que sea un "avance real", procesamos de la fila más adelantada a la más atrasada
+    filasOcupadas.reverse().forEach(numFila => {
+        let grupo = grupos[numFila];
+        
+        // Buscamos la siguiente fila que no esté quemada y esté vacía
+        let nuevaFila = -1;
+        for (let f = punteroBusqueda; f <= s.fin; f++) {
+            let esQuemada = DB.avance.some(a => a.cuadroUid === s.uid && a.fila === f && a.fin !== null);
+            let ocupadaAhora = DB.staff.some(st => st.cuadroUid === s.uid && st.fila === f);
+            
+            if (!esQuemada && !ocupadaAhora) {
+                nuevaFila = f;
+                break;
+            }
+        }
+
+        if (nuevaFila !== -1 && nuevaFila <= s.fin) {
+            grupo.forEach(t => {
+                cerrarTarea(t); // Terminamos la fila actual
+                asignarFilaEspecifica(t, nuevaFila, s); // Asignamos la nueva
+            });
+            movidosCount++;
+            punteroBusqueda = nuevaFila + 1; // El siguiente grupo debe ir después de este
+        }
+    });
+
+    guardarTodo();
+    renderMapa();
+    alert(`✅ Avance completado: ${movidosCount} filas movidas.`);
+}
 
     function abrirEditor() {
         const list = document.getElementById('editorList'); list.innerHTML = "";
@@ -319,6 +363,7 @@
 </script>
 </body>
 </html>
+
 
 
 
