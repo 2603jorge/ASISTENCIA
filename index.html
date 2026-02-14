@@ -330,25 +330,82 @@
 }
 
     function abrirEditor() {
-        const list = document.getElementById('editorList'); list.innerHTML = "";
-        DB.staff.filter(st => st.fila !== null).forEach(st => {
-            list.innerHTML += `<div class="edit-item">
-                <span>ID: ${st.id} - Fila: ${st.fila}</span>
-                <button class="btn btn-r btn-sm" onclick="borrarRegistroManual('${st.id}')">QUITAR</button>
-            </div>`;
-        });
-        document.getElementById('modalEditor').classList.add('open');
+    let s = DB.sesiones[DB.currentSessionId];
+    const list = document.getElementById('editorList');
+    list.innerHTML = "";
+    
+    // Obtenemos solo los que están trabajando en el cuadro que estamos viendo
+    let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+    
+    if(activos.length === 0) {
+        list.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>No hay personal activo en este cuadro.</p>";
     }
 
-    function borrarRegistroManual(id) {
-        let st = DB.staff.find(x => x.id === id);
-        if(st) {
-            let idx = DB.avance.findIndex(a => a.obrero === id && a.fin === null);
-            if(idx !== -1) DB.avance.splice(idx, 1);
-            st.fila = null; st.cuadroUid = null;
-            guardarTodo(); renderMapa(); abrirEditor();
+    activos.forEach((st) => {
+        list.innerHTML += `
+            <div class="edit-item" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #333; background:#222; margin-bottom:5px; border-radius:8px;">
+                <div>
+                    <b style="color:var(--active-tab); font-size:14px;">${st.id}</b><br>
+                    <small style="color:#aaa;">Fila: ${st.fila}</small>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-sm" style="background:var(--blue); color:white; border:none; border-radius:5px; padding:8px 12px;" onclick="modificarFilaManual('${st.id}')">EDITAR</button>
+                    <button class="btn-sm" style="background:var(--danger); color:white; border:none; border-radius:5px; padding:8px 12px;" onclick="borrarRegistroManual('${st.id}')">BORRAR</button>
+                </div>
+            </div>`;
+    });
+    document.getElementById('modalEditor').classList.add('open');
+}
+
+function modificarFilaManual(id) {
+    let s = DB.sesiones[DB.currentSessionId];
+    let trabajador = DB.staff.find(x => x.id === id);
+    
+    let nuevaFila = prompt(`ID: ${id}\nFila actual: ${trabajador.fila}\n\nIngresa el nuevo número de fila:`, trabajador.fila);
+    
+    if (nuevaFila !== null && nuevaFila !== "" && !isNaN(nuevaFila)) {
+        let filaNum = parseInt(nuevaFila);
+        
+        if (filaNum < s.inicio || filaNum > s.fin) {
+            alert(`⚠️ Error: La fila debe estar entre ${s.inicio} y ${s.fin}`);
+            return;
         }
+
+        // Cerramos la tarea técnica en la fila anterior (sin borrar el registro de tiempo)
+        // Y lo movemos a la nueva fila creando un nuevo registro de avance
+        cerrarTarea(trabajador);
+        asignarFilaEspecifica(trabajador, filaNum, s);
+        
+        guardarTodo();
+        renderMapa();
+        abrirEditor(); // Refrescar lista del editor
     }
+}
+
+function borrarRegistroManual(id) {
+    if(!confirm(`¿ELIMINAR A ${id} DE ESTE CUADRO?\n\nEsto liberará la fila ${DB.staff.find(x=>x.id===id).fila} y borrará su registro de inicio actual.`)) return;
+    
+    let st = DB.staff.find(x => x.id === id);
+    if(st) {
+        // 1. Buscamos el registro de avance que NO tiene hora de fin (el activo) y lo borramos del array
+        let indexAvance = DB.avance.findIndex(a => a.obrero === id && a.fin === null && a.cuadroUid === st.cuadroUid);
+        if(indexAvance !== -1) {
+            DB.avance.splice(indexAvance, 1);
+        }
+        
+        // 2. Limpiamos el estado del trabajador para que el sistema lo vea como "disponible"
+        st.fila = null;
+        st.cuadroUid = null;
+        
+        // 3. Si no tiene otros registros en el día (estaba recién ingresado), podrías decidir si quitarlo del staff global
+        // Por ahora lo dejamos en el staff pero "libre" para ser re-escaneado.
+
+        guardarTodo();
+        renderMapa();
+        renderSession();
+        abrirEditor(); 
+    }
+}
 
     function confirmarFinDia() {
         if(confirm("¿Cerrar día?")) {
@@ -363,6 +420,7 @@
 </script>
 </body>
 </html>
+
 
 
 
