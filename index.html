@@ -221,31 +221,52 @@
     }
 
     function onScan(id) {
-        id = id.trim();
-        let now = Date.now();
-        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
-        lastScanTime[id] = now;
+    id = id.trim();
+    let now = Date.now();
+    if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
+    lastScanTime[id] = now;
 
-        let sesion = DB.sesiones[DB.currentSessionId];
-        let trabajador = DB.staff.find(s => s.id === id);
+    let sesionActual = DB.sesiones[DB.currentSessionId]; // El cuadro que tienes abierto en la pestaña
+    let trabajador = DB.staff.find(s => s.id === id);
 
-        if(!trabajador) {
-            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("Límite alcanzado");
-            trabajador = { id: id, fila: null, cuadroUid: null };
-            DB.staff.push(trabajador);
-        }
-
-        if(trabajador.fila && trabajador.cuadroUid === sesion.uid) {
-            let n = prompt("Ya está aquí. ¿Mover a fila?", buscarSiguienteFilaVacia(sesion));
-            if(n) { cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, parseInt(n), sesion); }
-        } else {
-            if(trabajador.fila) cerrarTarea(trabajador);
-            asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesion), sesion);
-        }
-        audioBeep.play();
-        guardarTodo(); renderMapa(); renderSession();
+    // 1. Si es un trabajador nuevo, lo agregamos
+    if(!trabajador) {
+        if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ LímITE ALCANZADO");
+        trabajador = { id: id, fila: null, cuadroUid: null };
+        DB.staff.push(trabajador);
     }
 
+    // 2. Lógica de Cambio de Cuadro o Fila
+    if(trabajador.fila !== null) {
+        // Si ya está en ESTE mismo cuadro y pestaña
+        if(trabajador.cuadroUid === sesionActual.uid) {
+            let n = prompt(`Ya está en este cuadro (Fila ${trabajador.fila}). ¿Mover a qué fila?`, buscarSiguienteFilaVacia(sesionActual));
+            if(n) { 
+                cerrarTarea(trabajador); 
+                asignarFilaEspecifica(trabajador, parseInt(n), sesionActual); 
+            }
+        } 
+        // ¡AQUÍ ESTÁ EL TRUCO!: Si viene de otro cuadro que ya terminó
+        else {
+            let cuadroAnterior = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
+            let nombreViejo = cuadroAnterior ? cuadroAnterior.cuadro : "OTRO";
+            
+            if(confirm(`El trabajador viene del cuadro ${nombreViejo}. ¿Deseas pasarlo al cuadro ACTUAL (${sesionActual.cuadro})?`)) {
+                cerrarTarea(trabajador); // Cerramos su labor allá
+                asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual); // Lo metemos aquí
+                audioBeep.play();
+            }
+        }
+    } else {
+        // Si estaba libre, entra directo al cuadro actual
+        asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
+        audioBeep.play();
+    }
+    
+    guardarTodo(); 
+    renderMapa(); 
+    renderSession();
+}
     function buscarSiguienteFilaVacia(sesion) {
         let quemadas = new Set(DB.avance.filter(a => a.cuadroUid === sesion.uid && a.fin !== null).map(a => a.fila));
         for(let i = sesion.inicio; i <= sesion.fin; i++) {
@@ -382,6 +403,7 @@
 </script>
 </body>
 </html>
+
 
 
 
