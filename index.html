@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - Final PRO</title>
+    <title>AgriCactus V47 - Versión Final PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -88,6 +88,7 @@
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin-top:10px;"></p>
+        <button class="btn btn-p" onclick="descargarJSONReporte()" style="font-size:11px;">💾 DESCARGAR JSON RESPALDO</button>
     </div>
     <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
@@ -132,8 +133,8 @@
         if (DB.sesiones.length > 0) irAlMapa();
     };
 
+    // Funciones Base (Apertura, Sesiones, Mapa) se mantienen igual...
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
-
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
@@ -167,7 +168,7 @@
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const total = parseInt(document.getElementById('conf_total_global').value);
-        if(!resp || isNaN(total)) return alert("Faltan datos de supervisor o total personal");
+        if(!resp || isNaN(total)) return alert("Faltan datos");
         DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
         DB.sesiones = []; DB.staff = []; DB.avance = [];
         crearSesionDesdeForm('conf');
@@ -287,6 +288,7 @@
         if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
 
+    // --- AVANCE MASIVO ---
     function ejecutarAvanceMasivoFix() {
         let s_origen = DB.sesiones[DB.currentSessionId];
         let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
@@ -318,47 +320,62 @@
         }
     }
 
-    // --- FUNCIONES CORTE PARCIAL ---
-  function generarCorteParcial() {
-    // 1. Reducimos el peso de los datos para que el QR siempre se genere
-    let qrData = {
-        config: {
-            resp: DB.globalConfig.resp,
-            supAct: DB.sesiones[DB.currentSessionId]?.act || "General"
-        },
-        // Solo enviamos los puntos de tiempo necesarios para las gráficas del Monitor
-        sesiones: DB.sesiones.map(s => ({ inicio: s.inicio, fin: s.fin })),
-        avance: DB.avance.map(a => ({ inicio: a.inicio, fin: a.fin })),
-        totalStaff: DB.staff.length
-    };
+    // --- CORTE PARCIAL OPTIMIZADO PARA MONITOR V4 ---
+    function generarCorteParcial() {
+        let avanceComprimido = DB.avance.map(a => ({
+            i: a.inicio,
+            f: a.fin
+        })).filter(a => a.f !== null);
 
-    document.getElementById('viewMain').classList.remove('open');
-    document.getElementById('viewPartial').classList.add('open');
-    
-    const qrContainer = document.getElementById('qrcode_partial');
-    qrContainer.innerHTML = ""; // Limpiar antes de generar
-    
-    try {
-        // 2. Generamos el QR con un nivel de corrección bajo (L) para permitir más datos
-        new QRCode(qrContainer, { 
-            text: JSON.stringify(qrData), 
-            width: 260, 
-            height: 260,
-            correctLevel: QRCode.CorrectLevel.L 
-        });
+        let qrData = {
+            config: {
+                resp: DB.globalConfig.resp,
+                supAct: DB.sesiones[DB.currentSessionId]?.act || "General"
+            },
+            sesiones: DB.sesiones.map(s => ({ i: s.inicio, f: s.fin })),
+            avance: avanceComprimido,
+            totalStaff: DB.staff.length
+        };
+
+        document.getElementById('viewMain').classList.remove('open');
+        document.getElementById('viewPartial').classList.add('open');
         
-        document.getElementById('partial_summary').innerText = 
-            `Enviando datos de ${qrData.avance.length} hileras para análisis...`;
-    } catch (e) {
-        qrContainer.innerHTML = "<p style='color:red;padding:20px;'>Error: Demasiadas hileras para un solo QR. Descarga el JSON mejor.</p>";
+        const qrContainer = document.getElementById('qrcode_partial');
+        qrContainer.innerHTML = ""; 
+        
+        try {
+            new QRCode(qrContainer, { 
+                text: JSON.stringify(qrData), 
+                width: 270, 
+                height: 270,
+                correctLevel: QRCode.CorrectLevel.L 
+            });
+            document.getElementById('partial_summary').innerText = `Monitor V4: Enviando ${avanceComprimido.length} hileras.`;
+        } catch (e) {
+            qrContainer.innerHTML = "<p style='color:red;'>QR Saturado. Usa Descargar JSON.</p>";
+        }
     }
-}
 
-function cerrarCorteParcial() {
-    document.getElementById('viewPartial').classList.remove('open');
-    document.getElementById('viewMain').classList.add('open');
-}
+    function cerrarCorteParcial() {
+        document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
+    }
 
+    function descargarJSONReporte() {
+        let data = {
+            config: DB.globalConfig,
+            sesiones: DB.sesiones,
+            avance: DB.avance,
+            staff: DB.staff
+        };
+        let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `Reporte_${DB.globalConfig.resp}_${new Date().toLocaleDateString()}.json`;
+        a.click();
+    }
+
+    // --- EDITOR ---
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
         const list = document.getElementById('editorList'); list.innerHTML = "";
@@ -381,14 +398,14 @@ function cerrarCorteParcial() {
         let n = prompt("Fila:", t.fila);
         if (n && !isNaN(n)) {
             let f = parseInt(n);
-            if (f < s.inicio || f > s.fin) return alert("Rango inválido");
+            if (f < s.inicio || f > s.fin) return alert("Inválido");
             cerrarTarea(t); asignarFilaEspecifica(t, f, s);
             guardarTodo(); renderMapa(); abrirEditor();
         }
     }
 
     function borrarRegistroManual(id) {
-        if(!confirm(`¿Borrar a ${id}?`)) return;
+        if(!confirm(`Borrar a ${id}?`)) return;
         let st = DB.staff.find(x=>x.id===id);
         if(st) {
             let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid);
@@ -399,7 +416,7 @@ function cerrarCorteParcial() {
     }
 
     function confirmarFinDia() {
-        if(confirm("¿Cerrar día y limpiar?")) {
+        if(confirm("¿Cerrar y limpiar datos del día?")) {
             DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
             DB.archive.push({ fecha: new Date().toLocaleDateString(), avance: DB.avance });
             localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
@@ -416,7 +433,7 @@ function cerrarCorteParcial() {
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
-    function abrirHistorial() { alert("Historial guardado en memoria local."); }
+    function abrirHistorial() { alert("Historial guardado localmente."); }
 </script>
 </body>
 </html>
