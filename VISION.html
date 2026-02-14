@@ -2,37 +2,53 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>AgriCactus V5.3 - Extractor de IDs Inteligente</title>
+    <title>AgriCactus V5.3 - Extractor PRO (Edición Activa)</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #1565c0; --accent: #00e676; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        :root { --primary: #1565c0; --accent: #00e676; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; --warn: #f59e0b; --danger: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); padding: 15px; margin: 0; }
-        .container { max-width: 1100px; margin: auto; }
+        .container { max-width: 1200px; margin: auto; }
         .card { background: var(--card); border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; font-size: 14px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; font-size: 13px; }
         .btn-blue { background: var(--primary); color: white; }
         .btn-green { background: var(--accent); color: #000; }
+        .btn-warn { background: var(--warn); color: #000; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { width: auto; padding: 5px 10px; font-size: 10px; margin: 2px; }
         #reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; border: 2px solid #334155; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
-        th { background: #0f172a; color: var(--accent); white-space: nowrap; }
-        .sup-row { background: rgba(21, 101, 192, 0.3); font-weight: bold; color: #90caf9; }
+        th { background: #0f172a; color: var(--accent); }
+        .sup-row { background: rgba(21, 101, 192, 0.2); }
         .hidden { display: none; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
+        .manual-box { border: 2px dashed var(--warn); padding: 15px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color: var(--primary);">📋 Extractor de Asistencia V5.3</h2>
+    <h2 style="text-align:center; color: var(--primary);">📋 Extractor V5.3 PRO (Edición)</h2>
 
     <div class="card">
         <div id="reader"></div>
-        <p style="text-align:center; font-size:10px; color:#94a3b8;">Lector QR para reportes parciales</p>
+        <p style="text-align:center; font-size:10px; color:#94a3b8;">Escanea Reportes JSON o Credenciales Individuales</p>
+    </div>
+
+    <div class="card manual-box">
+        <h3 style="color:var(--warn); margin-top:0; font-size:16px;">⚡ Rescate de Personal / Asignación Directa</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <div><label style="font-size:10px;">ID ESCANEADO:</label><input type="text" id="manual_id" placeholder="ID..." readonly></div>
+            <div><label style="font-size:10px;">JORNADA:</label><select id="sel_jor"></select></div>
+            <div><label style="font-size:10px;">ACTIVIDAD:</label><select id="sel_act"></select></div>
+            <div><label style="font-size:10px;">CUADRO:</label><select id="sel_cua"></select></div>
+        </div>
+        <button class="btn btn-warn" onclick="asignarTrabajadorManual()">➕ AGREGAR A LISTA</button>
     </div>
 
     <div class="card">
         <input type="file" id="fileInput" class="hidden" accept=".json" onchange="procesarArchivo(this)">
-        <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR REPORTE .JSON</button>
+        <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR ARCHIVO .JSON</button>
         
         <div id="tablaArea" class="hidden">
             <div style="overflow-x: auto;">
@@ -42,115 +58,116 @@
                             <th>CREDENTIAL</th>
                             <th>ID_ACT</th>
                             <th>NAME_ACT</th>
-                            <th>ID_CUADRO</th>
+                            <th>ID_CUA</th>
                             <th>CUADRO</th>
                             <th>ID_JOR</th>
                             <th>DESC_JOR</th>
                             <th>LÍNEAS</th>
+                            <th>ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
             <button class="btn btn-green" onclick="descargarCSV()" style="margin-top:20px;">💾 DESCARGAR EXCEL (CSV)</button>
-            <button class="btn" onclick="limpiarDatos()" style="background: #c62828; color: white;">🗑️ BORRAR ACUMULADO</button>
+            <button class="btn btn-danger" onclick="limpiarDatos()">🗑️ BORRAR TODO</button>
         </div>
     </div>
 </div>
 
 <script>
     let BASE_DATOS = JSON.parse(localStorage.getItem('agri_v53_data')) || [];
-
-    // Función de limpieza profunda: Quita espacios, comas, puntos y pasa a mayúsculas
+    let CATALOGOS_LOCALES = JSON.parse(localStorage.getItem('agri_v53_cats')) || { jornadas: [], actividades: [], cuadros: [] };
     const normalizar = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
 
     const scanner = new Html5Qrcode("reader");
-    const scanner = new Html5Qrcode("reader");
-
-// Configuración mejorada
-const config = { 
-    fps: 10, 
-    qrbox: { width: 300, height: 300 }, // Cuadro de enfoque más grande
-    aspectRatio: 1.0 // Fuerza a que sea un cuadrado perfecto (1.0) o pantalla completa (1.77)
-};
-
-scanner.start(
-    { facingMode: "environment" }, 
-    config, 
-    (text) => {
-        try { procesar(JSON.parse(text)); } catch(e) { alert("QR inválido"); }
-    }
-).catch(e => console.log("Cámara off"));
+    scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
+        try {
+            const obj = JSON.parse(text);
+            procesar(obj);
+            audioBeep();
+        } catch(e) {
+            document.getElementById('manual_id').value = text;
+            audioBeep();
+        }
+    });
 
     function procesarArchivo(input) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            try { procesar(JSON.parse(e.target.result)); } 
-            catch(err) { alert("Error al leer archivo"); }
+            try { 
+                const data = JSON.parse(e.target.result);
+                if(data.catalogos) {
+                    CATALOGOS_LOCALES = data.catalogos;
+                    localStorage.setItem('agri_v53_cats', JSON.stringify(CATALOGOS_LOCALES));
+                    cargarSelectores();
+                }
+                procesar(data); 
+            } catch(err) { alert("Error en JSON"); }
         };
         reader.readAsText(input.files[0]);
     }
 
     function procesar(json) {
-        const cat = json.catalogos;
-        const conf = json.config;
-
-        // 1. JORNADA
-        const jorData = cat.jornadas.find(j => normalizar(j.desc) === normalizar(conf.jornada)) || { id: "N/A", desc: conf.jornada };
-
-        // 2. SUPERVISOR
-        const supAct = cat.actividades.find(a => normalizar(a.desc) === normalizar(conf.supAct)) || { id: "N/A", desc: conf.supAct };
-        const supCName = json.sesiones[0]?.cuadro || "N/A";
-        const supCData = cat.cuadros.find(c => normalizar(c.nombre) === normalizar(supCName)) || { id: "N/A", nombre: supCName };
-
-        actualizar({
-            credencial: String(conf.supId || "135"),
-            id_act: supAct.id,
-            name_act: supAct.desc,
-            id_cuadro: supCData.id,
-            cuadro: supCData.nombre,
-            id_jor: jorData.id,
-            desc_jor: jorData.desc,
-            lineas: 0
-        });
-
-        // 3. TRABAJADORES
-        const obrerosIds = [...new Set(json.avance.map(a => String(a.obrero)))];
-
-        obrerosIds.forEach(id => {
-            const historial = json.avance.filter(a => String(a.obrero) === id);
-            const u = historial[historial.length - 1];
-
-            // Búsqueda inteligente: normalizamos antes de comparar
-            const actData = cat.actividades.find(a => normalizar(a.desc) === normalizar(u.supAct)) || { id: "N/A", desc: u.supAct };
-            const cuadroData = cat.cuadros.find(c => normalizar(c.nombre) === normalizar(u.nomCuadro)) || { id: "N/A", nombre: u.nomCuadro };
-
-            actualizar({
-                credencial: id,
-                id_act: actData.id,
-                name_act: actData.desc,
-                id_cuadro: cuadroData.id,
-                cuadro: cuadroData.nombre,
-                id_jor: jorData.id,
-                desc_jor: jorData.desc,
-                lineas: historial.length
+        const cat = json.catalogos || CATALOGOS_LOCALES;
+        const conf = json.config || {};
+        const jorData = cat.jornadas.find(j => normalizar(j.desc) === normalizar(conf.jornada)) || { id: "N/A", desc: conf.jornada || "N/A" };
+        
+        if (json.avance) {
+            const obrerosIds = [...new Set(json.avance.map(a => String(a.obrero)))];
+            obrerosIds.forEach(id => {
+                const hist = json.avance.filter(a => String(a.obrero) === id);
+                const u = hist[hist.length - 1];
+                const aD = cat.actividades.find(a => normalizar(a.desc) === normalizar(u.supAct)) || { id: "N/A", desc: u.supAct };
+                const cD = cat.cuadros.find(c => normalizar(c.nombre) === normalizar(u.nomCuadro)) || { id: "N/A", nombre: u.nomCuadro };
+                actualizar({
+                    credencial: id, id_act: aD.id, name_act: aD.desc,
+                    id_cuadro: cD.id, cuadro: cD.nombre,
+                    id_jor: jorData.id, desc_jor: jorData.desc, lineas: hist.length
+                });
             });
+        }
+        render();
+    }
+
+    function asignarTrabajadorManual() {
+        const id = document.getElementById('manual_id').value;
+        if(!id) return alert("Escanea un ID primero");
+        const j = document.getElementById('sel_jor').value.split('|');
+        const a = document.getElementById('sel_act').value.split('|');
+        const c = document.getElementById('sel_cua').value.split('|');
+        actualizar({
+            credencial: id, id_act: a[0], name_act: a[1],
+            id_cuadro: c[0], cuadro: c[1], id_jor: j[0], desc_jor: j[1], lineas: 1
         });
         render();
+        document.getElementById('manual_id').value = "";
     }
 
     function actualizar(n) {
         let idx = BASE_DATOS.findIndex(r => r.credencial === n.credencial);
         if (idx > -1) {
-            BASE_DATOS[idx].lineas += n.lineas;
-            BASE_DATOS[idx].id_act = n.id_act;
-            BASE_DATOS[idx].name_act = n.name_act;
-            BASE_DATOS[idx].id_cuadro = n.id_cuadro;
-            BASE_DATOS[idx].cuadro = n.cuadro;
-        } else {
-            BASE_DATOS.push(n);
-        }
+            BASE_DATOS[idx] = {...BASE_DATOS[idx], ...n}; // Sobrescribe con la nueva info
+        } else { BASE_DATOS.push(n); }
         localStorage.setItem('agri_v53_data', JSON.stringify(BASE_DATOS));
+    }
+
+    function borrarFila(id) {
+        if(confirm(`¿Eliminar registro ${id}?`)) {
+            BASE_DATOS = BASE_DATOS.filter(r => r.credencial !== id);
+            localStorage.setItem('agri_v53_data', JSON.stringify(BASE_DATOS));
+            render();
+        }
+    }
+
+    function editarFila(id) {
+        const r = BASE_DATOS.find(x => x.credencial === id);
+        const nuevaL = prompt(`Editar líneas para ${id}:`, r.lineas);
+        if(nuevaL !== null) {
+            r.lineas = parseInt(nuevaL) || 0;
+            localStorage.setItem('agri_v53_data', JSON.stringify(BASE_DATOS));
+            render();
+        }
     }
 
     function render() {
@@ -158,7 +175,6 @@ scanner.start(
         tbody.innerHTML = "";
         BASE_DATOS.forEach(d => {
             const tr = document.createElement('tr');
-            if(d.id_act == "45" || d.name_act.includes("SUPERVISOR")) tr.className = "sup-row";
             tr.innerHTML = `
                 <td>${d.credencial}</td>
                 <td>${d.id_act}</td>
@@ -167,33 +183,37 @@ scanner.start(
                 <td>${d.cuadro}</td>
                 <td>${d.id_jor}</td>
                 <td>${d.desc_jor}</td>
-                <td style="font-weight:bold; color:var(--accent);">${d.lineas}</td>
+                <td><b>${d.lineas}</b></td>
+                <td>
+                    <button class="btn btn-blue btn-sm" onclick="editarFila('${d.credencial}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="borrarFila('${d.credencial}')">🗑️</button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
-        if(BASE_DATOS.length > 0) document.getElementById('tablaArea').classList.remove('hidden');
+        document.getElementById('tablaArea').classList.remove('hidden');
+    }
+
+    function cargarSelectores() {
+        const sJ = document.getElementById('sel_jor'), sA = document.getElementById('sel_act'), sC = document.getElementById('sel_cua');
+        sJ.innerHTML = CATALOGOS_LOCALES.jornadas.map(j => `<option value="${j.id}|${j.desc}">${j.desc}</option>`).join('');
+        sA.innerHTML = CATALOGOS_LOCALES.actividades.map(a => `<option value="${a.id}|${a.desc}">${a.desc}</option>`).join('');
+        sC.innerHTML = CATALOGOS_LOCALES.cuadros.map(c => `<option value="${c.id}|${c.nombre}">${c.nombre}</option>`).join('');
     }
 
     function descargarCSV() {
-        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUADRO,CUADRO,ID_JORNADA,DESC_JORNADA,TOTAL_LINEAS\n";
-        BASE_DATOS.forEach(d => {
-            csv += `${d.credencial},${d.id_act},${d.name_act},${d.id_cuadro},${d.cuadro},${d.id_jor},${d.desc_jor},${d.lineas}\n`;
-        });
+        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,L\n";
+        BASE_DATOS.forEach(d => { csv += `${d.credencial},${d.id_act},${d.name_act},${d.id_cuadro},${d.cuadro},${d.id_jor},${d.desc_jor},${d.lineas}\n`; });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `ASISTENCIA_SISTEMA.csv`;
+        link.download = `REPORTE_ASISTENCIA_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
     }
 
-    function limpiarDatos() {
-        if(confirm("¿Borrar acumulado?")) {
-            localStorage.removeItem('agri_v53_data');
-            BASE_DATOS = [];
-            location.reload();
-        }
-    }
-    window.onload = render;
+    function limpiarDatos() { if(confirm("¿Borrar todo?")) { localStorage.removeItem('agri_v53_data'); location.reload(); } }
+    function audioBeep() { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); }
+    window.onload = () => { cargarSelectores(); render(); };
 </script>
 </body>
 </html>
