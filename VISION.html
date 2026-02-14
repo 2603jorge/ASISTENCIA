@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V5.7 - Concentrador de Asistencia</title>
+    <title>AgriCactus V5.8 - Concentrador con Fecha Auto</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --primary: #1565c0; --accent: #00e676; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; --warn: #f59e0b; }
@@ -14,12 +14,11 @@
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 6px; font-size: 12px; color: white; display: flex; align-items: center; justify-content: center; }
         .btn-blue { background: var(--primary); }
         .btn-green { background: var(--accent); color: #000; }
-        .btn-warn { background: var(--warn); color: #000; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 14px; box-sizing: border-box; }
         .flex-row { display: flex; gap: 5px; }
         .hidden { display: none; }
         .table-wrapper { overflow-x: auto; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 650px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid #334155; border-right: 1px solid #1e293b; }
         th { background: #1e293b; color: var(--accent); font-weight: bold; }
         .row-sup { background: rgba(21, 101, 192, 0.2); }
@@ -30,7 +29,7 @@
 <div class="container">
     <div class="card" style="padding: 5px;">
         <div id="reader"></div>
-        <p id="cam-info" style="text-align:center; font-size:10px; color:var(--warn); margin:2px;">Cámara modo: Concentrador</p>
+        <p style="text-align:center; font-size:10px; color:var(--warn); margin:2px;">Cámara de Concentración Activa</p>
     </div>
 
     <div class="flex-row">
@@ -45,16 +44,16 @@
                 <input type="text" id="manual_id" placeholder="ID Credencial">
                 <input type="number" id="manual_lineas" value="1" style="width:60px;">
             </div>
-            <input type="text" id="in_jor" list="list_jor" placeholder="Jornada (Escriba para sugerencias)">
-            <input type="text" id="in_act" list="list_act" placeholder="Actividad (Escriba para sugerencias)">
-            <input type="text" id="in_cua" list="list_cua" placeholder="Cuadro (Escriba para sugerencias)">
-            <button class="btn btn-warn" onclick="registrarManual()">➕ AGREGAR AL CONCENTRADO</button>
+            <input type="text" id="in_jor" list="list_jor" placeholder="Jornada...">
+            <input type="text" id="in_act" list="list_act" placeholder="Actividad...">
+            <input type="text" id="in_cua" list="list_cua" placeholder="Cuadro...">
+            <button class="btn btn-warn" style="background:var(--warn); color:black;" onclick="registrarManual()">➕ AGREGAR AL REPORTE</button>
         </div>
     </div>
 
     <div id="sec_asistencia">
         <div class="card">
-            <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR ARCHIVO .JSON</button>
+            <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR REPORTE .JSON</button>
             <input type="file" id="fileInput" class="hidden" accept=".json" onchange="procesarArchivo(this)">
             
             <div class="table-wrapper">
@@ -74,34 +73,33 @@
                     <tbody></tbody>
                 </table>
             </div>
-            <button class="btn btn-green" onclick="descargarExcel()" style="margin-top:10px;">💾 DESCARGAR REPORTE (EXCEL)</button>
+            <button class="btn btn-green" onclick="descargarExcel()" style="margin-top:10px;">💾 DESCARGAR EXCEL CON FECHA</button>
             <button class="btn" style="background:#c62828" onclick="borrarTodo()">🗑️ LIMPIAR TODO</button>
         </div>
     </div>
 
     <div id="sec_catalogos" class="card hidden">
-        <h4>📦 Catálogos Activos</h4>
-        <textarea id="cat_cua" placeholder="Cuadros..." rows="2"></textarea>
-        <textarea id="cat_act" placeholder="Actividades..." rows="2"></textarea>
-        <textarea id="cat_jor" placeholder="Jornadas..." rows="2"></textarea>
+        <h4>📦 Gestión de Catálogos</h4>
+        <textarea id="cat_cua" placeholder="Cuadros..." rows="2" readonly></textarea>
+        <textarea id="cat_act" placeholder="Actividades..." rows="2" readonly></textarea>
+        <textarea id="cat_jor" placeholder="Jornadas..." rows="2" readonly></textarea>
     </div>
 </div>
 
 <datalist id="list_jor"></datalist><datalist id="list_act"></datalist><datalist id="list_cua"></datalist>
 
 <script>
-    let CONCENTRADO = JSON.parse(localStorage.getItem('agri_v57_master')) || [];
-    let CATS = JSON.parse(localStorage.getItem('agri_v57_cats')) || { cuadros: [], actividades: [], jornadas: [] };
+    let CONCENTRADO = JSON.parse(localStorage.getItem('agri_v58_master')) || [];
+    let CATS = JSON.parse(localStorage.getItem('agri_v58_cats')) || { cuadros: [], actividades: [], jornadas: [] };
     let view = 'sec_asistencia';
 
     const scanner = new Html5Qrcode("reader");
     const norm = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
 
-    // Iniciar Cámara
     scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 200 }, (text) => {
         if (view === 'sec_asistencia') {
-            try { procesarJSON(JSON.parse(text)); alert("Datos sumados al reporte ✅"); }
-            catch(e) { alert("Error: Use la pestaña INDIVIDUAL para escanear credenciales."); }
+            try { procesarJSON(JSON.parse(text)); alert("Datos sumados ✅"); }
+            catch(e) { alert("Error: Para credenciales use la pestaña ESCANEO."); }
         } else {
             document.getElementById('manual_id').value = text.trim();
             new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
@@ -115,92 +113,55 @@
     }
 
     function procesarJSON(json) {
-        // Guardar catálogos si vienen
         if (json.catalogos) {
             CATS = json.catalogos;
-            localStorage.setItem('agri_v57_cats', JSON.stringify(CATS));
+            localStorage.setItem('agri_v58_cats', JSON.stringify(CATS));
             actualizarDatalists();
         }
-
         const conf = json.config || {};
         const jorD = CATS.jornadas.find(j => norm(j.desc) === norm(conf.jornada)) || {id:"?", desc:conf.jornada};
 
-        // 1. Agregar Supervisor (Si tiene ID)
         if (conf.supId) {
             const sActD = CATS.actividades.find(a => norm(a.desc) === norm(conf.supAct)) || {id:"?", desc:conf.supAct};
-            sumarAlMaster({
-                cre: conf.supId, id_a: sActD.id, n_a: sActD.desc, 
-                id_c: "9", cua: "104", // Datos fijos según tu imagen
-                id_j: jorD.id, n_j: jorD.desc, lin: 0
-            });
+            sumarAlMaster({ cre: conf.supId, id_a: sActD.id, n_a: sActD.desc, id_c: "9", cua: "104", id_j: jorD.id, n_j: jorD.desc, lin: 0 });
         }
 
-        // 2. Agregar Obreros
         (json.avance || []).forEach(a => {
             const actNom = a.supAct || conf.supAct;
             const aD = CATS.actividades.find(ac => norm(ac.desc) === norm(actNom)) || {id:"?", desc:actNom};
             const cD = CATS.cuadros.find(cu => norm(cu.nombre) === norm(a.nomCuadro)) || {id:"?", nombre:a.nomCuadro};
-            
-            sumarAlMaster({
-                cre: a.obrero, id_a: aD.id, n_a: aD.desc,
-                id_c: cD.id, cua: cD.nombre,
-                id_j: jorD.id, n_j: jorD.desc, lin: 1
-            });
+            sumarAlMaster({ cre: a.obrero, id_a: aD.id, n_a: aD.desc, id_c: cD.id, cua: cD.nombre, id_j: jorD.id, n_j: jorD.desc, lin: 1 });
         });
         render();
     }
 
     function registrarManual() {
         const id = document.getElementById('manual_id').value.trim();
-        const nJ = document.getElementById('in_jor').value;
-        const nA = document.getElementById('in_act').value;
-        const nC = document.getElementById('in_cua').value;
+        const nJ = document.getElementById('in_jor').value, nA = document.getElementById('in_act').value, nC = document.getElementById('in_cua').value;
         const lin = parseInt(document.getElementById('manual_lineas').value) || 0;
-
         if(!id || !nA || !nC) return alert("Faltan datos");
-
         const jD = CATS.jornadas.find(j => norm(j.desc) === norm(nJ)) || {id:"?", desc:nJ};
         const aD = CATS.actividades.find(a => norm(a.desc) === norm(nA)) || {id:"?", desc:nA};
         const cD = CATS.cuadros.find(c => norm(c.nombre) === norm(nC)) || {id:"?", nombre:nC};
-
-        sumarAlMaster({
-            cre: id, id_a: aD.id, n_a: aD.desc,
-            id_c: cD.id, cua: cD.nombre,
-            id_j: jD.id, n_j: jD.desc, lin: lin
-        });
-        
-        document.getElementById('manual_id').value = "";
-        render();
+        sumarAlMaster({ cre: id, id_a: aD.id, n_a: aD.desc, id_c: cD.id, cua: cD.nombre, id_j: jD.id, n_j: jD.desc, lin: lin });
+        document.getElementById('manual_id').value = ""; render();
     }
 
     function sumarAlMaster(n) {
         let ex = CONCENTRADO.find(r => r.cre === n.cre);
-        if (ex) {
-            ex.lin += n.lin;
-            ex.n_a = n.n_a; // Actualiza a la última actividad
-            ex.cua = n.cua;
-        } else {
-            CONCENTRADO.push(n);
-        }
-        localStorage.setItem('agri_v57_master', JSON.stringify(CONCENTRADO));
+        if (ex) { ex.lin += n.lin; ex.n_a = n.n_a; ex.cua = n.cua; }
+        else { CONCENTRADO.push(n); }
+        localStorage.setItem('agri_v58_master', JSON.stringify(CONCENTRADO));
     }
 
     function render() {
         const tbody = document.querySelector('#tablaMaster tbody');
-        tbody.innerHTML = CONCENTRADO.map(d => `
-            <tr class="${d.lin === 0 ? 'row-sup' : ''}">
-                <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
-                <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
-                <td>${d.n_j}</td><td><b>${d.lin}</b></td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = CONCENTRADO.map(d => `<tr class="${d.lin === 0 ? 'row-sup' : ''}"><td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td><td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td><td>${d.n_j}</td><td><b>${d.lin}</b></td></tr>`).join('');
     }
 
     function nav(id) {
         view = id;
-        document.querySelectorAll('.container > div.hidden, .container > div:not(.card)').forEach(el => {
-            if(el.id) el.classList.add('hidden');
-        });
+        document.querySelectorAll('.container > div.hidden, .container > div:not(.card)').forEach(el => { if(el.id) el.classList.add('hidden'); });
         document.getElementById(id).classList.remove('hidden');
     }
 
@@ -208,27 +169,24 @@
         document.getElementById('list_jor').innerHTML = CATS.jornadas.map(j => `<option value="${j.desc}">`).join('');
         document.getElementById('list_act').innerHTML = CATS.actividades.map(a => `<option value="${a.desc}">`).join('');
         document.getElementById('list_cua').innerHTML = CATS.cuadros.map(c => `<option value="${c.nombre}">`).join('');
-        document.getElementById('cat_cua').value = CATS.cuadros.map(c => `${c.id},${c.nombre}`).join('\n');
-        document.getElementById('cat_act').value = CATS.actividades.map(a => `${a.id},${a.desc}`).join('\n');
     }
 
     function descargarExcel() {
+        const hoy = new Date();
+        const fecha = `${hoy.getDate()}_${hoy.getMonth() + 1}_${hoy.getFullYear()}`;
         let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS\n";
         CONCENTRADO.forEach(d => { csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin}\n`; });
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `CONCENTRADO_ASISTENCIA.csv`;
+        link.download = `REPORTE_${fecha}.csv`;
         link.click();
     }
 
-    function borrarTodo() { if(confirm("¿Limpiar todo el concentrado del día?")) { CONCENTRADO = []; localStorage.removeItem('agri_v57_master'); render(); } }
-
+    function borrarTodo() { if(confirm("¿Borrar reporte actual?")) { CONCENTRADO = []; localStorage.removeItem('agri_v58_master'); render(); } }
     window.onload = () => { actualizarDatalists(); render(); };
 </script>
 </body>
 </html>
-
-
 
 
