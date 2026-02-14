@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - Fixed</title>
+    <title>AgriCactus V47 - Final Fixed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -31,7 +31,6 @@
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
         #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; }
-        .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -160,47 +159,42 @@
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
-function crearSesionDesdeForm(prefix) {
-    const cuadroInput = document.getElementById(prefix + '_cuadro');
-    const actInput = document.getElementById(prefix + '_act');
-    const inicioInput = document.getElementById(prefix + '_inicio');
-    const finInput = document.getElementById(prefix + '_fin');
-    const modoInput = document.getElementById(prefix + '_modo'); // Este es el que suele fallar
 
-    if (!cuadroInput.value) return alert("Debes seleccionar un Cuadro");
+    // --- FUNCIONES DE SESIÓN Y CUADROS ---
+    function crearSesionDesdeForm(prefix) {
+        const cuadroInput = document.getElementById(prefix + '_cuadro');
+        const actInput = document.getElementById(prefix + '_act');
+        const inicioInput = document.getElementById(prefix + '_inicio');
+        const finInput = document.getElementById(prefix + '_fin');
+        const modoInput = document.getElementById(prefix + '_modo');
 
-    let sesion = {
-        uid: Date.now(),
-        cuadro: cuadroInput.value,
-        act: actInput.value,
-        inicio: parseInt(inicioInput.value) || 1,
-        fin: parseInt(finInput.value) || 10,
-        // Si el selector de modo no existe en el modal, usamos 'PAREJAS' por defecto
-        modo: modoInput ? modoInput.value : 'PAREJAS' 
-    };
+        if (!cuadroInput.value) return alert("Debes seleccionar un Cuadro");
 
-    DB.sesiones.push(sesion);
-    DB.currentSessionId = DB.sesiones.length - 1;
-    guardarTodo(); }
-    // Esta es la función que llama tu botón "AÑADIR"
-function confirmarNuevoCuadro() {
-    // 1. Ejecutamos la creación de la sesión
-    crearSesionDesdeForm('add');
-    
-    // 2. Cerramos el modal de "Nuevo Cuadro"
-    document.getElementById('modalAddCuadro').classList.remove('open');
-    
-    // 3. Limpiamos los campos para la próxima vez
-    document.getElementById('add_cuadro').value = "";
-    document.getElementById('add_act').value = "";
-    
-    // 4. Forzamos el refresco de las pestañas y el mapa
-    renderTabs();
-    renderSession();
-    
-    alert("✅ Cuadro añadido correctamente");
-}
+        let sesion = {
+            uid: Date.now(),
+            cuadro: cuadroInput.value,
+            act: actInput.value,
+            inicio: parseInt(inicioInput.value) || 1,
+            fin: parseInt(finInput.value) || 10,
+            modo: modoInput ? modoInput.value : 'PAREJAS' 
+        };
 
+        DB.sesiones.push(sesion);
+        DB.currentSessionId = DB.sesiones.length - 1;
+        guardarTodo();
+    }
+
+    function confirmarNuevoCuadro() {
+        crearSesionDesdeForm('add');
+        document.getElementById('modalAddCuadro').classList.remove('open');
+        document.getElementById('add_cuadro').value = "";
+        document.getElementById('add_act').value = "";
+        renderTabs();
+        renderSession();
+        alert("✅ Cuadro añadido correctamente");
+    }
+
+    // --- MAPA Y SCANNER ---
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
@@ -299,139 +293,79 @@ function confirmarNuevoCuadro() {
         if(val) { onScan(val); document.getElementById('manual_id').value = ""; }
     }
 
+    // --- AVANCE MASIVO ---
     function ejecutarAvanceMasivoFix() {
-    let s = DB.sesiones[DB.currentSessionId];
-    if(!confirm(`¿AVANZAR GRUPOS EN CUADRO ${s.cuadro}?`)) return;
+        let s = DB.sesiones[DB.currentSessionId];
+        if(!confirm(`¿AVANZAR GRUPOS EN CUADRO ${s.cuadro}?`)) return;
+        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        if(activos.length === 0) return alert("Nadie para mover.");
 
-    // 1. Identificamos quiénes están trabajando en este cuadro ahorita
-    let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-    if(activos.length === 0) return alert("Nadie para mover.");
+        let grupos = {};
+        activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
 
-    // 2. Agrupamos a las personas por su fila actual (para mover parejas juntas)
-    let grupos = {};
-    activos.forEach(t => {
-        if(!grupos[t.fila]) grupos[t.fila] = [];
-        grupos[t.fila].push(t);
-    });
+        let filasOcupadas = Object.keys(grupos).map(Number).sort((a, b) => b - a);
+        let maxFilaActual = Math.max(...filasOcupadas);
+        let punteroBusqueda = maxFilaActual + 1;
+        let movidosCount = 0;
 
-    // 3. Ordenamos las filas de mayor a menor para no "chocar" al movernos
-    let filasOcupadas = Object.keys(grupos).map(Number).sort((a, b) => b - a);
-    
-    // Determinamos desde dónde empezar a buscar espacio (después de la última fila ocupada)
-    let maxFilaActual = Math.max(...filasOcupadas);
-    let punteroBusqueda = maxFilaActual + 1;
-
-    let movidosCount = 0;
-
-    // 4. Procesamos cada grupo (fila por fila)
-    // Nota: Para que sea un "avance real", procesamos de la fila más adelantada a la más atrasada
-    filasOcupadas.reverse().forEach(numFila => {
-        let grupo = grupos[numFila];
-        
-        // Buscamos la siguiente fila que no esté quemada y esté vacía
-        let nuevaFila = -1;
-        for (let f = punteroBusqueda; f <= s.fin; f++) {
-            let esQuemada = DB.avance.some(a => a.cuadroUid === s.uid && a.fila === f && a.fin !== null);
-            let ocupadaAhora = DB.staff.some(st => st.cuadroUid === s.uid && st.fila === f);
-            
-            if (!esQuemada && !ocupadaAhora) {
-                nuevaFila = f;
-                break;
+        filasOcupadas.reverse().forEach(numFila => {
+            let grupo = grupos[numFila];
+            let nuevaFila = -1;
+            for (let f = punteroBusqueda; f <= s.fin; f++) {
+                let esQuemada = DB.avance.some(a => a.cuadroUid === s.uid && a.fila === f && a.fin !== null);
+                let ocupadaAhora = DB.staff.some(st => st.cuadroUid === s.uid && st.fila === f);
+                if (!esQuemada && !ocupadaAhora) { nuevaFila = f; break; }
             }
-        }
-
-        if (nuevaFila !== -1 && nuevaFila <= s.fin) {
-            grupo.forEach(t => {
-                cerrarTarea(t); // Terminamos la fila actual
-                asignarFilaEspecifica(t, nuevaFila, s); // Asignamos la nueva
-            });
-            movidosCount++;
-            punteroBusqueda = nuevaFila + 1; // El siguiente grupo debe ir después de este
-        }
-    });
-
-    guardarTodo();
-    renderMapa();
-    alert(`✅ Avance completado: ${movidosCount} filas movidas.`);
-}
-
-    function abrirEditor() {
-    let s = DB.sesiones[DB.currentSessionId];
-    const list = document.getElementById('editorList');
-    list.innerHTML = "";
-    
-    // Obtenemos solo los que están trabajando en el cuadro que estamos viendo
-    let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-    
-    if(activos.length === 0) {
-        list.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>No hay personal activo en este cuadro.</p>";
+            if (nuevaFila !== -1 && nuevaFila <= s.fin) {
+                grupo.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, nuevaFila, s); });
+                movidosCount++;
+                punteroBusqueda = nuevaFila + 1;
+            }
+        });
+        guardarTodo(); renderMapa(); alert(`✅ Avance: ${movidosCount} filas.`);
     }
 
-    activos.forEach((st) => {
-        list.innerHTML += `
-            <div class="edit-item" style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #333; background:#222; margin-bottom:5px; border-radius:8px;">
-                <div>
-                    <b style="color:var(--active-tab); font-size:14px;">${st.id}</b><br>
-                    <small style="color:#aaa;">Fila: ${st.fila}</small>
-                </div>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn-sm" style="background:var(--blue); color:white; border:none; border-radius:5px; padding:8px 12px;" onclick="modificarFilaManual('${st.id}')">EDITAR</button>
-                    <button class="btn-sm" style="background:var(--danger); color:white; border:none; border-radius:5px; padding:8px 12px;" onclick="borrarRegistroManual('${st.id}')">BORRAR</button>
+    // --- EDITOR ---
+    function abrirEditor() {
+        let s = DB.sesiones[DB.currentSessionId];
+        const list = document.getElementById('editorList');
+        list.innerHTML = "";
+        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        if(activos.length === 0) list.innerHTML = "<p style='text-align:center; padding:20px;'>Vacío</p>";
+        activos.forEach((st) => {
+            list.innerHTML += `<div class="edit-item">
+                <div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn-sm" style="background:var(--blue);" onclick="modificarFilaManual('${st.id}')">EDITAR</button>
+                    <button class="btn-sm" style="background:var(--danger);" onclick="borrarRegistroManual('${st.id}')">BORRAR</button>
                 </div>
             </div>`;
-    });
-    document.getElementById('modalEditor').classList.add('open');
-}
-
-function modificarFilaManual(id) {
-    let s = DB.sesiones[DB.currentSessionId];
-    let trabajador = DB.staff.find(x => x.id === id);
-    
-    let nuevaFila = prompt(`ID: ${id}\nFila actual: ${trabajador.fila}\n\nIngresa el nuevo número de fila:`, trabajador.fila);
-    
-    if (nuevaFila !== null && nuevaFila !== "" && !isNaN(nuevaFila)) {
-        let filaNum = parseInt(nuevaFila);
-        
-        if (filaNum < s.inicio || filaNum > s.fin) {
-            alert(`⚠️ Error: La fila debe estar entre ${s.inicio} y ${s.fin}`);
-            return;
-        }
-
-        // Cerramos la tarea técnica en la fila anterior (sin borrar el registro de tiempo)
-        // Y lo movemos a la nueva fila creando un nuevo registro de avance
-        cerrarTarea(trabajador);
-        asignarFilaEspecifica(trabajador, filaNum, s);
-        
-        guardarTodo();
-        renderMapa();
-        abrirEditor(); // Refrescar lista del editor
+        });
+        document.getElementById('modalEditor').classList.add('open');
     }
-}
 
-function borrarRegistroManual(id) {
-    if(!confirm(`¿ELIMINAR A ${id} DE ESTE CUADRO?\n\nEsto liberará la fila ${DB.staff.find(x=>x.id===id).fila} y borrará su registro de inicio actual.`)) return;
-    
-    let st = DB.staff.find(x => x.id === id);
-    if(st) {
-        // 1. Buscamos el registro de avance que NO tiene hora de fin (el activo) y lo borramos del array
-        let indexAvance = DB.avance.findIndex(a => a.obrero === id && a.fin === null && a.cuadroUid === st.cuadroUid);
-        if(indexAvance !== -1) {
-            DB.avance.splice(indexAvance, 1);
+    function modificarFilaManual(id) {
+        let s = DB.sesiones[DB.currentSessionId];
+        let trabajador = DB.staff.find(x => x.id === id);
+        let n = prompt("Nueva fila:", trabajador.fila);
+        if (n && !isNaN(n)) {
+            let f = parseInt(n);
+            if (f < s.inicio || f > s.fin) return alert("Rango inválido");
+            cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, f, s);
+            guardarTodo(); renderMapa(); abrirEditor();
         }
-        
-        // 2. Limpiamos el estado del trabajador para que el sistema lo vea como "disponible"
-        st.fila = null;
-        st.cuadroUid = null;
-        
-        // 3. Si no tiene otros registros en el día (estaba recién ingresado), podrías decidir si quitarlo del staff global
-        // Por ahora lo dejamos en el staff pero "libre" para ser re-escaneado.
-
-        guardarTodo();
-        renderMapa();
-        renderSession();
-        abrirEditor(); 
     }
-}
+
+    function borrarRegistroManual(id) {
+        if(!confirm(`¿Borrar a ${id}?`)) return;
+        let st = DB.staff.find(x => x.id === id);
+        if(st) {
+            let idx = DB.avance.findIndex(a => a.obrero === id && a.fin === null && a.cuadroUid === st.cuadroUid);
+            if(idx !== -1) DB.avance.splice(idx, 1);
+            st.fila = null; st.cuadroUid = null;
+            guardarTodo(); renderMapa(); renderSession(); abrirEditor(); 
+        }
+    }
 
     function confirmarFinDia() {
         if(confirm("¿Cerrar día?")) {
@@ -443,18 +377,11 @@ function borrarRegistroManual(id) {
             location.reload();
         }
     }
+
+    function abrirHistorial() { alert("Función de historial abierta."); }
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
 
 
