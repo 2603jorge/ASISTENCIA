@@ -181,7 +181,24 @@ function crearSesionDesdeForm(prefix) {
 
     DB.sesiones.push(sesion);
     DB.currentSessionId = DB.sesiones.length - 1;
-    guardarTodo();
+    guardarTodo(); }
+    // Esta es la función que llama tu botón "AÑADIR"
+function confirmarNuevoCuadro() {
+    // 1. Ejecutamos la creación de la sesión
+    crearSesionDesdeForm('add');
+    
+    // 2. Cerramos el modal de "Nuevo Cuadro"
+    document.getElementById('modalAddCuadro').classList.remove('open');
+    
+    // 3. Limpiamos los campos para la próxima vez
+    document.getElementById('add_cuadro').value = "";
+    document.getElementById('add_act').value = "";
+    
+    // 4. Forzamos el refresco de las pestañas y el mapa
+    renderTabs();
+    renderSession();
+    
+    alert("✅ Cuadro añadido correctamente");
 }
 
     function irAlMapa() {
@@ -429,6 +446,7 @@ function borrarRegistroManual(id) {
 </script>
 </body>
 </html>
+
 
 
 
