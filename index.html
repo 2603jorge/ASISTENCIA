@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - Final Fixed</title>
+    <title>AgriCactus V47 - Final PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -26,11 +26,11 @@
         .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
         .active-row { background: var(--sec); border-color: #ffca28; color: black; }
         .row-tag { font-size: 7px; position: absolute; bottom: 1px; width: 100%; text-align: center; overflow: hidden; }
-        .badge { position: absolute; top: 0; right: 0; background: var(--blue); color: white; font-size: 7px; padding: 1px 3px; border-radius: 0 0 0 4px; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
         #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; }
+        .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
 <body>
@@ -64,18 +64,18 @@
 </div>
 
 <div id="viewMain" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div id="disp_resp">--</div>
-        <div id="disp_count_global">0/0</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+        <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
+        <div id="disp_count_global" style="font-size:12px;">0/0</div>
     </div>
     <div class="tabs-container" id="tabsContainer"></div>
     <div id="reader"></div>
     <div class="flex-row" style="margin-bottom: 10px;">
-        <input type="text" id="manual_id" placeholder="ID Manual">
+        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;">
         <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
     </div>
     <div id="mapGrid" class="grid-map"></div>
-    <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO</button>
+    <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
         <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
@@ -87,11 +87,15 @@
 <div id="modalAddCuadro" class="modal">
     <h2>➕ NUEVO CUADRO</h2>
     <div class="card">
-        <input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
-        <input type="text" id="add_act" list="lista_actividades">
-        <div class="flex-row"><input type="number" id="add_inicio"><input type="number" id="add_fin"></div>
+        <label>Seleccionar Cuadro</label><input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
+        <label>Actividad</label><input type="text" id="add_act" list="lista_actividades">
+        <div class="flex-row">
+            <div><label>Desde</label><input type="number" id="add_inicio"></div>
+            <div><label>Hasta</label><input type="number" id="add_fin"></div>
+        </div>
     </div>
     <button class="btn btn-g" onclick="confirmarNuevoCuadro()">AÑADIR</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
 </div>
 
 <datalist id="lista_cuadros"></datalist>
@@ -118,6 +122,7 @@
         if (DB.sesiones.length > 0) irAlMapa();
     };
 
+    // --- CONFIGURACIÓN ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
 
     function procesarYGuardar() {
@@ -150,35 +155,28 @@
         }
     }
 
+    // --- INICIO Y SESIONES ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const total = parseInt(document.getElementById('conf_total_global').value);
-        if(!resp || isNaN(total)) return alert("Faltan datos");
+        if(!resp || isNaN(total)) return alert("Faltan datos de supervisor o total personal");
         DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
         DB.sesiones = []; DB.staff = []; DB.avance = [];
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
 
-    // --- FUNCIONES DE SESIÓN Y CUADROS ---
     function crearSesionDesdeForm(prefix) {
-        const cuadroInput = document.getElementById(prefix + '_cuadro');
-        const actInput = document.getElementById(prefix + '_act');
-        const inicioInput = document.getElementById(prefix + '_inicio');
-        const finInput = document.getElementById(prefix + '_fin');
-        const modoInput = document.getElementById(prefix + '_modo');
-
-        if (!cuadroInput.value) return alert("Debes seleccionar un Cuadro");
-
+        const cuadro = document.getElementById(prefix + '_cuadro').value;
+        if (!cuadro) return alert("Selecciona un cuadro");
         let sesion = {
             uid: Date.now(),
-            cuadro: cuadroInput.value,
-            act: actInput.value,
-            inicio: parseInt(inicioInput.value) || 1,
-            fin: parseInt(finInput.value) || 10,
-            modo: modoInput ? modoInput.value : 'PAREJAS' 
+            cuadro: cuadro,
+            act: document.getElementById(prefix + '_act').value,
+            inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1,
+            fin: parseInt(document.getElementById(prefix + '_fin').value) || 10,
+            modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS'
         };
-
         DB.sesiones.push(sesion);
         DB.currentSessionId = DB.sesiones.length - 1;
         guardarTodo();
@@ -187,24 +185,16 @@
     function confirmarNuevoCuadro() {
         crearSesionDesdeForm('add');
         document.getElementById('modalAddCuadro').classList.remove('open');
-        document.getElementById('add_cuadro').value = "";
-        document.getElementById('add_act').value = "";
-        renderTabs();
-        renderSession();
-        alert("✅ Cuadro añadido correctamente");
+        renderTabs(); renderSession();
     }
 
-    // --- MAPA Y SCANNER ---
+    // --- MAPA Y OPERACIÓN ---
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
-        renderTabs();
-        renderSession();
-        if(!scanner) {
-            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            scanner.render(onScan);
-        }
+        renderTabs(); renderSession();
+        if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
     }
 
     function renderTabs() {
@@ -214,59 +204,37 @@
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
-    function renderSession() {
-        renderMapa();
-        let total = DB.staff.length;
-        document.getElementById('disp_count_global').innerText = `${total}/${DB.globalConfig.totalStaff} Personal`;
-    }
-
     function onScan(id) {
-    id = id.trim();
-    let now = Date.now();
-    if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
-    lastScanTime[id] = now;
+        id = id.trim();
+        let now = Date.now();
+        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
+        lastScanTime[id] = now;
 
-    let sesionActual = DB.sesiones[DB.currentSessionId]; // El cuadro que tienes abierto en la pestaña
-    let trabajador = DB.staff.find(s => s.id === id);
+        let sesionActual = DB.sesiones[DB.currentSessionId];
+        let trabajador = DB.staff.find(s => s.id === id);
 
-    // 1. Si es un trabajador nuevo, lo agregamos
-    if(!trabajador) {
-        if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ LímITE ALCANZADO");
-        trabajador = { id: id, fila: null, cuadroUid: null };
-        DB.staff.push(trabajador);
-    }
-
-    // 2. Lógica de Cambio de Cuadro o Fila
-    if(trabajador.fila !== null) {
-        // Si ya está en ESTE mismo cuadro y pestaña
-        if(trabajador.cuadroUid === sesionActual.uid) {
-            let n = prompt(`Ya está en este cuadro (Fila ${trabajador.fila}). ¿Mover a qué fila?`, buscarSiguienteFilaVacia(sesionActual));
-            if(n) { 
-                cerrarTarea(trabajador); 
-                asignarFilaEspecifica(trabajador, parseInt(n), sesionActual); 
-            }
-        } 
-        // ¡AQUÍ ESTÁ EL TRUCO!: Si viene de otro cuadro que ya terminó
-        else {
-            let cuadroAnterior = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
-            let nombreViejo = cuadroAnterior ? cuadroAnterior.cuadro : "OTRO";
-            
-            if(confirm(`El trabajador viene del cuadro ${nombreViejo}. ¿Deseas pasarlo al cuadro ACTUAL (${sesionActual.cuadro})?`)) {
-                cerrarTarea(trabajador); // Cerramos su labor allá
-                asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual); // Lo metemos aquí
-                audioBeep.play();
-            }
+        if(!trabajador) {
+            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite alcanzado");
+            trabajador = { id: id, fila: null, cuadroUid: null };
+            DB.staff.push(trabajador);
         }
-    } else {
-        // Si estaba libre, entra directo al cuadro actual
-        asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
-        audioBeep.play();
+
+        if(trabajador.fila !== null) {
+            if(trabajador.cuadroUid === sesionActual.uid) {
+                let n = prompt(`Ya está en Fila ${trabajador.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sesionActual));
+                if(n) { cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, parseInt(n), sesionActual); }
+            } else {
+                let s_vieja = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
+                if(confirm(`Viene de ${s_vieja?s_vieja.cuadro:'OTRO'}. ¿Pasar al cuadro ACTUAL (${sesionActual.cuadro})?`)) {
+                    cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
+                }
+            }
+        } else {
+            asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
+        }
+        audioBeep.play(); guardarTodo(); renderMapa(); renderSession();
     }
-    
-    guardarTodo(); 
-    renderMapa(); 
-    renderSession();
-}
+
     function buscarSiguienteFilaVacia(sesion) {
         let quemadas = new Set(DB.avance.filter(a => a.cuadroUid === sesion.uid && a.fin !== null).map(a => a.fila));
         for(let i = sesion.inicio; i <= sesion.fin; i++) {
@@ -277,10 +245,10 @@
         return sesion.fin + 1;
     }
 
-    function asignarFilaEspecifica(trabajador, fila, sesion) {
-        if(fila > sesion.fin) return alert("Cuadro lleno");
-        trabajador.fila = fila; trabajador.cuadroUid = sesion.uid;
-        DB.avance.push({ fila: fila, obrero: trabajador.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: sesion.cuadro, cuadroUid: sesion.uid, supAct: sesion.act });
+    function asignarFilaEspecifica(t, fila, s) {
+        if(fila > s.fin) return alert("Cuadro lleno");
+        t.fila = fila; t.cuadroUid = s.uid;
+        DB.avance.push({ fila: fila, obrero: t.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act });
     }
 
     function cerrarTarea(t) {
@@ -292,68 +260,65 @@
     function renderMapa() {
         let s = DB.sesiones[DB.currentSessionId];
         const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
-        let terminadas = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
+        let term = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
         for(let i = s.inicio; i <= s.fin; i++) {
             let div = document.createElement('div');
             let gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
-            div.className = "row-item " + (gente.length ? "active-row" : (terminadas.has(i) ? "done" : ""));
+            div.className = "row-item " + (gente.length ? "active-row" : (term.has(i) ? "done" : ""));
             div.innerHTML = `<span>${i}</span>` + (gente.length ? `<span class="row-tag">${gente.map(g=>g.id).join(',')}</span>` : "");
             grid.appendChild(div);
         }
     }
 
-    function guardarTodo() {
-        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
-        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
-        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
+    function renderSession() {
+        renderMapa();
+        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff} Personal`;
     }
 
     function registrarManual() {
-        let val = document.getElementById('manual_id').value.toUpperCase();
-        if(val) { onScan(val); document.getElementById('manual_id').value = ""; }
+        let v = document.getElementById('manual_id').value.toUpperCase();
+        if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
 
-    // --- AVANCE MASIVO ---
+    // --- AVANCE MASIVO / TRANSFERIR ---
     function ejecutarAvanceMasivoFix() {
-        let s = DB.sesiones[DB.currentSessionId];
-        if(!confirm(`¿AVANZAR GRUPOS EN CUADRO ${s.cuadro}?`)) return;
-        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-        if(activos.length === 0) return alert("Nadie para mover.");
+        let s_origen = DB.sesiones[DB.currentSessionId];
+        let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
+        if (!activos.length) return alert("Sin personal activo.");
 
-        let grupos = {};
-        activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-
-        let filasOcupadas = Object.keys(grupos).map(Number).sort((a, b) => b - a);
-        let maxFilaActual = Math.max(...filasOcupadas);
-        let punteroBusqueda = maxFilaActual + 1;
-        let movidosCount = 0;
-
-        filasOcupadas.reverse().forEach(numFila => {
-            let grupo = grupos[numFila];
-            let nuevaFila = -1;
-            for (let f = punteroBusqueda; f <= s.fin; f++) {
-                let esQuemada = DB.avance.some(a => a.cuadroUid === s.uid && a.fila === f && a.fin !== null);
-                let ocupadaAhora = DB.staff.some(st => st.cuadroUid === s.uid && st.fila === f);
-                if (!esQuemada && !ocupadaAhora) { nuevaFila = f; break; }
+        if (buscarSiguienteFilaVacia(s_origen) > s_origen.fin) {
+            let otras = DB.sesiones.filter(s => s.uid !== s_origen.uid);
+            if (!otras.length) return alert("Cuadro terminado. No hay a donde ir.");
+            let m = otras.map((o, i) => `${i+1}. ${o.cuadro}`).join('\n');
+            let e = prompt(`¿A qué cuadro transferir?\n${m}`);
+            let d = otras[parseInt(e)-1];
+            if (d && confirm(`Transferir a ${d.cuadro}?`)) {
+                activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(d), d); });
+                DB.currentSessionId = DB.sesiones.indexOf(d);
+                guardarTodo(); renderTabs(); renderSession();
             }
-            if (nuevaFila !== -1 && nuevaFila <= s.fin) {
-                grupo.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, nuevaFila, s); });
-                movidosCount++;
-                punteroBusqueda = nuevaFila + 1;
-            }
-        });
-        guardarTodo(); renderMapa(); alert(`✅ Avance: ${movidosCount} filas.`);
+        } else {
+            if (!confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) return;
+            let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+            let filas = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
+            let ptr = buscarSiguienteFilaVacia(s_origen);
+            filas.reverse().forEach(f => {
+                let g = grupos[f]; let n = -1;
+                for(let i=ptr; i<=s_origen.fin; i++) {
+                    if(!DB.avance.some(a=>a.cuadroUid===s_origen.uid && a.fila===i && a.fin!==null) && !DB.staff.some(st=>st.cuadroUid===s_origen.uid && st.fila===i)) { n=i; break; }
+                }
+                if(n!==-1) { g.forEach(t=>{ cerrarTarea(t); asignarFilaEspecifica(t, n, s_origen); }); ptr=n+1; }
+            });
+            guardarTodo(); renderMapa();
+        }
     }
 
     // --- EDITOR ---
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
-        const list = document.getElementById('editorList');
-        list.innerHTML = "";
+        const list = document.getElementById('editorList'); list.innerHTML = "";
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-        if(activos.length === 0) list.innerHTML = "<p style='text-align:center; padding:20px;'>Vacío</p>";
-        activos.forEach((st) => {
+        activos.forEach(st => {
             list.innerHTML += `<div class="edit-item">
                 <div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div>
                 <div style="display:flex; gap:5px;">
@@ -367,29 +332,29 @@
 
     function modificarFilaManual(id) {
         let s = DB.sesiones[DB.currentSessionId];
-        let trabajador = DB.staff.find(x => x.id === id);
-        let n = prompt("Nueva fila:", trabajador.fila);
+        let t = DB.staff.find(x=>x.id===id);
+        let n = prompt("Fila:", t.fila);
         if (n && !isNaN(n)) {
             let f = parseInt(n);
             if (f < s.inicio || f > s.fin) return alert("Rango inválido");
-            cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, f, s);
+            cerrarTarea(t); asignarFilaEspecifica(t, f, s);
             guardarTodo(); renderMapa(); abrirEditor();
         }
     }
 
     function borrarRegistroManual(id) {
         if(!confirm(`¿Borrar a ${id}?`)) return;
-        let st = DB.staff.find(x => x.id === id);
+        let st = DB.staff.find(x=>x.id===id);
         if(st) {
-            let idx = DB.avance.findIndex(a => a.obrero === id && a.fin === null && a.cuadroUid === st.cuadroUid);
+            let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid);
             if(idx !== -1) DB.avance.splice(idx, 1);
             st.fila = null; st.cuadroUid = null;
-            guardarTodo(); renderMapa(); renderSession(); abrirEditor(); 
+            guardarTodo(); renderMapa(); renderSession(); abrirEditor();
         }
     }
 
     function confirmarFinDia() {
-        if(confirm("¿Cerrar día?")) {
+        if(confirm("¿Cerrar día y limpiar?")) {
             DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
             DB.archive.push({ fecha: new Date().toLocaleDateString(), avance: DB.avance });
             localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
@@ -399,11 +364,17 @@
         }
     }
 
-    function abrirHistorial() { alert("Función de historial abierta."); }
+    function guardarTodo() {
+        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
+    }
+
+    function abrirHistorial() { alert("Historial guardado en memoria local."); }
 </script>
 </body>
 </html>
-
 
 
 
