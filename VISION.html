@@ -172,16 +172,31 @@
     const normalizar = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
 
     // Iniciar Scanner con mejor compatibilidad móvil
-    const scanner = new Html5Qrcode("reader");
-    scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 200 }, (text) => {
-        try {
-            const obj = JSON.parse(text);
-            procesarJSON(obj);
-        } catch(e) {
-            document.getElementById('manual_id').value = text;
+    // BUSCA ESTA PARTE EN TU SCRIPT Y REEMPLÁZALA
+const scanner = new Html5Qrcode("reader");
+const config = { fps: 15, qrbox: 200, aspectRatio: 1.0 };
+
+scanner.start({ facingMode: "environment" }, config, (text) => {
+    try {
+        // Intenta ver si es un reporte JSON completo
+        const obj = JSON.parse(text);
+        procesarJSON(obj);
+        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+        alert("Reporte JSON cargado ✅");
+    } catch(e) {
+        // SI NO ES JSON, ES UNA CREDENCIAL:
+        // Buscamos el campo de texto y le asignamos el valor escaneado
+        const campoManual = document.getElementById('manual_id');
+        if (campoManual) {
+            campoManual.value = text.trim(); // Asigna el texto escaneado al input
             new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+            
+            // Efecto visual para confirmar que se leyó
+            campoManual.style.backgroundColor = "#2e7d32";
+            setTimeout(() => { campoManual.style.backgroundColor = "#0f172a"; }, 500);
         }
-    });
+    }
+}).catch(err => console.error("Error al iniciar cámara: ", err));
 
     function guardarCatalogos() {
         const txtC = document.getElementById('csv_cuadros').value;
@@ -288,5 +303,6 @@
 </script>
 </body>
 </html>
+
 
 
