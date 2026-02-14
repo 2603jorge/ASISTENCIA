@@ -282,37 +282,56 @@
 
     // --- AVANCE MASIVO / TRANSFERIR ---
     function ejecutarAvanceMasivoFix() {
-        let s_origen = DB.sesiones[DB.currentSessionId];
-        let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
+    let s_origen = DB.sesiones[DB.currentSessionId];
+    let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
+    
+    if (activos.length === 0) return alert("No hay nadie activo en este cuadro.");
 
-        if (buscarSiguienteFilaVacia(s_origen) > s_origen.fin) {
-            let otras = DB.sesiones.filter(s => s.uid !== s_origen.uid);
-            if (!otras.length) return alert("Cuadro terminado. No hay a donde ir.");
-            let m = otras.map((o, i) => `${i+1}. ${o.cuadro}`).join('\n');
-            let e = prompt(`¿A qué cuadro transferir?\n${m}`);
-            let d = otras[parseInt(e)-1];
-            if (d && confirm(`Transferir a ${d.cuadro}?`)) {
-                activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(d), d); });
-                DB.currentSessionId = DB.sesiones.indexOf(d);
+    // 1. Buscamos si hay lugar en el cuadro actual
+    let ptr = buscarSiguienteFilaVacia(s_origen);
+
+    // 2. ¿EL CUADRO ESTÁ LLENO?
+    if (ptr > s_origen.fin) {
+        // Buscamos si existe OTRA pestaña abierta
+        let s_destino = DB.sesiones.find(s => s.uid !== s_origen.uid);
+
+        if (s_destino) {
+            if (confirm(`¡CUADRO LLENO! ¿Pasar a todos automáticamente al cuadro ${s_destino.cuadro}?`)) {
+                activos.forEach(t => {
+                    cerrarTarea(t);
+                    asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino);
+                });
+                // Cambiamos la vista al nuevo cuadro automáticamente
+                DB.currentSessionId = DB.sesiones.indexOf(s_destino);
                 guardarTodo(); renderTabs(); renderSession();
+                alert(`✅ Todos movidos al cuadro ${s_destino.cuadro}`);
             }
         } else {
-            if (!confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) return;
-            let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+            alert("⛔ CUADRO LLENO. Debes añadir un nuevo cuadro (+) para poder mover a la gente.");
+        }
+    } else {
+        // 3. SI HAY ESPACIO: Avance normal dentro del mismo cuadro
+        if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
+            let grupos = {};
+            activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
             let filas = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
-            let ptr = buscarSiguienteFilaVacia(s_origen);
+            
             filas.reverse().forEach(f => {
                 let g = grupos[f]; let n = -1;
                 for(let i=ptr; i<=s_origen.fin; i++) {
-                    if(!DB.avance.some(a=>a.cuadroUid===s_origen.uid && a.fila===i && a.fin!==null) && !DB.staff.some(st=>st.cuadroUid===s_origen.uid && st.fila===i)) { n=i; break; }
+                    let quemada = DB.avance.some(a=>a.cuadroUid===s_origen.uid && a.fila===i && a.fin!==null);
+                    let ocupada = DB.staff.some(st=>st.cuadroUid===s_origen.uid && st.fila===i);
+                    if(!quemada && !ocupada) { n=i; break; }
                 }
-                if(n!==-1) { g.forEach(t=>{ cerrarTarea(t); asignarFilaEspecifica(t, n, s_origen); }); ptr=n+1; }
+                if(n!==-1) { 
+                    g.forEach(t=>{ cerrarTarea(t); asignarFilaEspecifica(t, n, s_origen); }); 
+                    ptr=n+1; 
+                }
             });
             guardarTodo(); renderMapa();
         }
     }
-
+}
     // --- EDITOR ---
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
@@ -375,6 +394,7 @@
 </script>
 </body>
 </html>
+
 
 
 
