@@ -66,6 +66,7 @@
 <div id="viewMain" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
         <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
+        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="width:auto; margin:0;">📡 CORTE PARCIAL</button>
         <div id="disp_count_global" style="font-size:12px;">0/0</div>
     </div>
     <div class="tabs-container" id="tabsContainer"></div>
@@ -80,6 +81,15 @@
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
         <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
     </div>
+</div>
+
+<div id="viewPartial" class="modal" style="background:#111;">
+    <h2 style="color:var(--info); text-align:center;">📡 AVANCE EN VIVO</h2>
+    <div class="card" style="text-align:center;">
+        <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
+        <p id="partial_summary" style="font-size:12px; color:#aaa; margin-top:10px;"></p>
+    </div>
+    <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
 
 <div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
@@ -122,7 +132,6 @@
         if (DB.sesiones.length > 0) irAlMapa();
     };
 
-    // --- CONFIGURACIÓN ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
 
     function procesarYGuardar() {
@@ -155,7 +164,6 @@
         }
     }
 
-    // --- INICIO Y SESIONES ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const total = parseInt(document.getElementById('conf_total_global').value);
@@ -188,7 +196,6 @@
         renderTabs(); renderSession();
     }
 
-    // --- MAPA Y OPERACIÓN ---
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
@@ -225,7 +232,7 @@
                 if(n) { cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, parseInt(n), sesionActual); }
             } else {
                 let s_vieja = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
-                if(confirm(`Viene de ${s_vieja?s_vieja.cuadro:'OTRO'}. ¿Pasar al cuadro ACTUAL (${sesionActual.cuadro})?`)) {
+                if(confirm(`Viene de ${s_vieja?s_vieja.cuadro:'OTRO'}. ¿Pasar al cuadro ACTUAL?`)) {
                     cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
                 }
             }
@@ -280,59 +287,58 @@
         if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
 
-    // --- AVANCE MASIVO / TRANSFERIR ---
     function ejecutarAvanceMasivoFix() {
-    let s_origen = DB.sesiones[DB.currentSessionId];
-    let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
-    
-    if (activos.length === 0) return alert("No hay nadie activo en este cuadro.");
+        let s_origen = DB.sesiones[DB.currentSessionId];
+        let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
+        if (!activos.length) return alert("Sin personal activo.");
 
-    // 1. Buscamos si hay lugar en el cuadro actual
-    let ptr = buscarSiguienteFilaVacia(s_origen);
-
-    // 2. ¿EL CUADRO ESTÁ LLENO?
-    if (ptr > s_origen.fin) {
-        // Buscamos si existe OTRA pestaña abierta
-        let s_destino = DB.sesiones.find(s => s.uid !== s_origen.uid);
-
-        if (s_destino) {
-            if (confirm(`¡CUADRO LLENO! ¿Pasar a todos automáticamente al cuadro ${s_destino.cuadro}?`)) {
-                activos.forEach(t => {
-                    cerrarTarea(t);
-                    asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino);
-                });
-                // Cambiamos la vista al nuevo cuadro automáticamente
-                DB.currentSessionId = DB.sesiones.indexOf(s_destino);
-                guardarTodo(); renderTabs(); renderSession();
-                alert(`✅ Todos movidos al cuadro ${s_destino.cuadro}`);
-            }
+        let ptr = buscarSiguienteFilaVacia(s_origen);
+        if (ptr > s_origen.fin) {
+            let s_destino = DB.sesiones.find(s => s.uid !== s_origen.uid);
+            if (s_destino) {
+                if (confirm(`¡CUADRO LLENO! ¿Pasar a todos automáticamente al cuadro ${s_destino.cuadro}?`)) {
+                    activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); });
+                    DB.currentSessionId = DB.sesiones.indexOf(s_destino);
+                    guardarTodo(); renderTabs(); renderSession();
+                }
+            } else { alert("⛔ CUADRO LLENO. Crea otra pestaña (+) para transferir."); }
         } else {
-            alert("⛔ CUADRO LLENO. Debes añadir un nuevo cuadro (+) para poder mover a la gente.");
-        }
-    } else {
-        // 3. SI HAY ESPACIO: Avance normal dentro del mismo cuadro
-        if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
-            let grupos = {};
-            activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-            let filas = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
-            
-            filas.reverse().forEach(f => {
-                let g = grupos[f]; let n = -1;
-                for(let i=ptr; i<=s_origen.fin; i++) {
-                    let quemada = DB.avance.some(a=>a.cuadroUid===s_origen.uid && a.fila===i && a.fin!==null);
-                    let ocupada = DB.staff.some(st=>st.cuadroUid===s_origen.uid && st.fila===i);
-                    if(!quemada && !ocupada) { n=i; break; }
-                }
-                if(n!==-1) { 
-                    g.forEach(t=>{ cerrarTarea(t); asignarFilaEspecifica(t, n, s_origen); }); 
-                    ptr=n+1; 
-                }
-            });
-            guardarTodo(); renderMapa();
+            if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
+                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+                let filas = Object.keys(grupos).map(Number).sort((a,b)=>b-a);
+                filas.reverse().forEach(f => {
+                    let g = grupos[f]; let n = -1;
+                    for(let i=ptr; i<=s_origen.fin; i++) {
+                        if(!DB.avance.some(a=>a.cuadroUid===s_origen.uid && a.fila===i && a.fin!==null) && !DB.staff.some(st=>st.cuadroUid===s_origen.uid && st.fila===i)) { n=i; break; }
+                    }
+                    if(n!==-1) { g.forEach(t=>{ cerrarTarea(t); asignarFilaEspecifica(t, n, s_origen); }); ptr=n+1; }
+                });
+                guardarTodo(); renderMapa();
+            }
         }
     }
-}
-    // --- EDITOR ---
+
+    // --- FUNCIONES CORTE PARCIAL ---
+    function generarCorteParcial() {
+        let qrData = {
+            sup: DB.globalConfig.resp,
+            total: DB.staff.length,
+            activos: DB.staff.filter(s => s.fila !== null).length,
+            avance: DB.avance.length,
+            time: new Date().toLocaleTimeString()
+        };
+        document.getElementById('viewMain').classList.remove('open');
+        document.getElementById('viewPartial').classList.add('open');
+        document.getElementById('qrcode_partial').innerHTML = "";
+        new QRCode(document.getElementById("qrcode_partial"), { text: JSON.stringify(qrData), width: 200, height: 200 });
+        document.getElementById('partial_summary').innerText = `Reporte generado a las ${qrData.time}`;
+    }
+
+    function cerrarCorteParcial() {
+        document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
+    }
+
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
         const list = document.getElementById('editorList'); list.innerHTML = "";
