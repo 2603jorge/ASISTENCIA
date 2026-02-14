@@ -143,7 +143,6 @@
         if (DB.sesiones.length > 0) irAlMapa();
     };
 
-    // --- FUNCIONES CORE ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
@@ -227,16 +226,13 @@
         let now = Date.now();
         if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
         lastScanTime[id] = now;
-
         let sesionActual = DB.sesiones[DB.currentSessionId];
         let trabajador = DB.staff.find(s => s.id === id);
-
         if(!trabajador) {
             if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite alcanzado");
             trabajador = { id: id, fila: null, cuadroUid: null };
             DB.staff.push(trabajador);
         }
-
         if(trabajador.fila !== null) {
             if(trabajador.cuadroUid === sesionActual.uid) {
                 let n = prompt(`Ya está en Fila ${trabajador.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sesionActual));
@@ -298,133 +294,64 @@
         if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
 
-   function ejecutarAvanceMasivoFix() {
-    let s_origen = DB.sesiones[DB.currentSessionId];
-    let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
-    
-    if (!activos.length) return alert("Sin personal activo para avanzar.");
-
-    // Calculamos dónde terminaría el primer trabajador si avanzamos
-    let ptr = buscarSiguienteFilaVacia(s_origen);
-
-    // ESCENARIO A: EL CUADRO ACTUAL ESTÁ LLENO (TRANSFERENCIA A OTRO CUADRO)
-    if (ptr > s_origen.fin) {
-        // Buscamos si existe una sesión posterior (la siguiente pestaña)
-        let siguienteIdx = DB.currentSessionId + 1;
-        let s_destino = DB.sesiones[siguienteIdx];
-
-        if (s_destino) {
-            if (confirm(`¡CUADRO ${s_origen.cuadro} COMPLETADO! ¿Transferir personal al cuadro ${s_destino.cuadro}?`)) {
-                activos.forEach(t => {
-                    cerrarTarea(t); // Termina la tarea en el cuadro viejo
-                    asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); // Inicia en el nuevo
-                });
-                
-                // Cambiamos automáticamente a la pestaña del nuevo cuadro
-                DB.currentSessionId = siguienteIdx;
-                guardarTodo();
-                renderTabs();
-                renderSession();
-                alert(`Personal transferido a ${s_destino.cuadro} ✅`);
-            }
-        } else {
-            alert("⛔ CUADRO LLENO. Por favor, crea una nueva pestaña (+) para poder transferir al personal.");
-        }
-    } 
-    // ESCENARIO B: TODAVÍA HAY ESPACIO EN EL CUADRO ACTUAL (AVANCE NORMAL)
-    else {
-        if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
-            // Agrupamos por fila para mantener a las parejas o individuos juntos
-            let grupos = {};
-            activos.forEach(t => {
-                if(!grupos[t.fila]) grupos[t.fila] = [];
-                grupos[t.fila].push(t);
-            });
-
-            // Ordenamos las filas para avanzar de forma ordenada
-            let filas = Object.keys(grupos).map(Number).sort((a,b) => a - b);
-            
-            filas.forEach(f => {
-                let g = grupos[f];
-                let proximaFila = buscarSiguienteFilaVacia(s_origen);
-                
-                if(proximaFila <= s_origen.fin) {
-                    g.forEach(t => {
-                        cerrarTarea(t);
-                        asignarFilaEspecifica(t, proximaFila, s_origen);
-                    });
+    function ejecutarAvanceMasivoFix() {
+        let s_origen = DB.sesiones[DB.currentSessionId];
+        let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
+        if (!activos.length) return alert("Sin personal activo.");
+        let ptr = buscarSiguienteFilaVacia(s_origen);
+        if (ptr > s_origen.fin) {
+            let siguienteIdx = DB.currentSessionId + 1;
+            let s_destino = DB.sesiones[siguienteIdx];
+            if (s_destino) {
+                if (confirm(`¡CUADRO ${s_origen.cuadro} COMPLETADO! ¿Transferir personal al cuadro ${s_destino.cuadro}?`)) {
+                    activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); });
+                    DB.currentSessionId = siguienteIdx;
+                    guardarTodo(); renderTabs(); renderSession();
+                    alert(`Personal transferido a ${s_destino.cuadro} ✅`);
                 }
-            });
-            
-            guardarTodo();
-            renderMapa();
-            renderSession();
+            } else { alert("⛔ CUADRO LLENO. Crea otra pestaña (+) para transferir."); }
+        } else {
+            if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
+                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+                let filas = Object.keys(grupos).map(Number).sort((a,b) => a - b);
+                filas.forEach(f => {
+                    let g = grupos[f]; let proximaFila = buscarSiguienteFilaVacia(s_origen);
+                    if(proximaFila <= s_origen.fin) { g.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, proximaFila, s_origen); }); }
+                });
+                guardarTodo(); renderMapa(); renderSession();
             }
         }
     }
 
-    // --- CORTE PARCIAL Y REPORTES (IMPORTANTE PARA EL EXTRACTOR V5.3) ---
     function generarCorteParcial() {
-        // Estructura completa incluyendo Catálogos para que el Extractor V5.3 pueda cruzar IDs
         let qrData = {
-            config: { 
-                supId: DB.globalConfig.supId,
-                resp: DB.globalConfig.resp, 
-                supAct: DB.sesiones[DB.currentSessionId]?.act || "General",
-                jornada: DB.globalConfig.jornada
-            },
+            config: { supId: DB.globalConfig.supId, resp: DB.globalConfig.resp, supAct: DB.sesiones[DB.currentSessionId]?.act || "General", jornada: DB.globalConfig.jornada },
             sesiones: DB.sesiones.map(s => ({ cuadro: s.cuadro })),
             avance: DB.avance.map(a => ({ obrero: a.obrero, supAct: a.supAct, nomCuadro: a.nomCuadro })),
-            catalogos: {
-                cuadros: DB.cuadros.map(c => ({ id: c.id, nombre: c.nombre })),
-                actividades: DB.actividades.map(a => ({ id: a.id, desc: a.desc })),
-                jornadas: DB.jornadas.map(j => ({ id: j.id, desc: j.desc }))
-            }
+            catalogos: { cuadros: DB.cuadros.map(c => ({ id: c.id, nombre: c.nombre })), actividades: DB.actividades.map(a => ({ id: a.id, desc: a.desc })), jornadas: DB.jornadas.map(j => ({ id: j.id, desc: j.desc })) }
         };
-
         document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
         const qrContainer = document.getElementById('qrcode_partial');
         qrContainer.innerHTML = ""; 
-        
         try {
             new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
             document.getElementById('partial_summary').innerText = `Reporte compatible con Extractor V5.3`;
-        } catch (e) {
-            qrContainer.innerHTML = "<p style='color:red;'>QR Saturado. Usa el archivo JSON.</p>";
-        }
+        } catch (e) { qrContainer.innerHTML = "<p style='color:red;'>QR Saturado. Usa el archivo JSON.</p>"; }
     }
 
-   function descargarJSONReporte() {
-    // 1. Obtenemos el nombre del supervisor y la fecha actual
-    const resp = DB.globalConfig.resp || "SinNombre";
-    const ahora = new Date();
-    const fecha = `${ahora.getDate()}_${ahora.getMonth() + 1}_${ahora.getFullYear()}`;
-    const hora = `${ahora.getHours()}h${ahora.getMinutes()}`;
-
-    // 2. Preparamos el objeto de datos completo
-    let data = { 
-        config: DB.globalConfig, 
-        sesiones: DB.sesiones, 
-        avance: DB.avance, 
-        staff: DB.staff, 
-        catalogos: { 
-            cuadros: DB.cuadros, 
-            actividades: DB.actividades, 
-            jornadas: DB.jornadas 
-        } 
-    };
-
-    // 3. Creamos el archivo
-    let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    
-    // 4. Nombre dinámico: AVANCE_Nombre_Fecha_Hora.json
-    a.download = `AVANCE_${resp.replace(/\s+/g, '_')}_${fecha}_${hora}.json`;
-    
-    a.click();
-}
+    function descargarJSONReporte() {
+        const resp = DB.globalConfig.resp || "SinNombre";
+        const ahora = new Date();
+        const fecha = `${ahora.getDate()}_${ahora.getMonth() + 1}_${ahora.getFullYear()}`;
+        const hora = `${ahora.getHours()}h${ahora.getMinutes()}`;
+        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
+        let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `AVANCE_${resp.replace(/\s+/g, '_')}_${fecha}_${hora}.json`;
+        a.click();
+    }
 
     function cerrarCorteParcial() {
         document.getElementById('viewPartial').classList.remove('open');
@@ -448,14 +375,9 @@
             let cObj = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
             filas.push({id: id, act: aObj.id, nAct: u.supAct, cId: cObj.id, cNom: u.nomCuadro, jId: jorObj.id, jNom: DB.globalConfig.jornada, l: hist.length});
         });
-        let html = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:11px;">
-            <tr style="background:#eee;"><th>CREDENTIAL</th><th>ID_ACT</th><th>NAME_ACT</th><th>ID_CUA</th><th>CUADRO</th><th>ID_JOR</th><th>DESC_JOR</th><th>LÍNEAS</th></tr>`;
-        filas.forEach(f => {
-            html += `<tr><td>${f.id}</td><td>${f.act}</td><td>${f.nAct}</td><td>${f.cId}</td><td>${f.cNom}</td><td>${f.jId}</td><td>${f.jNom}</td><td><b>${f.l}</b></td></tr>`;
-        });
-        html += `</table>`;
-        container.innerHTML = html;
-        modal.classList.add('open');
+        let html = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:11px;"><tr style="background:#eee;"><th>CREDENTIAL</th><th>ID_ACT</th><th>NAME_ACT</th><th>ID_CUA</th><th>CUADRO</th><th>ID_JOR</th><th>DESC_JOR</th><th>LÍNEAS</th></tr>`;
+        filas.forEach(f => { html += `<tr><td>${f.id}</td><td>${f.act}</td><td>${f.nAct}</td><td>${f.cId}</td><td>${f.cNom}</td><td>${f.jId}</td><td>${f.jNom}</td><td><b>${f.l}</b></td></tr>`; });
+        html += `</table>`; container.innerHTML = html; modal.classList.add('open');
     }
 
     function descargarCSVAsistencia() {
@@ -478,13 +400,7 @@
         const list = document.getElementById('editorList'); list.innerHTML = "";
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
         activos.forEach(st => {
-            list.innerHTML += `<div class="edit-item">
-                <div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn-sm" style="background:var(--blue);" onclick="modificarFilaManual('${st.id}')">EDITAR</button>
-                    <button class="btn-sm" style="background:var(--danger);" onclick="borrarRegistroManual('${st.id}')">BORRAR</button>
-                </div>
-            </div>`;
+            list.innerHTML += `<div class="edit-item"><div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div><div style="display:flex; gap:5px;"><button class="btn-sm" style="background:var(--blue);" onclick="modificarFilaManual('${st.id}')">EDITAR</button><button class="btn-sm" style="background:var(--danger);" onclick="borrarRegistroManual('${st.id}')">BORRAR</button></div></div>`;
         });
         document.getElementById('modalEditor').classList.add('open');
     }
@@ -512,40 +428,6 @@
         }
     }
 
-    function confirmarFinDia() {
-    if(confirm("¿Deseas finalizar la jornada? Se generará el reporte final antes de limpiar.")) {
-        // 1. Cerramos todas las tareas activas (ponemos hora de fin a los que siguen trabajando)
-        DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-        
-        // 2. Guardamos en el archivo histórico local
-        const cierreHoy = {
-            fecha: new Date().toLocaleDateString(),
-            hora: new Date().toLocaleTimeString(),
-            config: DB.globalConfig,
-            avance: [...DB.avance]
-        };
-        DB.archive.push(cierreHoy);
-        localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-
-        // 3. Abrimos el reporte de asistencia para que lo vean antes de irse
-        abrirReporteAsistencia();
-        
-        // 4. Cambiamos el texto del botón de cerrar en el modal de reporte para que limpie
-        const btnCerrar = document.querySelector("#modalReporte .btn-r");
-        btnCerrar.innerText = "⚠️ FINALIZAR Y LIMPIAR TODO";
-        btnCerrar.onclick = () => {
-            if(confirm("¿Estás seguro? Los datos actuales se borrarán (quedarán en historial).")) {
-                localStorage.removeItem('v47_sesiones');
-                localStorage.removeItem('v47_avance');
-                localStorage.removeItem('v47_staff');
-                location.reload();
-            }
-        };
-        
-        alert("Paso 1: Revisa la tabla.\nPaso 2: Descarga el CSV.\nPaso 3: Presiona FINALIZAR Y LIMPIAR.");
-    }
-}
-
     function guardarTodo() {
         localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
         localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
@@ -553,39 +435,59 @@
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
-    function abrirHistorial() { alert("Historial guardado localmente."); } 
-    function abrirHistorial() {
-    if (DB.archive.length === 0) return alert("No hay cierres guardados.");
-    
-    let html = `<h2>📜 CIERRES ANTERIORES</h2><div style="max-height:300px; overflow-y:auto;">`;
-    DB.archive.forEach((item, idx) => {
-        html += `<div class="card" style="margin-bottom:5px; font-size:12px;">
-            <b>Fecha:</b> ${item.fecha} - ${item.hora}<br>
-            <b>Sup:</b> ${item.config.resp}<br>
-            <button class="btn btn-b btn-sm" onclick="descargarHistorialIdx(${idx})">💾 BAJAR JSON</button>
-        </div>`;
-    });
-    html += `</div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button>`;
-    
-    // Reutilizamos el modal de editor para no crear más HTML
-    const modal = document.getElementById('modalEditor');
-    document.getElementById('editorList').innerHTML = html;
-    modal.classList.add('open');
-}
+    // --- CORRECCIÓN DE HISTORIAL Y CIERRE ---
+    function limpiarHistorialViejo() {
+        const TRES_DIAS_EN_MS = 3 * 24 * 60 * 60 * 1000;
+        const ahora = Date.now();
+        DB.archive = DB.archive.filter(item => (ahora - (item.fecha_ms || 0)) < TRES_DIAS_EN_MS);
+        localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+    }
 
-function descargarHistorialIdx(idx) {
-    const item = DB.archive[idx];
-    const data = {
-        config: item.config,
-        avance: item.avance,
-        fecha_archivo: item.fecha
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `RECUPERADO_${item.config.resp}_${item.fecha.replace(/\//g,'-')}.json`;
-    a.click();
-}
+    function abrirHistorial() {
+        limpiarHistorialViejo();
+        if (DB.archive.length === 0) return alert("No hay cierres recientes (últimas 72h).");
+        let html = `<h2>📜 HISTORIAL (72H)</h2><div style="max-height:300px; overflow-y:auto;">`;
+        DB.archive.forEach((item, idx) => {
+            html += `<div class="card" style="margin-bottom:5px; font-size:12px; background:#222;"><b>Fecha:</b> ${item.fecha} - ${item.hora}<br><b>Supervisor:</b> ${item.config.resp}<br><button class="btn btn-p btn-sm" onclick="descargarHistorialIdx(${idx})">💾 DESCARGAR JSON</button></div>`;
+        });
+        html += `</div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button>`;
+        const modal = document.getElementById('modalEditor');
+        document.getElementById('editorList').innerHTML = html;
+        modal.classList.add('open');
+    }
+
+    function descargarHistorialIdx(idx) {
+        const item = DB.archive[idx];
+        const data = { config: item.config, avance: item.avance, fecha_archivo: item.fecha, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+        const a = document.createElement("a");
+        const respLimpio = item.config.resp.replace(/\s+/g, '_');
+        a.href = URL.createObjectURL(blob);
+        a.download = `RECUPERADO_${respLimpio}_${item.fecha.replace(/\//g,'-')}.json`;
+        a.click();
+    }
+
+    function confirmarFinDia() {
+        if(confirm("¿Finalizar jornada? Se generará el JSON y QR para el de asistencia.")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            const cierreHoy = { fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), fecha_ms: Date.now(), config: DB.globalConfig, avance: [...DB.avance] };
+            DB.archive.push(cierreHoy);
+            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+            generarCorteParcial();
+            const btnVolver = document.querySelector("#viewPartial .btn-b");
+            btnVolver.innerText = "⚠️ FINALIZAR Y BORRAR TODO";
+            btnVolver.style.background = "var(--danger)";
+            btnVolver.onclick = () => {
+                if(confirm("¿Ya entregaste el JSON o QR? Al aceptar se borrará el mapa actual.")) {
+                    localStorage.removeItem('v47_sesiones');
+                    localStorage.removeItem('v47_avance');
+                    localStorage.removeItem('v47_staff');
+                    location.reload();
+                }
+            };
+            alert("SISTEMA CERRADO:\n1. Muestra el QR al de asistencia.\n2. Descarga el archivo .JSON.\n3. Presiona FINALIZAR.");
+        }
+    }
 </script>
 </body>
 </html>
