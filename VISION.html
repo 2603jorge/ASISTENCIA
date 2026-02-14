@@ -3,200 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V5.3 PRO - Mobile Optimized</title>
+    <title>AgriCactus V5.4 - Extractor PRO Multitarea</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { 
-            --primary: #1565c0; 
-            --accent: #00e676; 
-            --dark: #0f172a; 
-            --card: #1e293b; 
-            --text: #f1f5f9; 
-            --warn: #f59e0b; 
-        }
-        
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: var(--dark); 
-            color: var(--text); 
-            padding: 10px; 
-            margin: 0; 
-            box-sizing: border-box;
-        }
-
+        :root { --primary: #1565c0; --accent: #00e676; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; --warn: #f59e0b; }
+        body { font-family: -apple-system, sans-serif; background: var(--dark); color: var(--text); padding: 10px; margin: 0; }
         .container { max-width: 100%; margin: auto; }
+        .card { background: var(--card); border: 1px solid #334155; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
         
-        .card { 
-            background: var(--card); 
-            border: 1px solid #334155; 
-            border-radius: 12px; 
-            padding: 12px; 
-            margin-bottom: 12px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
+        /* Ajuste de Cámara */
+        #reader { width: 100% !important; max-width: 300px; margin: 0 auto 10px auto; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary); background: #000; }
         
-        /* Ajuste de Cámara para Celular */
-        #reader { 
-            width: 100% !important; 
-            max-width: 300px; 
-            margin: 0 auto 10px auto; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            border: 2px solid var(--primary);
-            background: #000;
-        }
-        
-        h3, h4 { margin: 5px 0; text-align: center; }
-
-        .btn { 
-            width: 100%; 
-            padding: 14px; 
-            border: none; 
-            border-radius: 8px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            text-transform: uppercase; 
-            margin-bottom: 8px; 
-            font-size: 13px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .btn-blue { background: var(--primary); color: white; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; color: white; }
+        .btn-blue { background: var(--primary); }
         .btn-green { background: var(--accent); color: #000; }
         .btn-warn { background: var(--warn); color: #000; }
-        .btn-red { background: #c62828; color: white; }
         
-        input, select, textarea { 
-            width: 100%; 
-            padding: 12px; 
-            margin-bottom: 10px; 
-            border-radius: 6px; 
-            border: 1px solid #334155; 
-            background: #0f172a; 
-            color: white; 
-            font-size: 15px; 
-            box-sizing: border-box; 
-            appearance: none; /* Quita estilo nativo en iOS */
-        }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 15px; box-sizing: border-box; }
         
-        .flex-row { 
-            display: flex; 
-            gap: 8px; 
-            align-items: center; 
-        }
-
+        .flex-row { display: flex; gap: 8px; }
         .hidden { display: none; }
-
-        /* Tabla optimizada para scroll lateral */
-        .table-wrapper { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: var(--accent); }
-        
-        .manual-id-input { border: 2px solid var(--accent) !important; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3 style="color: var(--primary);">📋 Extractor PRO V5.3</h3>
+    <h3 style="text-align:center; color: var(--primary); margin: 10px 0;">📋 Extractor PRO V5.4</h3>
 
-    <div class="card">
-        <div id="reader"></div>
-        <p style="text-align:center; font-size:11px; color:var(--warn); margin:0;">Cámara lista para escaneo</p>
-    </div>
-
-    <div class="flex-row" style="margin-bottom: 12px;">
+    <div class="flex-row" style="margin-bottom: 10px;">
         <button class="btn btn-blue" onclick="mostrarSeccion('sec_asistencia')">📋 TABLA</button>
+        <button class="btn btn-blue" onclick="mostrarSeccion('sec_escaner')">📸 ESCANEAR ID</button>
         <button class="btn btn-blue" onclick="mostrarSeccion('sec_catalogos')">📂 CATS</button>
     </div>
 
-    <div id="sec_catalogos" class="card hidden">
-        <h4>📦 Configuración de Listas</h4>
-        <textarea id="csv_cuadros" placeholder="CSV Cuadros (ID, Nombre)" rows="3"></textarea>
-        <textarea id="csv_act" placeholder="CSV Actividades (ID, Nombre)" rows="3"></textarea>
-        <textarea id="csv_jor" placeholder="CSV Jornadas (ID, Nombre)" rows="3"></textarea>
-        <button class="btn btn-green" onclick="guardarCatalogos()">💾 GUARDAR LISTAS</button>
+    <div id="sec_escaner" class="hidden">
+        <div class="card">
+            <div id="reader"></div>
+            <p style="text-align:center; font-size:11px; color:var(--warn);">Apunta a la credencial o escribe abajo</p>
+        </div>
+        <div class="card" style="border-left: 5px solid var(--warn);">
+            <h4 style="margin:0 0 10px 0; color:var(--warn);">Asignación Individual</h4>
+            <div class="flex-row">
+                <input type="text" id="manual_id" placeholder="ID Credencial" style="border: 1px solid var(--warn);">
+                <input type="number" id="manual_lineas" value="1" style="width:70px;">
+            </div>
+            
+            <label style="font-size:10px;">JORNADA:</label>
+            <input type="text" id="in_jor" list="list_jor" placeholder="Buscar jornada...">
+            
+            <label style="font-size:10px;">ACTIVIDAD:</label>
+            <input type="text" id="in_act" list="list_act" placeholder="Buscar actividad...">
+            
+            <label style="font-size:10px;">CUADRO:</label>
+            <input type="text" id="in_cua" list="list_cua" placeholder="Buscar cuadro...">
+            
+            <button class="btn btn-warn" onclick="registrarIndividual()">✅ REGISTRAR TRABAJADOR</button>
+        </div>
     </div>
 
     <div id="sec_asistencia">
-        <div class="card" style="border-left: 5px solid var(--accent);">
-            <h4 style="text-align:left; color:var(--accent);">➕ Entrada Manual</h4>
-            <div class="flex-row">
-                <div style="flex:3;">
-                    <input type="text" id="manual_id" class="manual-id-input" placeholder="ID Credencial">
-                </div>
-                <div style="flex:1;">
-                    <input type="number" id="manual_lineas" value="1" placeholder="L">
-                </div>
-            </div>
-            <select id="sel_jor"></select>
-            <select id="sel_act"></select>
-            <select id="sel_cua"></select>
-            <button class="btn btn-warn" onclick="asignarManual()">REGISTRAR INDIVIDUAL</button>
-        </div>
-
         <div class="card">
             <input type="file" id="fileInput" class="hidden" accept=".json" onchange="procesarArchivo(this)">
-            <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR JSON</button>
+            <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR REPORTE .JSON</button>
             
-            <div id="tablaArea" class="hidden">
-                <div class="table-wrapper">
-                    <table id="tablaAsistencia">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>ACT</th>
-                                <th>CUA</th>
-                                <th>L</th>
-                                <th>X</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <button class="btn btn-green" onclick="descargarCSV()" style="margin-top:15px;">💾 EXPORTAR EXCEL</button>
-                <button class="btn btn-red" onclick="limpiarDatos()">🗑️ BORRAR TODO</button>
+            <div id="tablaArea" class="table-wrapper">
+                <table id="tablaAsistencia">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ACTIVIDAD</th>
+                            <th>CUADRO</th>
+                            <th>L</th>
+                            <th>X</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button class="btn btn-green" onclick="descargarCSV()" style="margin-top:15px;">💾 EXPORTAR EXCEL (CSV)</button>
+                <button class="btn" style="background:#c62828" onclick="limpiarDatos()">🗑️ BORRAR TODO</button>
             </div>
         </div>
     </div>
+
+    <div id="sec_catalogos" class="card hidden">
+        <h4>📦 Configurar Catálogos</h4>
+        <textarea id="csv_cuadros" placeholder="Pegar Cuadros (ID, Nombre)" rows="3"></textarea>
+        <textarea id="csv_act" placeholder="Pegar Actividades (ID, Nombre)" rows="3"></textarea>
+        <textarea id="csv_jor" placeholder="Pegar Jornadas (ID, Nombre)" rows="3"></textarea>
+        <button class="btn btn-green" onclick="guardarCatalogos()">💾 GUARDAR LISTAS</button>
+    </div>
 </div>
 
-<script>
-    let BASE_DATOS = JSON.parse(localStorage.getItem('ext_data')) || [];
-    let CATS = JSON.parse(localStorage.getItem('ext_cats')) || { cuadros: [], actividades: [], jornadas: [] };
+<datalist id="list_jor"></datalist>
+<datalist id="list_act"></datalist>
+<datalist id="list_cua"></datalist>
 
+<script>
+    let BASE_DATOS = JSON.parse(localStorage.getItem('ext_v54_data')) || [];
+    let CATS = JSON.parse(localStorage.getItem('ext_v54_cats')) || { cuadros: [], actividades: [], jornadas: [] };
     const normalizar = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
 
-    // Iniciar Scanner con mejor compatibilidad móvil
-    // BUSCA ESTA PARTE EN TU SCRIPT Y REEMPLÁZALA
-const scanner = new Html5Qrcode("reader");
-const config = { fps: 15, qrbox: 200, aspectRatio: 1.0 };
+    // Iniciar Scanner (Configurado solo para IDs en esta pestaña)
+    const scanner = new Html5Qrcode("reader");
+    const config = { fps: 15, qrbox: 200, aspectRatio: 1.0 };
 
-scanner.start({ facingMode: "environment" }, config, (text) => {
-    try {
-        // Intenta ver si es un reporte JSON completo
-        const obj = JSON.parse(text);
-        procesarJSON(obj);
+    scanner.start({ facingMode: "environment" }, config, (text) => {
+        // En esta pestaña, cualquier cosa que lea la cámara se asume que es un ID
+        document.getElementById('manual_id').value = text.trim();
         new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
-        alert("Reporte JSON cargado ✅");
-    } catch(e) {
-        // SI NO ES JSON, ES UNA CREDENCIAL:
-        // Buscamos el campo de texto y le asignamos el valor escaneado
-        const campoManual = document.getElementById('manual_id');
-        if (campoManual) {
-            campoManual.value = text.trim(); // Asigna el texto escaneado al input
-            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
-            
-            // Efecto visual para confirmar que se leyó
-            campoManual.style.backgroundColor = "#2e7d32";
-            setTimeout(() => { campoManual.style.backgroundColor = "#0f172a"; }, 500);
-        }
-    }
-}).catch(err => console.error("Error al iniciar cámara: ", err));
+    });
 
     function guardarCatalogos() {
         const txtC = document.getElementById('csv_cuadros').value;
@@ -207,82 +126,88 @@ scanner.start({ facingMode: "environment" }, config, (text) => {
         if(txtA) CATS.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return c.length>=2 ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ) CATS.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return c.length>=2 ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         
-        localStorage.setItem('ext_cats', JSON.stringify(CATS));
-        cargarSelectores();
-        alert("Listas actualizadas ✅");
-        mostrarSeccion('sec_asistencia');
+        localStorage.setItem('ext_v54_cats', JSON.stringify(CATS));
+        actualizarSugerencias();
+        alert("Catálogos actualizados ✅");
+        mostrarSeccion('sec_escaner');
     }
 
-    function cargarSelectores() {
-        document.getElementById('sel_jor').innerHTML = CATS.jornadas.map(j => `<option value="${j.id}|${j.desc}">${j.desc}</option>`).join('');
-        document.getElementById('sel_act').innerHTML = CATS.actividades.map(a => `<option value="${a.id}|${a.desc}">${a.desc}</option>`).join('');
-        document.getElementById('sel_cua').innerHTML = CATS.cuadros.map(c => `<option value="${c.id}|${c.nombre}">${c.nombre}</option>`).join('');
+    function actualizarSugerencias() {
+        document.getElementById('list_jor').innerHTML = CATS.jornadas.map(j => `<option value="${j.desc}">`).join('');
+        document.getElementById('list_act').innerHTML = CATS.actividades.map(a => `<option value="${a.desc}">`).join('');
+        document.getElementById('list_cua').innerHTML = CATS.cuadros.map(c => `<option value="${c.nombre}">`).join('');
     }
 
-    function asignarManual() {
+    function registrarIndividual() {
         const id = document.getElementById('manual_id').value.trim();
-        if(!id) return alert("Ingrese un ID");
-        
-        const j = document.getElementById('sel_jor').value.split('|');
-        const a = document.getElementById('sel_act').value.split('|');
-        const c = document.getElementById('sel_cua').value.split('|');
-        const l = parseInt(document.getElementById('manual_lineas').value) || 0;
+        const nJor = document.getElementById('in_jor').value;
+        const nAct = document.getElementById('in_act').value;
+        const nCua = document.getElementById('in_cua').value;
+        const lineas = parseInt(document.getElementById('manual_lineas').value) || 0;
 
-        actualizarFila({
-            credencial: id, id_act: a[0], name_act: a[1],
-            id_cuadro: c[0], cuadro: c[1], id_jor: j[0], desc_jor: j[1], lineas: l
+        if(!id || !nAct || !nCua) return alert("Faltan datos");
+
+        const jObj = CATS.jornadas.find(j => normalizar(j.desc) === normalizar(nJor)) || {id:"N/A"};
+        const aObj = CATS.actividades.find(a => normalizar(a.desc) === normalizar(nAct)) || {id:"N/A"};
+        const cObj = CATS.cuadros.find(c => normalizar(c.nombre) === normalizar(nCua)) || {id:"N/A"};
+
+        actualizarDB({
+            credencial: id, id_act: aObj.id, name_act: nAct,
+            id_cuadro: cObj.id, cuadro: nCua, id_jor: jObj.id, desc_jor: nJor, lineas: lineas
         });
         
         document.getElementById('manual_id').value = "";
+        alert("Trabajador registrado ✅");
         render();
     }
 
-    function procesarJSON(json) {
-        const avance = json.avance || [];
-        const conf = json.config || {};
-        const cat = json.catalogos || CATS;
+    function procesarArchivo(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                const avance = json.avance || [];
+                const conf = json.config || {};
+                const cat = json.catalogos || CATS;
 
-        avance.forEach(a => {
-            const actD = cat.actividades.find(ac => normalizar(ac.desc) === normalizar(a.supAct)) || {id:"?"};
-            const cuaD = cat.cuadros.find(cu => normalizar(cu.nombre) === normalizar(a.nomCuadro)) || {id:"?"};
-            const jorD = cat.jornadas.find(jo => normalizar(jo.desc) === normalizar(conf.jornada)) || {id:"?"};
-
-            actualizarFila({
-                credencial: a.obrero, id_act: actD.id, name_act: a.supAct,
-                id_cuadro: cuaD.id, cuadro: a.nomCuadro,
-                id_jor: jorD.id, desc_jor: conf.jornada, lineas: 1
-            });
-        });
-        render();
+                avance.forEach(a => {
+                    const actD = cat.actividades.find(ac => normalizar(ac.desc) === normalizar(a.supAct)) || {id:"?"};
+                    const cuaD = cat.cuadros.find(cu => normalizar(cu.nombre) === normalizar(a.nomCuadro)) || {id:"?"};
+                    const jorD = cat.jornadas.find(jo => normalizar(jo.desc) === normalizar(conf.jornada)) || {id:"?"};
+                    actualizarDB({
+                        credencial: a.obrero, id_act: actD.id, name_act: a.supAct,
+                        id_cuadro: cuaD.id, cuadro: a.nomCuadro,
+                        id_jor: jorD.id, desc_jor: conf.jornada, lineas: 1
+                    });
+                });
+                render();
+            } catch(err) { alert("Error en JSON"); }
+        };
+        reader.readAsText(input.files[0]);
     }
 
-    function actualizarFila(n) {
+    function actualizarDB(n) {
         let idx = BASE_DATOS.findIndex(r => r.credencial === n.credencial);
         if (idx > -1) { BASE_DATOS[idx].lineas += n.lineas; }
         else { BASE_DATOS.push(n); }
-        localStorage.setItem('ext_data', JSON.stringify(BASE_DATOS));
+        localStorage.setItem('ext_v54_data', JSON.stringify(BASE_DATOS));
     }
 
     function render() {
         const tbody = document.querySelector('#tablaAsistencia tbody');
         tbody.innerHTML = "";
         BASE_DATOS.forEach(d => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${d.credencial}</td>
-                <td>${d.name_act}</td>
-                <td>${d.cuadro}</td>
-                <td><b>${d.lineas}</b></td>
+            tbody.innerHTML += `<tr>
+                <td>${d.credencial}</td><td>${d.name_act}</td><td>${d.cuadro}</td><td><b>${d.lineas}</b></td>
                 <td><button onclick="borrar('${d.credencial}')">❌</button></td>
-            `;
-            tbody.appendChild(tr);
+            </tr>`;
         });
-        document.getElementById('tablaArea').classList.remove('hidden');
     }
 
     function mostrarSeccion(id) {
         document.getElementById('sec_catalogos').classList.add('hidden');
         document.getElementById('sec_asistencia').classList.add('hidden');
+        document.getElementById('sec_escaner').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
     }
 
@@ -292,17 +217,18 @@ scanner.start({ facingMode: "environment" }, config, (text) => {
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `REPORTE_MOVIL_${new Date().toISOString().slice(0,10)}.csv`;
+        link.download = `REPORTE_ASISTENCIA.csv`;
         link.click();
     }
 
-    function borrar(id) { if(confirm("¿Eliminar fila?")) { BASE_DATOS = BASE_DATOS.filter(r => r.credencial !== id); render(); } }
-    function limpiarDatos() { if(confirm("¿Limpiar todo el reporte?")) { BASE_DATOS = []; localStorage.removeItem('ext_data'); render(); } }
+    function borrar(id) { if(confirm("¿Eliminar?")) { BASE_DATOS = BASE_DATOS.filter(r => r.credencial !== id); render(); } }
+    function limpiarDatos() { if(confirm("¿Limpiar todo?")) { BASE_DATOS = []; localStorage.removeItem('ext_v54_data'); render(); } }
 
-    window.onload = () => { cargarSelectores(); render(); };
+    window.onload = () => { actualizarSugerencias(); render(); };
 </script>
 </body>
 </html>
+
 
 
 
