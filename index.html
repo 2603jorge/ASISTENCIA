@@ -395,25 +395,36 @@
         }
     }
 
-    function descargarJSONReporte() {
-        // Descarga el JSON con la estructura completa de Catálogos
-        let data = { 
-            config: DB.globalConfig, 
-            sesiones: DB.sesiones, 
-            avance: DB.avance, 
-            staff: DB.staff, 
-            catalogos: { 
-                cuadros: DB.cuadros, 
-                actividades: DB.actividades, 
-                jornadas: DB.jornadas 
-            } 
-        };
-        let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-        let a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `Reporte_ASISTENCIA_${DB.globalConfig.resp}.json`;
-        a.click();
-    }
+   function descargarJSONReporte() {
+    // 1. Obtenemos el nombre del supervisor y la fecha actual
+    const resp = DB.globalConfig.resp || "SinNombre";
+    const ahora = new Date();
+    const fecha = `${ahora.getDate()}_${ahora.getMonth() + 1}_${ahora.getFullYear()}`;
+    const hora = `${ahora.getHours()}h${ahora.getMinutes()}`;
+
+    // 2. Preparamos el objeto de datos completo
+    let data = { 
+        config: DB.globalConfig, 
+        sesiones: DB.sesiones, 
+        avance: DB.avance, 
+        staff: DB.staff, 
+        catalogos: { 
+            cuadros: DB.cuadros, 
+            actividades: DB.actividades, 
+            jornadas: DB.jornadas 
+        } 
+    };
+
+    // 3. Creamos el archivo
+    let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    
+    // 4. Nombre dinámico: AVANCE_Nombre_Fecha_Hora.json
+    a.download = `AVANCE_${resp.replace(/\s+/g, '_')}_${fecha}_${hora}.json`;
+    
+    a.click();
+}
 
     function cerrarCorteParcial() {
         document.getElementById('viewPartial').classList.remove('open');
@@ -523,6 +534,7 @@
 </script>
 </body>
 </html>
+
 
 
 
