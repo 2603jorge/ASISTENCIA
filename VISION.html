@@ -2,90 +2,164 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>AgriCactus V5.3 PRO - Compacto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AgriCactus V5.3 PRO - Mobile Optimized</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        :root { --primary: #1565c0; --accent: #00e676; --dark: #0f172a; --card: #1e293b; --text: #f1f5f9; --warn: #f59e0b; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); padding: 10px; margin: 0; }
-        .container { max-width: 800px; margin: auto; }
-        .card { background: var(--card); border: 1px solid #334155; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+        :root { 
+            --primary: #1565c0; 
+            --accent: #00e676; 
+            --dark: #0f172a; 
+            --card: #1e293b; 
+            --text: #f1f5f9; 
+            --warn: #f59e0b; 
+        }
         
-        /* Cámara pequeña */
-        #reader { width: 100% !important; max-width: 350px; margin: auto; border-radius: 12px; overflow: hidden; border: 2px solid var(--primary); }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: var(--dark); 
+            color: var(--text); 
+            padding: 10px; 
+            margin: 0; 
+            box-sizing: border-box;
+        }
+
+        .container { max-width: 100%; margin: auto; }
         
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-bottom: 5px; font-size: 13px; color: white; }
-        .btn-blue { background: var(--primary); }
+        .card { 
+            background: var(--card); 
+            border: 1px solid #334155; 
+            border-radius: 12px; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Ajuste de Cámara para Celular */
+        #reader { 
+            width: 100% !important; 
+            max-width: 300px; 
+            margin: 0 auto 10px auto; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            border: 2px solid var(--primary);
+            background: #000;
+        }
+        
+        h3, h4 { margin: 5px 0; text-align: center; }
+
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            margin-bottom: 8px; 
+            font-size: 13px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-blue { background: var(--primary); color: white; }
         .btn-green { background: var(--accent); color: #000; }
         .btn-warn { background: var(--warn); color: #000; }
+        .btn-red { background: #c62828; color: white; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #334155; }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+            border-radius: 6px; 
+            border: 1px solid #334155; 
+            background: #0f172a; 
+            color: white; 
+            font-size: 15px; 
+            box-sizing: border-box; 
+            appearance: none; /* Quita estilo nativo en iOS */
+        }
+        
+        .flex-row { 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+        }
+
+        .hidden { display: none; }
+
+        /* Tabla optimizada para scroll lateral */
+        .table-wrapper { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: var(--accent); }
         
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
-        .hidden { display: none; }
-        .flex { display: flex; gap: 10px; }
+        .manual-id-input { border: 2px solid var(--accent) !important; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h3 style="text-align:center; color: var(--primary); margin: 5px;">📋 Extractor PRO V5.3</h3>
-
-    <div class="card" style="text-align:center;">
-        <div id="reader"></div>
-        <p style="font-size:10px; color:var(--warn);">Lector de IDs y Reportes</p>
-    </div>
+    <h3 style="color: var(--primary);">📋 Extractor PRO V5.3</h3>
 
     <div class="card">
-        <div class="flex">
-            <button class="btn btn-blue" onclick="mostrarSeccion('sec_asistencia')">📋 TABLA</button>
-            <button class="btn btn-blue" onclick="mostrarSeccion('sec_catalogos')">📂 CATÁLOGOS</button>
-        </div>
+        <div id="reader"></div>
+        <p style="text-align:center; font-size:11px; color:var(--warn); margin:0;">Cámara lista para escaneo</p>
+    </div>
+
+    <div class="flex-row" style="margin-bottom: 12px;">
+        <button class="btn btn-blue" onclick="mostrarSeccion('sec_asistencia')">📋 TABLA</button>
+        <button class="btn btn-blue" onclick="mostrarSeccion('sec_catalogos')">📂 CATS</button>
     </div>
 
     <div id="sec_catalogos" class="card hidden">
-        <h4>📦 Cargar Listas (CSV)</h4>
-        <textarea id="csv_cuadros" placeholder="Pegar Cuadros aquí..." rows="3"></textarea>
-        <textarea id="csv_act" placeholder="Pegar Actividades aquí..." rows="3"></textarea>
-        <textarea id="csv_jor" placeholder="Pegar Jornadas aquí..." rows="3"></textarea>
-        <button class="btn btn-green" onclick="guardarCatalogos()">💾 GUARDAR CATÁLOGOS</button>
+        <h4>📦 Configuración de Listas</h4>
+        <textarea id="csv_cuadros" placeholder="CSV Cuadros (ID, Nombre)" rows="3"></textarea>
+        <textarea id="csv_act" placeholder="CSV Actividades (ID, Nombre)" rows="3"></textarea>
+        <textarea id="csv_jor" placeholder="CSV Jornadas (ID, Nombre)" rows="3"></textarea>
+        <button class="btn btn-green" onclick="guardarCatalogos()">💾 GUARDAR LISTAS</button>
     </div>
 
     <div id="sec_asistencia">
-        <div class="card" style="border: 1px dashed var(--warn);">
-            <h4 style="margin:0; color:var(--warn);">➕ Asignación Manual / Rescate</h4>
-            <div class="flex">
-                <input type="text" id="manual_id" placeholder="ID Escaneado" readonly>
-                <input type="number" id="manual_lineas" value="1" style="width:70px;">
+        <div class="card" style="border-left: 5px solid var(--accent);">
+            <h4 style="text-align:left; color:var(--accent);">➕ Entrada Manual</h4>
+            <div class="flex-row">
+                <div style="flex:3;">
+                    <input type="text" id="manual_id" class="manual-id-input" placeholder="ID Credencial">
+                </div>
+                <div style="flex:1;">
+                    <input type="number" id="manual_lineas" value="1" placeholder="L">
+                </div>
             </div>
             <select id="sel_jor"></select>
             <select id="sel_act"></select>
             <select id="sel_cua"></select>
-            <button class="btn btn-warn" onclick="asignarManual()">AGREGAR A TABLA</button>
+            <button class="btn btn-warn" onclick="asignarManual()">REGISTRAR INDIVIDUAL</button>
         </div>
 
         <div class="card">
             <input type="file" id="fileInput" class="hidden" accept=".json" onchange="procesarArchivo(this)">
-            <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR REPORTE .JSON</button>
+            <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR JSON</button>
             
             <div id="tablaArea" class="hidden">
-                <div style="overflow-x: auto;">
+                <div class="table-wrapper">
                     <table id="tablaAsistencia">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>ACT</th>
-                                <th>CUADRO</th>
-                                <th>LÍNEAS</th>
-                                <th>EDIT</th>
+                                <th>CUA</th>
+                                <th>L</th>
+                                <th>X</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
-                <button class="btn btn-green" onclick="descargarCSV()" style="margin-top:15px;">💾 DESCARGAR EXCEL</button>
-                <button class="btn" style="background:#c62828" onclick="limpiarDatos()">🗑️ BORRAR TODO</button>
+                <button class="btn btn-green" onclick="descargarCSV()" style="margin-top:15px;">💾 EXPORTAR EXCEL</button>
+                <button class="btn btn-red" onclick="limpiarDatos()">🗑️ BORRAR TODO</button>
             </div>
         </div>
     </div>
@@ -97,9 +171,9 @@
 
     const normalizar = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
 
-    // SCANNER CONFIG
+    // Iniciar Scanner con mejor compatibilidad móvil
     const scanner = new Html5Qrcode("reader");
-    scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (text) => {
+    scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 200 }, (text) => {
         try {
             const obj = JSON.parse(text);
             procesarJSON(obj);
@@ -120,7 +194,7 @@
         
         localStorage.setItem('ext_cats', JSON.stringify(CATS));
         cargarSelectores();
-        alert("Catálogos guardados");
+        alert("Listas actualizadas ✅");
         mostrarSeccion('sec_asistencia');
     }
 
@@ -131,17 +205,19 @@
     }
 
     function asignarManual() {
-        const id = document.getElementById('manual_id').value;
-        if(!id) return alert("Escanea un ID");
+        const id = document.getElementById('manual_id').value.trim();
+        if(!id) return alert("Ingrese un ID");
+        
         const j = document.getElementById('sel_jor').value.split('|');
         const a = document.getElementById('sel_act').value.split('|');
         const c = document.getElementById('sel_cua').value.split('|');
-        const l = parseInt(document.getElementById('manual_lineas').value);
+        const l = parseInt(document.getElementById('manual_lineas').value) || 0;
 
         actualizarFila({
             credencial: id, id_act: a[0], name_act: a[1],
             id_cuadro: c[0], cuadro: c[1], id_jor: j[0], desc_jor: j[1], lineas: l
         });
+        
         document.getElementById('manual_id').value = "";
         render();
     }
@@ -176,10 +252,15 @@
         const tbody = document.querySelector('#tablaAsistencia tbody');
         tbody.innerHTML = "";
         BASE_DATOS.forEach(d => {
-            tbody.innerHTML += `<tr>
-                <td>${d.credencial}</td><td>${d.name_act}</td><td>${d.cuadro}</td><td><b>${d.lineas}</b></td>
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${d.credencial}</td>
+                <td>${d.name_act}</td>
+                <td>${d.cuadro}</td>
+                <td><b>${d.lineas}</b></td>
                 <td><button onclick="borrar('${d.credencial}')">❌</button></td>
-            </tr>`;
+            `;
+            tbody.appendChild(tr);
         });
         document.getElementById('tablaArea').classList.remove('hidden');
     }
@@ -193,18 +274,19 @@
     function descargarCSV() {
         let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,L\n";
         BASE_DATOS.forEach(d => { csv += `${d.credencial},${d.id_act},${d.name_act},${d.id_cuadro},${d.cuadro},${d.id_jor},${d.desc_jor},${d.lineas}\n`; });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `ASISTENCIA_FINAL.csv`;
+        link.download = `REPORTE_MOVIL_${new Date().toISOString().slice(0,10)}.csv`;
         link.click();
     }
 
-    function borrar(id) { BASE_DATOS = BASE_DATOS.filter(r => r.credencial !== id); render(); }
-    function limpiarDatos() { if(confirm("¿Limpiar todo?")) { BASE_DATOS = []; localStorage.removeItem('ext_data'); render(); } }
+    function borrar(id) { if(confirm("¿Eliminar fila?")) { BASE_DATOS = BASE_DATOS.filter(r => r.credencial !== id); render(); } }
+    function limpiarDatos() { if(confirm("¿Limpiar todo el reporte?")) { BASE_DATOS = []; localStorage.removeItem('ext_data'); render(); } }
 
     window.onload = () => { cargarSelectores(); render(); };
 </script>
 </body>
 </html>
+
 
