@@ -513,15 +513,38 @@
     }
 
     function confirmarFinDia() {
-        if(confirm("¿Cerrar día y limpiar?")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleDateString(), avance: DB.avance });
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-            localStorage.removeItem('v47_sesiones');
-            localStorage.removeItem('v47_avance');
-            location.reload();
-        }
+    if(confirm("¿Deseas finalizar la jornada? Se generará el reporte final antes de limpiar.")) {
+        // 1. Cerramos todas las tareas activas (ponemos hora de fin a los que siguen trabajando)
+        DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+        
+        // 2. Guardamos en el archivo histórico local
+        const cierreHoy = {
+            fecha: new Date().toLocaleDateString(),
+            hora: new Date().toLocaleTimeString(),
+            config: DB.globalConfig,
+            avance: [...DB.avance]
+        };
+        DB.archive.push(cierreHoy);
+        localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+
+        // 3. Abrimos el reporte de asistencia para que lo vean antes de irse
+        abrirReporteAsistencia();
+        
+        // 4. Cambiamos el texto del botón de cerrar en el modal de reporte para que limpie
+        const btnCerrar = document.querySelector("#modalReporte .btn-r");
+        btnCerrar.innerText = "⚠️ FINALIZAR Y LIMPIAR TODO";
+        btnCerrar.onclick = () => {
+            if(confirm("¿Estás seguro? Los datos actuales se borrarán (quedarán en historial).")) {
+                localStorage.removeItem('v47_sesiones');
+                localStorage.removeItem('v47_avance');
+                localStorage.removeItem('v47_staff');
+                location.reload();
+            }
+        };
+        
+        alert("Paso 1: Revisa la tabla.\nPaso 2: Descarga el CSV.\nPaso 3: Presiona FINALIZAR Y LIMPIAR.");
     }
+}
 
     function guardarTodo() {
         localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
@@ -534,6 +557,7 @@
 </script>
 </body>
 </html>
+
 
 
 
