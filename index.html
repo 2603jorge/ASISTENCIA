@@ -214,13 +214,21 @@
         if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
     }
 
-    function renderTabs() {
-        const container = document.getElementById('tabsContainer');
-      const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
-const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.orientacion}` : s.cuadro;
-
-return `<div class="tab ${idx===DB.currentSessionId?'active':''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;}
-
+function renderTabs() {
+    const container = document.getElementById('tabsContainer');
+    
+    // Generamos el contenido recorriendo las sesiones
+    container.innerHTML = DB.sesiones.map((s, idx) => {
+        // 1. Buscamos los datos del cuadro en el catálogo
+        const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
+        
+        // 2. Definimos el texto: si hay datos usamos "Nombre - Orientación", si no solo "Nombre"
+        const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.ori}` : s.cuadro;
+        
+        // 3. Devolvemos el HTML de la pestaña
+        return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;
+    }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+}
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
     function onScan(id) {
@@ -493,6 +501,7 @@ return `<div class="tab ${idx===DB.currentSessionId?'active':''}" onclick="cambi
 </script>
 </body>
 </html>
+
 
 
 
