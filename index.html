@@ -52,6 +52,10 @@
         <h3>PRIMER CUADRO</h3>
         <label>🕒 JORNADA</label><select id="conf_jornada"></select>
         <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
+        <label>🧭 ORIENTACIÓN</label>
+<input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Sugerencia de orientación...">
+
+<datalist id="lista_orientaciones"></datalist>
         <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
         <div class="flex-row">
             <input type="number" id="conf_inicio" placeholder="Desde">
@@ -180,14 +184,30 @@
         document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
 
-    function alEscribirCuadro(prefix) {
-        const val = document.getElementById(prefix+'_cuadro').value;
-        const data = DB.cuadros.find(c => c.nombre === val);
-        if(data) {
-            document.getElementById(prefix+'_inicio').value = 1;
-            document.getElementById(prefix+'_fin').value = data.max;
+   function alEscribirCuadro(prefix) {
+    const val = document.getElementById(prefix + '_cuadro').value;
+    const data = DB.cuadros.find(c => c.nombre === val);
+    
+    if (data) {
+        // Autocompleta el rango de líneas
+        document.getElementById(prefix + '_inicio').value = 1;
+        document.getElementById(prefix + '_fin').value = data.max;
+        
+        // Autocompleta la Orientación y genera la lista de sugerencias
+        const inputOri = document.getElementById(prefix + '_ori');
+        if (inputOri) {
+            inputOri.value = data.ori; // Pone la orientación del catálogo
+            
+            // Actualiza la lista de sugerencias (datalist)
+            const listaOri = document.getElementById('lista_orientaciones');
+            // Buscamos todas las orientaciones diferentes que existan para este cuadro
+            const sugerencias = DB.cuadros.filter(c => c.nombre === val).map(c => c.ori);
+            const sugerenciasUnicas = [...new Set(sugerencias)];
+            
+            listaOri.innerHTML = sugerenciasUnicas.map(o => `<option value="${o}">`).join('');
         }
     }
+}
 
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
@@ -515,6 +535,7 @@ function renderTabs() {
 </script>
 </body>
 </html>
+
 
 
 
