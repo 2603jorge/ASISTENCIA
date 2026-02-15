@@ -177,34 +177,47 @@
     alert("Catálogos cargados correctamente");
 }
 
-    function actualizarSelectores() {
-        const listaC = document.getElementById('lista_cuadros'), listaA = document.getElementById('lista_actividades');
-        listaC.innerHTML = DB.cuadros.map(c => `<option value="${c.nombre}">`).join('');
-        listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
-        document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
-    }
-
-   function alEscribirCuadro(prefix) {
-    const val = document.getElementById(prefix + '_cuadro').value;
-    const data = DB.cuadros.find(c => c.nombre === val);
+   function actualizarSelectores() {
+    const listaC = document.getElementById('lista_cuadros');
+    const listaA = document.getElementById('lista_actividades');
     
-    if (data) {
-        // Autocompleta el rango de líneas
+    // Filtramos para que los nombres de los cuadros no se repitan en la lista
+    const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
+    
+    listaC.innerHTML = nombresUnicos.map(nombre => `<option value="${nombre}">`).join('');
+    listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
+    
+    document.getElementById('conf_jornada').innerHTML = DB.jornadas
+        .map(j => `<option value="${j.desc}">${j.desc}</option>`)
+        .join('');
+}
+
+  function alEscribirCuadro(prefix) {
+    const val = document.getElementById(prefix + '_cuadro').value;
+    
+    // 1. Buscamos TODOS los registros que coincidan con ese nombre de cuadro
+    const registrosCuadro = DB.cuadros.filter(c => c.nombre === val);
+    
+    if (registrosCuadro.length > 0) {
+        // Tomamos el primero para llenar los valores por defecto (inicio y fin)
+        const primerRegistro = registrosCuadro[0];
         document.getElementById(prefix + '_inicio').value = 1;
-        document.getElementById(prefix + '_fin').value = data.max;
+        document.getElementById(prefix + '_fin').value = primerRegistro.max;
         
-        // Autocompleta la Orientación y genera la lista de sugerencias
+        // 2. Manejo de Orientaciones
         const inputOri = document.getElementById(prefix + '_ori');
         if (inputOri) {
-            inputOri.value = data.ori; // Pone la orientación del catálogo
+            // Ponemos la orientación del primer registro como valor inicial
+            inputOri.value = primerRegistro.ori; 
             
-            // Actualiza la lista de sugerencias (datalist)
+            // Buscamos todas las orientaciones únicas para este cuadro específico
+            const orientacionesDisponibles = [...new Set(registrosCuadro.map(c => c.ori))];
+            
+            // Llenamos la lista de sugerencias de orientaciones
             const listaOri = document.getElementById('lista_orientaciones');
-            // Buscamos todas las orientaciones diferentes que existan para este cuadro
-            const sugerencias = DB.cuadros.filter(c => c.nombre === val).map(c => c.ori);
-            const sugerenciasUnicas = [...new Set(sugerencias)];
-            
-            listaOri.innerHTML = sugerenciasUnicas.map(o => `<option value="${o}">`).join('');
+            listaOri.innerHTML = orientacionesDisponibles
+                .map(o => `<option value="${o}">`)
+                .join('');
         }
     }
 }
@@ -535,6 +548,7 @@ function renderTabs() {
 </script>
 </body>
 </html>
+
 
 
 
