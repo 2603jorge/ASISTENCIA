@@ -216,8 +216,10 @@
 
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
-        container.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx===DB.currentSessionId?'active':''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
-    }
+      const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
+const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.orientacion}` : s.cuadro;
+
+return `<div class="tab ${idx===DB.currentSessionId?'active':''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;}
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
@@ -491,6 +493,7 @@
 </script>
 </body>
 </html>
+
 
 
 
