@@ -177,11 +177,11 @@
     alert("Catálogos cargados correctamente");
 }
 
-   function actualizarSelectores() {
+ function actualizarSelectores() {
     const listaC = document.getElementById('lista_cuadros');
     const listaA = document.getElementById('lista_actividades');
     
-    // Filtramos para que los nombres de los cuadros no se repitan en la lista
+    // 🌟 Creamos una lista de nombres ÚNICOS para que no se repita "201"
     const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
     
     listaC.innerHTML = nombresUnicos.map(nombre => `<option value="${nombre}">`).join('');
@@ -195,29 +195,27 @@
   function alEscribirCuadro(prefix) {
     const val = document.getElementById(prefix + '_cuadro').value;
     
-    // 1. Buscamos TODOS los registros que coincidan con ese nombre de cuadro
-    const registrosCuadro = DB.cuadros.filter(c => c.nombre === val);
+    // 🔍 Buscamos TODOS los registros que tengan ese número de cuadro
+    const registros = DB.cuadros.filter(c => c.nombre === val);
     
-    if (registrosCuadro.length > 0) {
-        // Tomamos el primero para llenar los valores por defecto (inicio y fin)
-        const primerRegistro = registrosCuadro[0];
+    if (registros.length > 0) {
+        // Usamos el primero para llenar los datos básicos
+        const primero = registros[0];
         document.getElementById(prefix + '_inicio').value = 1;
-        document.getElementById(prefix + '_fin').value = primerRegistro.max;
+        document.getElementById(prefix + '_fin').value = primero.max;
         
-        // 2. Manejo de Orientaciones
-        const inputOri = document.getElementById(prefix + '_ori');
-        if (inputOri) {
-            // Ponemos la orientación del primer registro como valor inicial
-            inputOri.value = primerRegistro.ori; 
-            
-            // Buscamos todas las orientaciones únicas para este cuadro específico
-            const orientacionesDisponibles = [...new Set(registrosCuadro.map(c => c.ori))];
-            
-            // Llenamos la lista de sugerencias de orientaciones
-            const listaOri = document.getElementById('lista_orientaciones');
-            listaOri.innerHTML = orientacionesDisponibles
-                .map(o => `<option value="${o}">`)
-                .join('');
+        // 🎯 Llenamos la lista de ORIENTACIONES con todas las opciones del cuadro
+        const listaOri = document.getElementById('lista_orientaciones');
+        const orientaciones = registros.map(r => r.ori);
+        const orientacionesUnicas = [...new Set(orientaciones)];
+        
+        listaOri.innerHTML = orientacionesUnicas
+            .map(o => `<option value="${o}">`)
+            .join('');
+
+        // Si solo hay una orientación, la ponemos de una vez
+        if (orientacionesUnicas.length === 1) {
+            document.getElementById(prefix + '_ori').value = orientacionesUnicas[0];
         }
     }
 }
@@ -548,6 +546,7 @@ function renderTabs() {
 </script>
 </body>
 </html>
+
 
 
 
