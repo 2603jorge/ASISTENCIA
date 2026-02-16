@@ -33,12 +33,21 @@
         .flex-row { display: flex; gap: 10px; }
         #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px;}
         .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
+        
+        /* ESTILOS DEL SENSOR */
+        .status-box { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 12px; }
+        .status-ok { background: #1b5e20; color: #00e676; border: 1px solid #00e676; }
+        .status-ko { background: #b71c1c; color: #ff8a80; border: 1px solid #ff8a80; }
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
     <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
+    
+    <div id="offlineStatus" class="status-box status-ko">Verificando almacenamiento...</div>
+    <button class="btn btn-sm btn-b" onclick="verificarAlmacenamiento()" style="width:100%; margin-bottom:15px;">🔄 RE-VERIFICAR OFFLINE</button>
+
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
@@ -127,7 +136,8 @@
 <datalist id="lista_actividades"></datalist>
 
 <script>
-    // LÓGICA DE DATOS ORIGINAL
+    const CACHE_NAME = 'agricactus-v47-cache-v1';
+
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -147,30 +157,49 @@
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
 
-        // 🚀 REGISTRO DE SERVICE WORKER PARA GUARDAR ARCHIVOS EN EL TELÉFONO
+        // 🚀 REGISTRO PWA Y CACHÉ
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'agricactus-v47-cache-v1';
-                const urlsToCache = [
-                    location.href,
-                    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-                    'https://unpkg.com/html5-qrcode'
-                ];
-                self.addEventListener('install', event => {
-                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
-                });
-                self.addEventListener('fetch', event => {
-                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
-                });
+                const CACHE = '${CACHE_NAME}';
+                const assets = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob))
-                .then(() => console.log("AgriCactus guardado para uso Offline ✅"));
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => {
+                console.log("Service Worker Registrado ✅");
+                setTimeout(verificarAlmacenamiento, 2000);
+            });
         }
     };
 
-    // TODA LA LÓGICA DE TU V47 SE MANTIENE AQUÍ (Funciones de registro, mapa, etc.)
+    async function verificarAlmacenamiento() {
+        const statusDiv = document.getElementById('offlineStatus');
+        if (!('caches' in window)) {
+            statusDiv.className = "status-box status-ko";
+            statusDiv.innerText = "❌ NAVEGADOR NO SOPORTA OFFLINE";
+            return;
+        }
+        try {
+            const cache = await caches.open(CACHE_NAME);
+            const keys = await cache.keys();
+            const tieneQR = keys.some(k => k.url.includes('qrcode.min.js'));
+            const tieneCamara = keys.some(k => k.url.includes('html5-qrcode'));
+
+            if (tieneQR && tieneCamara) {
+                statusDiv.className = "status-box status-ok";
+                statusDiv.innerText = "✅ SISTEMA LISTO PARA EL CAMPO (OFFLINE)";
+            } else {
+                statusDiv.className = "status-box status-ko";
+                statusDiv.innerText = "⚠️ DESCARGANDO ARCHIVOS... (NECESITAS RED)";
+            }
+        } catch (e) { statusDiv.innerText = "❌ ERROR AL VERIFICAR"; }
+    }
+
+    // --- FUNCIONES ORIGINALES RESTAURADAS ---
+
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
+    
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
@@ -188,6 +217,7 @@
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         document.getElementById('modalDB').classList.remove('open');
+        alert("Catálogos cargados correctamente");
     }
 
     function actualizarSelectores() {
@@ -199,25 +229,67 @@
         document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
 
+    function alEscribirCuadro(prefix) {
+        const val = document.getElementById(prefix + '_cuadro').value;
+        const registros = DB.cuadros.filter(c => c.nombre === val);
+        if (registros.length > 0) {
+            const primero = registros[0];
+            document.getElementById(prefix + '_inicio').value = 1;
+            document.getElementById(prefix + '_fin').value = primero.max;
+            const listaOri = document.getElementById('lista_orientaciones');
+            const orientacionesUnicas = [...new Set(registros.map(r => r.ori))];
+            listaOri.innerHTML = orientacionesUnicas.map(o => `<option value="${o}">`).join('');
+            if (orientacionesUnicas.length === 1) document.getElementById(prefix + '_ori').value = orientacionesUnicas[0];
+        }
+    }
+
+    function iniciarSistema() {
+        const resp = document.getElementById('conf_resp').value;
+        const total = parseInt(document.getElementById('conf_total_global').value);
+        if(!resp || isNaN(total)) return alert("Faltan datos");
+        DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
+        DB.sesiones = []; DB.staff = []; DB.avance = [];
+        crearSesionDesdeForm('conf');
+        irAlMapa();
+    }
+
+    function crearSesionDesdeForm(prefix) {
+        const cuadro = document.getElementById(prefix + '_cuadro').value;
+        if (!cuadro) return alert("Selecciona un cuadro");
+        let sesion = { uid: Date.now(), cuadro: cuadro, act: document.getElementById(prefix + '_act').value, inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1, fin: parseInt(document.getElementById(prefix + '_fin').value) || 10, modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS' };
+        DB.sesiones.push(sesion);
+        DB.currentSessionId = DB.sesiones.length - 1;
+        guardarTodo();
+    }
+
+    function confirmarNuevoCuadro() {
+        crearSesionDesdeForm('add');
+        document.getElementById('modalAddCuadro').classList.remove('open');
+        renderTabs(); renderSession();
+    }
+
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs(); renderSession();
-        
-        // 📷 INICIO DE CÁMARA MEJORADO
         if(!scanner) { 
-            scanner = new Html5QrcodeScanner("reader", { 
-                fps: 15, 
-                qrbox: 250,
-                rememberLastUsedCamera: true,
-                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-            }, false); // El false evita que busque scripts externos durante la ejecución
+            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); 
             scanner.render(onScan); 
         }
     }
 
-    // Funciones de registro de personal y mapa iguales a tu código original...
+    function renderTabs() {
+        const container = document.getElementById('tabsContainer');
+        container.innerHTML = DB.sesiones.map((s, idx) => {
+            const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
+            const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.ori}` : s.cuadro;
+            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;
+        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+    }
+
+    function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
+
     function onScan(id) {
         id = id.trim();
         let now = Date.now();
@@ -240,13 +312,10 @@
                     cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
                 }
             }
-        } else {
-            asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
-        }
+        } else { asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual); }
         audioBeep.play(); guardarTodo(); renderMapa(); renderSession();
     }
 
-    // El resto de funciones (renderMapa, renderSession, avanceMasivo, historial, etc.) se mantienen idénticas...
     function buscarSiguienteFilaVacia(sesion) {
         let quemadas = new Set(DB.avance.filter(a => a.cuadroUid === sesion.uid && a.fin !== null).map(a => a.fila));
         for(let i = sesion.inicio; i <= sesion.fin; i++) {
@@ -284,7 +353,7 @@
 
     function renderSession() {
         renderMapa();
-        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff} Personal`;
+        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`;
     }
 
     function registrarManual() {
@@ -405,17 +474,6 @@
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
-    function renderTabs() {
-        const container = document.getElementById('tabsContainer');
-        container.innerHTML = DB.sesiones.map((s, idx) => {
-            const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
-            const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.ori}` : s.cuadro;
-            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;
-        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
-    }
-
-    function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
-
     function abrirHistorial() {
         if (DB.archive.length === 0) return alert("Sin cierres.");
         let html = `<h2>📜 HISTORIAL</h2>`;
@@ -449,3 +507,4 @@
 </script>
 </body>
 </html>
+
