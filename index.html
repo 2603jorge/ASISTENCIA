@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - PWA FULL</title>
+    <title>AgriCactus V47 - Final PRO + Backup</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -22,11 +22,12 @@
         .tabs-container { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 10px; padding-bottom: 5px; }
         .tab { background: #333; color: #aaa; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
         .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); }
+        .tab-add { background: var(--blue); color: white; font-size: 16px; padding: 5px 15px; }
         .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; max-height: 280px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
         .row-item { height: 42px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
         .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
         .active-row { background: var(--sec); border-color: #ffca28; color: black; }
-        .row-tag { font-size: 7px; position: absolute; bottom: 2px; width: 100%; text-align: center; }
+        .row-tag { font-size: 7px; position: absolute; bottom: 2px; width: 100%; text-align: center; overflow: hidden; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
         #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 15px; min-height: 250px; }
@@ -38,38 +39,37 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main); margin-top:0;">AgriCactus V47</h2>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
     
     <div id="offlineStatus" class="status-box status-ko">⏳ SINCRONIZANDO MEMORIA...</div>
-    
+
     <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirDB()">📂 CATÁLOGOS</button>
+        <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
     </div>
-    
     <div class="card">
-        <h3>👷 SUPERVISOR</h3>
-        <label>ID Supervisor</label><input type="text" id="conf_sup_id">
-        <label>Nombre</label><input type="text" id="conf_resp">
-        <label>Actividad</label><input type="text" id="conf_sup_act" list="lista_actividades">
+        <h3>👷 DATOS SUPERVISOR</h3>
+        <label>ID Credencial</label><input type="text" id="conf_sup_id">
+        <label>Nombre Supervisor</label><input type="text" id="conf_resp">
+        <label>Actividad Supervisor</label><input type="text" id="conf_sup_act" list="lista_actividades">
         <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global">
     </div>
-
     <div class="card">
-        <h3>CUADRO ACTUAL</h3>
+        <h3>PRIMER CUADRO</h3>
         <label>🕒 JORNADA</label><select id="conf_jornada"></select>
-        <label>🔍 CUADRO</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
-        <label>🧭 ORIENTACIÓN</label><input type="text" id="conf_ori" list="lista_orientaciones">
+        <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
+        <label>🧭 ORIENTACIÓN</label>
+        <input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Sugerencia de orientación...">
         <datalist id="lista_orientaciones"></datalist>
-        <label>ACTIVIDAD</label><input type="text" id="conf_act" list="lista_actividades">
+        <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
         <div class="flex-row">
             <input type="number" id="conf_inicio" placeholder="Desde">
             <input type="number" id="conf_fin" placeholder="Hasta">
         </div>
-        <label>MODO</label>
+        <label>Modo</label>
         <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR DÍA</button>
+    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
 </div>
 
 <div id="viewMain" class="modal">
@@ -98,30 +98,24 @@
 </div>
 
 <div id="modalReporte" class="modal">
-    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA CSV</h2>
+    <h2 style="color:var(--active-tab); text-align:center;">📋 REPORTE CSV</h2>
     <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:5px; min-height:200px;"></div>
-    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR EXCEL</button>
+    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV</button>
     <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER</button>
 </div>
 
 <div id="viewPartial" class="modal" style="background:#111;">
-    <h2 style="color:var(--info); text-align:center;">📡 REPORTE AVANCE</h2>
+    <h2 style="color:var(--info); text-align:center;">📡 REPORTE DE AVANCE</h2>
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
-        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR JSON</button>
+        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR .JSON</button>
     </div>
-    <button class="btn btn-b" id="btnFinalCerrar" onclick="cerrarCorteParcial()">🔙 VOLVER</button>
+    <button class="btn btn-b" id="btnSalidaFinal" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
 
-<div id="modalDB" class="modal">
-    <h3>📂 CATÁLOGOS</h3>
-    <textarea id="csv_cuadros" placeholder="Pega CSV Cuadros" rows="4"></textarea>
-    <textarea id="csv_act" placeholder="Pega CSV Actividades" rows="4"></textarea>
-    <textarea id="csv_jor" placeholder="Pega CSV Jornadas" rows="4"></textarea>
-    <button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalDB').classList.remove('open')">CANCELAR</button>
-</div>
+<div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" placeholder="Pega CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="Pega CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="Pega CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
+<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
 
 <div id="modalAddCuadro" class="modal">
     <h3>➕ NUEVO CUADRO</h3>
@@ -132,13 +126,11 @@
     <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CERRAR</button>
 </div>
 
-<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
-
 <datalist id="lista_cuadros"></datalist>
 <datalist id="lista_actividades"></datalist>
 
 <script>
-    const CACHE_NAME = 'agricactus-v47-final-cache';
+    const CACHE_NAME = 'agricactus-v47-pwa-cache';
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -154,6 +146,7 @@
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
+    // --- PWA: Registro para funcionamiento offline ---
     window.onload = () => {
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
@@ -161,8 +154,8 @@
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE = '${CACHE_NAME}';
-                const urls = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(urls))));
+                const assets = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
@@ -255,12 +248,12 @@
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
-        document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
+        document.getElementById('disp_resp').innerText = "👷 " + DB.globalConfig.resp;
         renderTabs(); renderSession();
         if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); scanner.render(onScan); }
     }
 
-    // --- REGISTRO ---
+    // --- REGISTRO Y MAPA ---
     function onScan(id) {
         id = id.trim().toUpperCase();
         let now = Date.now();
@@ -308,7 +301,7 @@
 
     function renderTabs() {
         const c = document.getElementById('tabsContainer');
-        c.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab" style="background:var(--blue); color:white" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+        c.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
     }
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
@@ -321,28 +314,44 @@
             let gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
             g.innerHTML += `<div class="row-item ${gente.length ? 'active-row' : (term.has(i) ? 'done' : '')}"><span>${i}</span><span class="row-tag">${gente.map(p=>p.id).join(',')}</span></div>`;
         }
-        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`;
+        document.getElementById('disp_count_global').innerText = `${DB.staff.length} / ${DB.globalConfig.totalStaff}`;
     }
 
-    // --- REPORTES ---
+    // --- CIERRE Y REPORTES ---
+    function confirmarFinDia() {
+        if(confirm("¿Cerrar jornada definitivamente?")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            DB.archive.push({ fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] });
+            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+            
+            generarCorteParcial();
+            
+            // CONFIGURAR BOTÓN DE SALIDA PARA IR AL INICIO
+            const btn = document.getElementById('btnSalidaFinal');
+            btn.innerText = "🏁 FINALIZAR Y VOLVER AL INICIO";
+            btn.style.background = "var(--main)";
+            btn.onclick = () => {
+                if(confirm("¿Ya guardaste tu reporte? Al aceptar regresaremos al inicio.")) {
+                    localStorage.removeItem('v47_sesiones');
+                    localStorage.removeItem('v47_avance');
+                    localStorage.removeItem('v47_staff');
+                    location.reload(); // ESTO TE SACA DEL MAPA Y TE MANDA AL SETUP
+                }
+            };
+            alert("Jornada cerrada. Entrega tu reporte y presiona FINALIZAR.");
+        }
+    }
+
     function generarCorteParcial() {
         const qr = document.getElementById('qrcode_partial'); qr.innerHTML = "";
         new QRCode(qr, { text: JSON.stringify({ config: DB.globalConfig, avance: DB.avance }), width: 250, height: 250 });
+        document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
     }
 
-    function abrirReporteAsistencia() {
-        const jor = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
-        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;"><tr style="background:#ddd;"><th>CREDENTIAL</th><th>ID_ACT</th><th>CUADRO</th><th>LINEAS</th></tr>`;
-        [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
-            let hist = DB.avance.filter(a => a.obrero === id);
-            let u = hist[hist.length - 1];
-            let act = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"};
-            let cua = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
-            html += `<tr><td>${id}</td><td>${act.id}</td><td>${u.nomCuadro}</td><td>${hist.length}</td></tr>`;
-        });
-        document.getElementById('tablaAsistenciaContainer').innerHTML = html + `</table>`;
-        document.getElementById('modalReporte').classList.add('open');
+    function cerrarCorteParcial() {
+        document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
     }
 
     function descargarJSONReporte() {
@@ -361,16 +370,25 @@
         a.download = `REPORTE_${DB.globalConfig.resp}.csv`; a.click();
     }
 
-    function confirmarFinDia() {
-        if(confirm("¿Cerrar jornada?")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] });
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-            generarCorteParcial();
-            const btn = document.getElementById('btnFinalCerrar');
-            btn.innerText = "🏁 FINALIZAR Y BORRAR TODO"; btn.style.background = "var(--danger)";
-            btn.onclick = () => { localStorage.removeItem('v47_sesiones'); localStorage.removeItem('v47_avance'); localStorage.removeItem('v47_staff'); location.reload(); };
-        }
+    function abrirReporteAsistencia() {
+        const jor = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
+        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;"><tr style="background:#ddd;"><th>CREDENTIAL</th><th>ID_ACT</th><th>CUADRO</th><th>LINEAS</th></tr>`;
+        [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
+            let hist = DB.avance.filter(a => a.obrero === id);
+            let u = hist[hist.length - 1];
+            let act = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"};
+            html += `<tr><td>${id}</td><td>${act.id}</td><td>${u.nomCuadro}</td><td>${hist.length}</td></tr>`;
+        });
+        document.getElementById('tablaAsistenciaContainer').innerHTML = html + `</table>`;
+        document.getElementById('modalReporte').classList.add('open');
+    }
+
+    // --- UTILIDADES ---
+    function guardarTodo() {
+        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
     function ejecutarAvanceMasivoFix() {
@@ -396,29 +414,6 @@
         }
     }
 
-    function abrirHistorial() {
-        let list = DB.archive.slice(-5).map((a, i) => `<div class="card">${a.fecha} - ${a.config.resp} <button class="btn-sm btn-b" onclick="descargarHistorialIdx(${i})">JSON</button></div>`).join('');
-        document.getElementById('editorList').innerHTML = list || "Sin historial";
-        document.getElementById('modalEditor').classList.add('open');
-    }
-
-    function descargarHistorialIdx(i) {
-        let b = new Blob([JSON.stringify(DB.archive[i], null, 2)], {type: "application/json"});
-        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `HISTORIAL_${i}.json`; a.click();
-    }
-
-    function guardarTodo() {
-        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
-        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
-        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
-    }
-    
-    function registrarManual() {
-        let v = document.getElementById('manual_id').value;
-        if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
-    }
-
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
         let list = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null).map(st => `
@@ -438,7 +433,21 @@
         }
     }
 
-    function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
+    function abrirHistorial() {
+        let list = DB.archive.slice(-5).map((a, i) => `<div class="card">${a.fecha} - ${a.config.resp} <button class="btn-sm btn-b" onclick="descargarHistorialIdx(${i})">JSON</button></div>`).join('');
+        document.getElementById('editorList').innerHTML = list || "Sin historial";
+        document.getElementById('modalEditor').classList.add('open');
+    }
+
+    function descargarHistorialIdx(i) {
+        let b = new Blob([JSON.stringify(DB.archive[i], null, 2)], {type: "application/json"});
+        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `HISTORIAL_${i}.json`; a.click();
+    }
+
+    function registrarManual() {
+        let v = document.getElementById('manual_id').value;
+        if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
+    }
 </script>
 </body>
 </html>
