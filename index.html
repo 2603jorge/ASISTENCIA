@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - PRO OFFLINE</title>
+    <title>AgriCactus V47 - RESTAURADO</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -72,7 +72,7 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
         <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
         <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="width:auto; margin:0;">📡 CORTE PARCIAL</button>
-        <div id="disp_count_global" style="font-size:12px;">0/0</div>
+        <div id="disp_count_global" style="font-size:12px;">0/0 Personal</div>
     </div>
     <div class="tabs-container" id="tabsContainer"></div>
     <div id="reader"></div>
@@ -102,7 +102,6 @@
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
         <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
-        <p style="font-size:11px; color:var(--info);">¿QR no escanea? Usa el archivo:</p>
         <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR REPORTE .JSON</button>
     </div>
     <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
@@ -147,16 +146,11 @@
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
         
-        // REGISTRO DE SERVICE WORKER PARA QUE NUNCA TE SAQUE DE LA APP
+        // --- Registro PWA para funcionamiento offline sin que te saque ---
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE = 'agri-v47-final';
-                const assets = [
-                    './',
-                    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-                    'https://unpkg.com/html5-qrcode'
-                ];
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))));
+                const CACHE = 'agri-v47-fix';
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(['https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode']))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
@@ -182,7 +176,7 @@
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         document.getElementById('modalDB').classList.remove('open');
-        alert("Catálogos cargados ✅");
+        alert("Catálogos cargados correctamente");
     }
 
     function actualizarSelectores() {
@@ -239,13 +233,12 @@
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs(); renderSession();
         
-        // CONFIGURACIÓN DE CAMARA PARA OFFLINE TOTAL
         if(!scanner) { 
             scanner = new Html5QrcodeScanner("reader", { 
                 fps: 15, 
                 qrbox: 250,
                 rememberLastUsedCamera: true
-            }, false); // <--- El false bloquea peticiones externas
+            }, false); // <--- PARÁMETRO CLAVE: Evita buscar parches online
             scanner.render(onScan); 
         }
     }
@@ -364,29 +357,23 @@
 
     function generarCorteParcial() {
         let qrData = {
-            config: { supId: DB.globalConfig.supId, resp: DB.globalConfig.resp, supAct: DB.sesiones[DB.currentSessionId]?.act || "General", jornada: DB.globalConfig.jornada },
+            config: DB.globalConfig,
             sesiones: DB.sesiones.map(s => ({ cuadro: s.cuadro })),
-            avance: DB.avance.map(a => ({ obrero: a.obrero, supAct: a.supAct, nomCuadro: a.nomCuadro })),
-            catalogos: { cuadros: DB.cuadros.map(c => ({ id: c.id, nombre: c.nombre })), actividades: DB.actividades.map(a => ({ id: a.id, desc: a.desc })), jornadas: DB.jornadas.map(j => ({ id: j.id, desc: j.desc })) }
+            avance: DB.avance.map(a => ({ obrero: a.obrero, supAct: a.supAct, nomCuadro: a.nomCuadro }))
         };
         document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
         const qrContainer = document.getElementById('qrcode_partial');
         qrContainer.innerHTML = ""; 
-        try {
-            new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
-        } catch (e) { qrContainer.innerHTML = "<p>QR Saturado. Usa JSON.</p>"; }
+        new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
     }
 
     function descargarJSONReporte() {
-        const resp = DB.globalConfig.resp || "SinNombre";
-        const ahora = new Date();
-        const fecha = `${ahora.getDate()}_${ahora.getMonth() + 1}_${ahora.getFullYear()}`;
-        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
+        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff };
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
         let a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `AVANCE_${resp}_${fecha}.json`;
+        a.download = `AVANCE_${DB.globalConfig.resp}.json`;
         a.click();
     }
 
