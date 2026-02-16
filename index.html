@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - TOTAL OFFLINE</title>
+    <title>AgriCactus V47 - PRO OFFLINE</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -31,7 +31,7 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
-        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; }
+        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px; }
         .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
@@ -147,10 +147,16 @@
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
         
+        // REGISTRO DE SERVICE WORKER PARA QUE NUNCA TE SAQUE DE LA APP
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE = 'agri-v47-offline';
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(['https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode']))));
+                const CACHE = 'agri-v47-final';
+                const assets = [
+                    './',
+                    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+                    'https://unpkg.com/html5-qrcode'
+                ];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
@@ -160,55 +166,47 @@
 
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
-    const txtC = document.getElementById('csv_cuadros').value;
-    const txtA = document.getElementById('csv_act').value;
-    const txtJ = document.getElementById('csv_jor').value;
-    
-    if(txtC.trim()) {
-        DB.cuadros = txtC.split('\n').map(l => { 
-            let c = l.split(/[,\t]/); 
-            return (c.length >= 6) ? {
-                id: c[0].trim(), 
-                nombre: c[1].trim(), 
-                ori: c[3].trim(), 
-                max: parseInt(c[5].trim()) 
-            } : null 
-        }).filter(x => x);
+        const txtC = document.getElementById('csv_cuadros').value;
+        const txtA = document.getElementById('csv_act').value;
+        const txtJ = document.getElementById('csv_jor').value;
+        if(txtC.trim()) {
+            DB.cuadros = txtC.split('\n').map(l => { 
+                let c = l.split(/[,\t]/); 
+                return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null 
+            }).filter(x => x);
+        }
+        if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
+        if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
+        localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros));
+        localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
+        localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
+        actualizarSelectores();
+        document.getElementById('modalDB').classList.remove('open');
+        alert("Catálogos cargados ✅");
     }
-    
-    if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-    if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-    
-    localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros));
-    localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
-    localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
-    actualizarSelectores();
-    document.getElementById('modalDB').classList.remove('open');
-    alert("Catálogos cargados correctamente");
-}
 
- function actualizarSelectores() {
-    const listaC = document.getElementById('lista_cuadros');
-    const listaA = document.getElementById('lista_actividades');
-    const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
-    listaC.innerHTML = nombresUnicos.map(nombre => `<option value="${nombre}">`).join('');
-    listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
-    document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
-}
-
-  function alEscribirCuadro(prefix) {
-    const val = document.getElementById(prefix + '_cuadro').value;
-    const registros = DB.cuadros.filter(c => c.nombre === val);
-    if (registros.length > 0) {
-        const primero = registros[0];
-        document.getElementById(prefix + '_inicio').value = 1;
-        document.getElementById(prefix + '_fin').value = primero.max;
-        const listaOri = document.getElementById('lista_orientaciones');
-        const orientacionesUnicas = [...new Set(registros.map(r => r.ori))];
-        listaOri.innerHTML = orientacionesUnicas.map(o => `<option value="${o}">`).join('');
-        if (orientacionesUnicas.length === 1) document.getElementById(prefix + '_ori').value = orientacionesUnicas[0];
+    function actualizarSelectores() {
+        const listaC = document.getElementById('lista_cuadros');
+        const listaA = document.getElementById('lista_actividades');
+        const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
+        listaC.innerHTML = nombresUnicos.map(nombre => `<option value="${nombre}">`).join('');
+        listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
+        document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
-}
+
+    function alEscribirCuadro(prefix) {
+        const val = document.getElementById(prefix + '_cuadro').value;
+        const registros = DB.cuadros.filter(c => c.nombre === val);
+        if (registros.length > 0) {
+            const primero = registros[0];
+            document.getElementById(prefix + '_inicio').value = 1;
+            document.getElementById(prefix + '_fin').value = primero.max;
+            const listaOri = document.getElementById('lista_orientaciones');
+            const orientacionesUnicas = [...new Set(registros.map(r => r.ori))];
+            listaOri.innerHTML = orientacionesUnicas.map(o => `<option value="${o}">`).join('');
+            if (orientacionesUnicas.length === 1) document.getElementById(prefix + '_ori').value = orientacionesUnicas[0];
+        }
+    }
 
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
@@ -223,14 +221,7 @@
     function crearSesionDesdeForm(prefix) {
         const cuadro = document.getElementById(prefix + '_cuadro').value;
         if (!cuadro) return alert("Selecciona un cuadro");
-        let sesion = {
-            uid: Date.now(),
-            cuadro: cuadro,
-            act: document.getElementById(prefix + '_act').value,
-            inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1,
-            fin: parseInt(document.getElementById(prefix + '_fin').value) || 10,
-            modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS'
-        };
+        let sesion = { uid: Date.now(), cuadro: cuadro, act: document.getElementById(prefix + '_act').value, inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1, fin: parseInt(document.getElementById(prefix + '_fin').value) || 10, modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS' };
         DB.sesiones.push(sesion);
         DB.currentSessionId = DB.sesiones.length - 1;
         guardarTodo();
@@ -248,25 +239,26 @@
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs(); renderSession();
         
-        // CORRECCIÓN FINAL PARA OFFLINE
+        // CONFIGURACIÓN DE CAMARA PARA OFFLINE TOTAL
         if(!scanner) { 
             scanner = new Html5QrcodeScanner("reader", { 
-                fps: 10, 
+                fps: 15, 
                 qrbox: 250,
                 rememberLastUsedCamera: true
-            }, false); // <--- El false es Vital: evita que el scanner busque archivos externos de ayuda
+            }, false); // <--- El false bloquea peticiones externas
             scanner.render(onScan); 
         }
     }
 
-function renderTabs() {
-    const container = document.getElementById('tabsContainer');
-    container.innerHTML = DB.sesiones.map((s, idx) => {
-        const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
-        const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.ori}` : s.cuadro;
-        return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;
-    }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
-}
+    function renderTabs() {
+        const container = document.getElementById('tabsContainer');
+        container.innerHTML = DB.sesiones.map((s, idx) => {
+            const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
+            const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.ori}` : s.cuadro;
+            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;
+        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+    }
+
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
     function onScan(id) {
@@ -355,9 +347,8 @@ function renderTabs() {
                     activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); });
                     DB.currentSessionId = siguienteIdx;
                     guardarTodo(); renderTabs(); renderSession();
-                    alert(`Personal transferido a ${s_destino.cuadro} ✅`);
                 }
-            } else { alert("⛔ CUADRO LLENO. Crea otra pestaña (+) para transferir."); }
+            } else { alert("⛔ CUADRO LLENO."); }
         } else {
             if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
                 let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
@@ -384,37 +375,28 @@ function renderTabs() {
         qrContainer.innerHTML = ""; 
         try {
             new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
-            document.getElementById('partial_summary').innerText = `Reporte compatible con Extractor V5.3`;
-        } catch (e) { qrContainer.innerHTML = "<p style='color:red;'>QR Saturado. Usa el archivo JSON.</p>"; }
+        } catch (e) { qrContainer.innerHTML = "<p>QR Saturado. Usa JSON.</p>"; }
     }
 
     function descargarJSONReporte() {
         const resp = DB.globalConfig.resp || "SinNombre";
         const ahora = new Date();
         const fecha = `${ahora.getDate()}_${ahora.getMonth() + 1}_${ahora.getFullYear()}`;
-        const hora = `${ahora.getHours()}h${ahora.getMinutes()}`;
         let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
         let a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `AVANCE_${resp.replace(/\s+/g, '_')}_${fecha}_${hora}.json`;
+        a.download = `AVANCE_${resp}_${fecha}.json`;
         a.click();
     }
 
-    function cerrarCorteParcial() {
-        document.getElementById('viewPartial').classList.remove('open');
-        document.getElementById('viewMain').classList.add('open');
-    }
+    function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
 
     function abrirReporteAsistencia() {
         const container = document.getElementById('tablaAsistenciaContainer');
         const modal = document.getElementById('modalReporte');
         let filas = [];
-        let supActObj = DB.actividades.find(a => a.desc === DB.globalConfig.supAct) || {id:"N/A"};
-        let supCName = DB.sesiones[0]?.cuadro || "N/A";
-        let supCObj = DB.cuadros.find(c => c.nombre === supCName) || {id:"N/A"};
         let jorObj = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
-        filas.push({id: DB.globalConfig.supId, act: supActObj.id, nAct: DB.globalConfig.supAct, cId: supCObj.id, cNom: supCName, jId: jorObj.id, jNom: DB.globalConfig.jornada, l: 0});
         let idsObreros = [...new Set(DB.avance.map(a => a.obrero))];
         idsObreros.forEach(id => {
             let hist = DB.avance.filter(a => a.obrero === id);
@@ -423,8 +405,8 @@ function renderTabs() {
             let cObj = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
             filas.push({id: id, act: aObj.id, nAct: u.supAct, cId: cObj.id, cNom: u.nomCuadro, jId: jorObj.id, jNom: DB.globalConfig.jornada, l: hist.length});
         });
-        let html = `<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:11px;"><tr style="background:#eee;"><th>CREDENTIAL</th><th>ID_ACT</th><th>NAME_ACT</th><th>ID_CUA</th><th>CUADRO</th><th>ID_JOR</th><th>DESC_JOR</th><th>LÍNEAS</th></tr>`;
-        filas.forEach(f => { html += `<tr><td>${f.id}</td><td>${f.act}</td><td>${f.nAct}</td><td>${f.cId}</td><td>${f.cNom}</td><td>${f.jId}</td><td>${f.jNom}</td><td><b>${f.l}</b></td></tr>`; });
+        let html = `<table style="width:100%; border-collapse:collapse; font-size:11px;"><tr style="background:#eee;"><th>ID</th><th>ACT</th><th>CUADRO</th><th>LÍNEAS</th></tr>`;
+        filas.forEach(f => { html += `<tr><td>${f.id}</td><td>${f.nAct}</td><td>${f.cNom}</td><td>${f.l}</td></tr>`; });
         html += `</table>`; container.innerHTML = html; modal.classList.add('open');
     }
 
@@ -448,21 +430,9 @@ function renderTabs() {
         const list = document.getElementById('editorList'); list.innerHTML = "";
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
         activos.forEach(st => {
-            list.innerHTML += `<div class="edit-item"><div><b>${st.id}</b><br><small>Fila: ${st.fila}</small></div><div style="display:flex; gap:5px;"><button class="btn-sm" style="background:var(--blue);" onclick="modificarFilaManual('${st.id}')">EDITAR</button><button class="btn-sm" style="background:var(--danger);" onclick="borrarRegistroManual('${st.id}')">BORRAR</button></div></div>`;
+            list.innerHTML += `<div class="edit-item"><b>${st.id}</b> - Fila: ${st.fila} <button onclick="borrarRegistroManual('${st.id}')">X</button></div>`;
         });
         document.getElementById('modalEditor').classList.add('open');
-    }
-
-    function modificarFilaManual(id) {
-        let s = DB.sesiones[DB.currentSessionId];
-        let t = DB.staff.find(x=>x.id===id);
-        let n = prompt("Fila:", t.fila);
-        if (n && !isNaN(n)) {
-            let f = parseInt(n);
-            if (f < s.inicio || f > s.fin) return alert("Rango inválido");
-            cerrarTarea(t); asignarFilaEspecifica(t, f, s);
-            guardarTodo(); renderMapa(); abrirEditor();
-        }
     }
 
     function borrarRegistroManual(id) {
@@ -472,7 +442,7 @@ function renderTabs() {
             let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid);
             if(idx !== -1) DB.avance.splice(idx, 1);
             st.fila = null; st.cuadroUid = null;
-            guardarTodo(); renderMapa(); renderSession(); abrirEditor();
+            guardarTodo(); renderMapa(); abrirEditor();
         }
     }
 
@@ -483,56 +453,34 @@ function renderTabs() {
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
-    function limpiarHistorialViejo() {
-        const TRES_DIAS_EN_MS = 3 * 24 * 60 * 60 * 1000;
-        const ahora = Date.now();
-        DB.archive = DB.archive.filter(item => (ahora - (item.fecha_ms || 0)) < TRES_DIAS_EN_MS);
-        localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-    }
-
     function abrirHistorial() {
-        limpiarHistorialViejo();
-        if (DB.archive.length === 0) return alert("No hay cierres recientes (últimas 72h).");
-        let html = `<h2>📜 HISTORIAL (72H)</h2><div style="max-height:300px; overflow-y:auto;">`;
-        DB.archive.forEach((item, idx) => {
-            html += `<div class="card" style="margin-bottom:5px; font-size:12px; background:#222;"><b>Fecha:</b> ${item.fecha} - ${item.hora}<br><b>Supervisor:</b> ${item.config.resp}<br><button class="btn btn-p btn-sm" onclick="descargarHistorialIdx(${idx})">💾 DESCARGAR JSON</button></div>`;
-        });
-        html += `</div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button>`;
-        const modal = document.getElementById('modalEditor');
+        if (DB.archive.length === 0) return alert("Sin cierres.");
+        let html = `<h2>📜 HISTORIAL</h2>`;
+        DB.archive.forEach((item, idx) => { html += `<div class="card"><b>${item.fecha}</b> <button onclick="descargarHistorialIdx(${idx})">⬇️</button></div>`; });
         document.getElementById('editorList').innerHTML = html;
-        modal.classList.add('open');
+        document.getElementById('modalEditor').classList.add('open');
     }
 
     function descargarHistorialIdx(idx) {
         const item = DB.archive[idx];
-        const data = { config: item.config, avance: item.avance, fecha_archivo: item.fecha, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
+        const data = { config: item.config, avance: item.avance, fecha_archivo: item.fecha };
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
         const a = document.createElement("a");
-        const respLimpio = item.config.resp.replace(/\s+/g, '_');
         a.href = URL.createObjectURL(blob);
-        a.download = `RECUPERADO_${respLimpio}_${item.fecha.replace(/\//g,'-')}.json`;
+        a.download = `RECUPERADO_${item.fecha}.json`;
         a.click();
     }
 
     function confirmarFinDia() {
-        if(confirm("¿Finalizar jornada? Se generará el JSON y QR para el de asistencia.")) {
+        if(confirm("¿Finalizar jornada?")) {
             DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            const cierreHoy = { fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), fecha_ms: Date.now(), config: DB.globalConfig, avance: [...DB.avance] };
+            const cierreHoy = { fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] };
             DB.archive.push(cierreHoy);
             localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
             generarCorteParcial();
             const btnVolver = document.querySelector("#viewPartial .btn-b");
-            btnVolver.innerText = "⚠️ FINALIZAR Y BORRAR TODO";
-            btnVolver.style.background = "var(--danger)";
-            btnVolver.onclick = () => {
-                if(confirm("¿Ya entregaste el JSON o QR? Al aceptar se borrará el mapa actual.")) {
-                    localStorage.removeItem('v47_sesiones');
-                    localStorage.removeItem('v47_avance');
-                    localStorage.removeItem('v47_staff');
-                    location.reload();
-                }
-            };
-            alert("SISTEMA CERRADO:\n1. Muestra el QR al de asistencia.\n2. Descarga el archivo .JSON.\n3. Presiona FINALIZAR.");
+            btnVolver.innerText = "CERRAR Y BORRAR TODO";
+            btnVolver.onclick = () => { localStorage.removeItem('v47_sesiones'); location.reload(); };
         }
     }
 </script>
