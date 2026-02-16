@@ -488,20 +488,56 @@
         a.click();
     }
 
+  // --- FUNCIÓN DE CIERRE CORREGIDA ---
     function confirmarFinDia() {
-        if(confirm("¿Finalizar jornada?")) {
+        if(confirm("¿Finalizar jornada? Se generará el JSON y QR para el de asistencia.")) {
+            // 1. Cerramos las tareas de los que siguen activos
             DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            const cierreHoy = { fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] };
+
+            // 2. Guardamos en el historial (Archivo)
+            const cierreHoy = { 
+                fecha: new Date().toLocaleDateString(), 
+                hora: new Date().toLocaleTimeString(), 
+                fecha_ms: Date.now(), 
+                config: DB.globalConfig, 
+                avance: [...DB.avance] 
+            };
             DB.archive.push(cierreHoy);
             localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+
+            // 3. Generamos el reporte visual
             generarCorteParcial();
+
+            // 4. CAMBIO CLAVE: Configuramos el botón de salida para resetear la app
             const btnVolver = document.querySelector("#viewPartial .btn-b");
-            btnVolver.innerText = "CERRAR Y BORRAR TODO";
-            btnVolver.onclick = () => { localStorage.removeItem('v47_sesiones'); location.reload(); };
+            btnVolver.innerText = "🏁 FINALIZAR Y SALIR AL INICIO";
+            btnVolver.style.background = "var(--main)";
+            
+            btnVolver.onclick = () => {
+                if(confirm("¿Ya guardaste tu reporte? Al aceptar regresaremos al inicio.")) {
+                    // Limpiamos los datos del día actual de la memoria temporal
+                    localStorage.removeItem('v47_sesiones');
+                    localStorage.removeItem('v47_avance');
+                    localStorage.removeItem('v47_staff');
+                    
+                    // Recargamos la página para volver a la ventana de Setup
+                    location.reload(); 
+                }
+            };
+            
+            alert("JORNADA CERRADA.\n1. Muestra el QR.\n2. Descarga el JSON.\n3. Presiona FINALIZAR para volver al inicio.");
         }
+    }
+
+    // Asegúrate que esta función solo cierre el modal de reporte parcial si NO es el fin del día
+    function cerrarCorteParcial() {
+        document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
+    }
     }
 </script>
 </body>
 </html>
+
 
 
