@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - Pro Offline</title>
+    <title>AgriCactus V47 - FULL PRO</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -11,30 +11,36 @@
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
-        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
+        
+        /* Botones mejor distribuidos */
+        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 12px; cursor: pointer; text-transform: uppercase; color: white; display: block; box-sizing: border-box; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
-        .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
+        .btn-i { background: var(--info); }
+        .btn-sm { padding: 8px 12px; font-size: 11px; width: auto; margin: 0; display: inline-block; }
+        
+        .flex-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .flex-row .btn { margin-bottom: 0; flex: 1; }
+
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
-        .tabs-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
-        .tab { background: #333; color: #aaa; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
+        
+        .tabs-container { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 15px; padding-bottom: 5px; }
+        .tab { background: #333; color: #aaa; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
         .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); }
-        .tab-add { background: var(--blue); color: white; font-size: 16px; padding: 5px 15px; }
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
-        .row-item { height: 40px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
-        .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
+        
+        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 15px; border: 2px solid #333; }
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; max-height: 300px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 12px; }
+        .row-item { height: 45px; background: #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
+        .done { background: var(--main); border-color: #66bb6a; opacity: 0.6; }
         .active-row { background: var(--sec); border-color: #ffca28; color: black; }
-        .row-tag { font-size: 7px; position: absolute; bottom: 1px; width: 100%; text-align: center; overflow: hidden; }
+        .row-tag { font-size: 7px; position: absolute; bottom: 2px; width: 100%; text-align: center; }
+
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
-        .flex-row { display: flex; gap: 10px; }
-        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px;}
-        .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
         
-        /* ESTILOS DEL SENSOR */
-        .status-box { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 12px; }
+        .status-box { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; font-size: 12px; }
         .status-ok { background: #1b5e20; color: #00e676; border: 1px solid #00e676; }
         .status-ko { background: #b71c1c; color: #ff8a80; border: 1px solid #ff8a80; }
     </style>
@@ -42,67 +48,73 @@
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
+    <h2 style="text-align:center; color: var(--main); margin-top:0;">AgriCactus V47</h2>
     
-    <div id="offlineStatus" class="status-box status-ko">Estado: Pendiente de verificación</div>
+    <div id="offlineStatus" class="status-box status-ko">Estado: Pendiente de sincronización</div>
+    
     <div class="flex-row">
-        <button class="btn btn-sm btn-b" onclick="forzarDescarga()">📥 DESCARGAR CEREBRO</button>
-        <button class="btn btn-sm btn-g" onclick="verificarAlmacenamiento()">🔄 VERIFICAR</button>
-    </div>
-
-    <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
+        <button class="btn btn-b" onclick="abrirDB()">📂 CATALOGOS</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
     </div>
+
     <div class="card">
-        <h3>👷 DATOS SUPERVISOR</h3>
-        <label>ID Credencial</label><input type="text" id="conf_sup_id">
+        <label>ID Credencial Supervisor</label><input type="text" id="conf_sup_id">
         <label>Nombre Supervisor</label><input type="text" id="conf_resp">
         <label>Actividad Supervisor</label><input type="text" id="conf_sup_act" list="lista_actividades">
-        <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global">
+        <label>👥 Total Personal Esperado</label><input type="number" id="conf_total_global">
     </div>
+
     <div class="card">
         <h3>PRIMER CUADRO</h3>
-        <label>🕒 JORNADA</label><select id="conf_jornada"></select>
+        <label>🕒 Jornada</label><select id="conf_jornada"></select>
         <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
-        <label>🧭 ORIENTACIÓN</label>
-        <input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Sugerencia de orientación...">
+        <label>🧭 Orientación</label><input type="text" id="conf_ori" list="lista_orientaciones">
         <datalist id="lista_orientaciones"></datalist>
-        <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
+        <label>Actividad del Grupo</label><input type="text" id="conf_act" list="lista_actividades">
         <div class="flex-row">
-            <input type="number" id="conf_inicio" placeholder="Desde">
-            <input type="number" id="conf_fin" placeholder="Hasta">
+            <div><label>Desde</label><input type="number" id="conf_inicio"></div>
+            <div><label>Hasta</label><input type="number" id="conf_fin"></div>
         </div>
-        <label>Modo</label>
+        <label>Modo de Trabajo</label>
         <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR DÍA</button>
+
+    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
 </div>
 
 <div id="viewMain" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
-        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="width:auto; margin:0;">📡 CORTE PARCIAL</button>
-        <div id="disp_count_global" style="font-size:12px;">0/0</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div id="disp_resp" style="font-weight:bold; color:var(--main); font-size:14px;">--</div>
+        <div id="disp_count_global" style="font-size:13px; background:#333; padding:4px 10px; border-radius:20px;">0/0</div>
     </div>
+
     <div class="tabs-container" id="tabsContainer"></div>
+    
     <div id="reader"></div>
-    <div class="flex-row" style="margin-bottom: 10px;">
-        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;">
-        <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
-    </div>
-    <div id="mapGrid" class="grid-map"></div>
-    <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
-    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
+
     <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
-        <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
+        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;">
+        <button class="btn btn-b" style="width:70px; margin:0;" onclick="registrarManual()">OK</button>
+    </div>
+
+    <div id="mapGrid" class="grid-map"></div>
+
+    <div style="margin-top:15px;">
+        <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
+        <div class="flex-row">
+            <button class="btn btn-i" onclick="generarCorteParcial()">📡 CORTE</button>
+            <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE</button>
+        </div>
+        <div class="flex-row">
+            <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
+            <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR DÍA</button>
+        </div>
     </div>
 </div>
 
 <div id="modalReporte" class="modal">
-    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA PARA EXCEL</h2>
-    <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:5px; min-height:200px;"></div>
+    <h2 style="color:var(--active-tab); text-align:center;">📋 REPORTE PARA EXCEL</h2>
+    <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:10px; min-height:250px;"></div>
     <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV (EXCEL)</button>
     <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER AL MAPA</button>
 </div>
@@ -112,16 +124,25 @@
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
-        <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
-        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR REPORTE .JSON</button>
+        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR .JSON</button>
     </div>
     <button class="btn btn-b" id="btnCerrarReporte" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
 
-<div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
-<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
+<div id="modalDB" class="modal">
+    <h3>📂 CARGAR CATÁLOGOS</h3>
+    <label>CSV Cuadros (ID, Nombre, Rancho, Ori, Ha, Lineas)</label>
+    <textarea id="csv_cuadros" placeholder="Pega aquí el CSV..." rows="4" style="width:100%; background:#222; color:white; border:1px solid #444; border-radius:8px;"></textarea>
+    <label>CSV Actividades (ID, Descripcion)</label>
+    <textarea id="csv_act" placeholder="Pega aquí el CSV..." rows="3" style="width:100%; background:#222; color:white; border:1px solid #444; border-radius:8px;"></textarea>
+    <label>CSV Jornadas (ID, Descripcion)</label>
+    <textarea id="csv_jor" placeholder="Pega aquí el CSV..." rows="2" style="width:100%; background:#222; color:white; border:1px solid #444; border-radius:8px;"></textarea>
+    <button class="btn btn-g" onclick="procesarYGuardar()" style="margin-top:15px;">💾 GUARDAR CATÁLOGOS</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalDB').classList.remove('open')">CANCELAR</button>
+</div>
+
 <div id="modalAddCuadro" class="modal">
-    <h2>➕ NUEVO CUADRO</h2>
+    <h2>➕ AÑADIR OTRO CUADRO</h2>
     <div class="card">
         <label>Cuadro</label><input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
         <label>Actividad</label><input type="text" id="add_act" list="lista_actividades">
@@ -134,12 +155,14 @@
     <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
 </div>
 
+<div id="modalEditor" class="modal"><h2>✏️ EDITOR DE REGISTROS</h2><div id="editorList"></div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
+
 <datalist id="lista_cuadros"></datalist>
 <datalist id="lista_actividades"></datalist>
 
 <script>
-    const CACHE_NAME = 'agricactus-v47-cache-v3';
-
+    const CACHE_NAME = 'agricactus-v47-pwa-v1';
+    
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -155,113 +178,69 @@
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
+    // --- SERVICE WORKER Y OFFLINE ---
     window.onload = () => {
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
-        
-        // Registro inicial
+
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE = '${CACHE_NAME}';
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll([location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode']))));
+                const assets = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => {
-                verificarAlmacenamiento();
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
+                verificarCache();
             });
         }
     };
 
-    async function verificarAlmacenamiento() {
-        const statusDiv = document.getElementById('offlineStatus');
-        if (!('caches' in window)) {
-            statusDiv.className = "status-box status-ko";
-            statusDiv.innerText = "❌ NAVEGADOR ANTIGUO";
-            return;
-        }
-        try {
+    async function verificarCache() {
+        const status = document.getElementById('offlineStatus');
+        if ('caches' in window) {
             const cache = await caches.open(CACHE_NAME);
             const keys = await cache.keys();
-            const tieneQR = keys.some(k => k.url.includes('qrcode.min.js'));
-            const tieneCamara = keys.some(k => k.url.includes('html5-qrcode'));
-
-            if (tieneQR && tieneCamara) {
-                statusDiv.className = "status-box status-ok";
-                statusDiv.innerText = "✅ LISTO: TODO EN MEMORIA";
+            if (keys.length >= 3) {
+                status.className = "status-box status-ok";
+                status.innerText = "✅ CEREBRO CARGADO: LISTO PARA EL CAMPO";
             } else {
-                statusDiv.className = "status-box status-ko";
-                statusDiv.innerText = "⚠️ PENDIENTE: PICA 'DESCARGAR CEREBRO'";
+                status.innerText = "⏳ DESCARGANDO RECURSOS...";
+                setTimeout(verificarCache, 3000);
             }
-        } catch (e) { statusDiv.innerText = "❌ ERROR DE ACCESO"; }
-    }
-
-    async function forzarDescarga() {
-        const statusDiv = document.getElementById('offlineStatus');
-        statusDiv.innerText = "⏳ DESCARGANDO... ESPERA";
-        try {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.add(location.href);
-            await cache.add('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
-            await cache.add('https://unpkg.com/html5-qrcode');
-            alert("✅ ¡Cerebro guardado! Ya puedes usarlo sin red.");
-            verificarAlmacenamiento();
-        } catch (e) { alert("❌ Error: Revisa tu internet para la descarga."); }
-    }
-
-    // --- LÓGICA DE CIERRE REVISADA ---
-    function confirmarFinDia() {
-        if(confirm("¿Finalizar jornada?")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            const cierreHoy = { fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] };
-            DB.archive.push(cierreHoy);
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-            
-            generarCorteParcial();
-            
-            // Re-configurar el botón de la ventana de reporte
-            const btn = document.getElementById('btnCerrarReporte');
-            btn.innerText = "🏁 FINALIZAR Y VOLVER AL INICIO";
-            btn.style.background = "var(--main)";
-            btn.onclick = () => {
-                if(confirm("¿Seguro que ya guardaste el JSON? Se borrará el mapa actual.")) {
-                    localStorage.removeItem('v47_sesiones');
-                    localStorage.removeItem('v47_avance');
-                    localStorage.removeItem('v47_staff');
-                    location.reload(); // Esto te manda al Setup
-                }
-            };
-            alert("Reporte generado. Guarda tu JSON y pica el botón verde para salir.");
         }
     }
 
-    // --- RESTO DE FUNCIONES (CATÁLOGOS, MAPA, REGISTRO) ---
+    // --- LÓGICA DE CATÁLOGOS ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
+    
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
         const txtJ = document.getElementById('csv_jor').value;
+        
         if(txtC.trim()) {
             DB.cuadros = txtC.split('\n').map(l => { 
                 let c = l.split(/[,\t]/); 
-                return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null 
+                return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), rancho: c[2].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null 
             }).filter(x => x);
         }
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
+        
         localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros));
         localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         document.getElementById('modalDB').classList.remove('open');
+        alert("✅ Catálogos actualizados.");
     }
 
     function actualizarSelectores() {
-        const listaC = document.getElementById('lista_cuadros');
-        const listaA = document.getElementById('lista_actividades');
-        const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
-        listaC.innerHTML = nombresUnicos.map(nombre => `<option value="${nombre}">`).join('');
-        listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
+        const nombresC = [...new Set(DB.cuadros.map(c => c.nombre))];
+        document.getElementById('lista_cuadros').innerHTML = nombresC.map(n => `<option value="${n}">`).join('');
+        document.getElementById('lista_actividades').innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
         document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
 
@@ -269,80 +248,105 @@
         const val = document.getElementById(prefix + '_cuadro').value;
         const registros = DB.cuadros.filter(c => c.nombre === val);
         if (registros.length > 0) {
-            const primero = registros[0];
             document.getElementById(prefix + '_inicio').value = 1;
-            document.getElementById(prefix + '_fin').value = primero.max;
-            const listaOri = document.getElementById('lista_orientaciones');
-            const orientacionesUnicas = [...new Set(registros.map(r => r.ori))];
-            listaOri.innerHTML = orientacionesUnicas.map(o => `<option value="${o}">`).join('');
-            if (orientacionesUnicas.length === 1) document.getElementById(prefix + '_ori').value = orientacionesUnicas[0];
+            document.getElementById(prefix + '_fin').value = registros[0].max;
+            const oris = [...new Set(registros.map(r => r.ori))];
+            document.getElementById('lista_orientaciones').innerHTML = oris.map(o => `<option value="${o}">`).join('');
+            if(oris.length === 1 && prefix === 'conf') document.getElementById('conf_ori').value = oris[0];
         }
     }
 
+    // --- LÓGICA DE NAVEGACIÓN ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const total = parseInt(document.getElementById('conf_total_global').value);
-        if(!resp || isNaN(total)) return alert("Faltan datos");
-        DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
+        if(!resp || !total) return alert("Faltan datos de configuración.");
+        
+        DB.globalConfig = { 
+            resp: resp, 
+            supId: document.getElementById('conf_sup_id').value, 
+            supAct: document.getElementById('conf_sup_act').value, 
+            jornada: document.getElementById('conf_jornada').value, 
+            totalStaff: total 
+        };
+        
+        DB.sesiones = []; DB.staff = []; DB.avance = [];
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
 
     function crearSesionDesdeForm(prefix) {
         const cuadro = document.getElementById(prefix + '_cuadro').value;
-        if (!cuadro) return alert("Selecciona un cuadro");
-        let sesion = { uid: Date.now(), cuadro: cuadro, act: document.getElementById(prefix + '_act').value, inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1, fin: parseInt(document.getElementById(prefix + '_fin').value) || 10, modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS' };
+        if (!cuadro) return;
+        let sesion = {
+            uid: Date.now(),
+            cuadro: cuadro,
+            act: document.getElementById(prefix + '_act').value,
+            inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1,
+            fin: parseInt(document.getElementById(prefix + '_fin').value) || 10,
+            modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS'
+        };
         DB.sesiones.push(sesion);
         DB.currentSessionId = DB.sesiones.length - 1;
         guardarTodo();
     }
 
+    function confirmarNuevoCuadro() {
+        crearSesionDesdeForm('add');
+        document.getElementById('modalAddCuadro').classList.remove('open');
+        renderTabs(); renderSession();
+    }
+
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
-        document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
+        document.getElementById('disp_resp').innerText = "👷 " + DB.globalConfig.resp;
         renderTabs(); renderSession();
-        if(!scanner) { 
-            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); 
-            scanner.render(onScan); 
+        if(!scanner) {
+            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false);
+            scanner.render(onScan);
         }
     }
 
+    // --- LÓGICA DE REGISTRO Y MAPA ---
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
         container.innerHTML = DB.sesiones.map((s, idx) => {
-            const datosCuadro = DB.cuadros.find(c => c.nombre === s.cuadro);
-            const textoPestaña = datosCuadro ? `${s.cuadro} - ${datosCuadro.ori}` : s.cuadro;
-            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${textoPestaña}</div>`;
-        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`;
+        }).join('') + `<div class="tab" style="background:var(--blue); color:white;" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
     }
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
     function onScan(id) {
-        id = id.trim();
+        id = id.trim().toUpperCase();
         let now = Date.now();
         if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
         lastScanTime[id] = now;
+
         let sesionActual = DB.sesiones[DB.currentSessionId];
         let trabajador = DB.staff.find(s => s.id === id);
+
         if(!trabajador) {
-            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite alcanzado");
+            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite de personal alcanzado.");
             trabajador = { id: id, fila: null, cuadroUid: null };
             DB.staff.push(trabajador);
         }
+
         if(trabajador.fila !== null) {
             if(trabajador.cuadroUid === sesionActual.uid) {
-                let n = prompt(`Ya está en Fila ${trabajador.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sesionActual));
+                let n = prompt(`ID ${id} ya está en Fila ${trabajador.fila}. ¿Mover a qué fila?`, buscarSiguienteFilaVacia(sesionActual));
                 if(n) { cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, parseInt(n), sesionActual); }
             } else {
                 let s_vieja = DB.sesiones.find(s => s.uid === trabajador.cuadroUid);
-                if(confirm(`Viene de ${s_vieja?s_vieja.cuadro:'OTRO'}. ¿Pasar al cuadro ACTUAL?`)) {
+                if(confirm(`Trabajador viene de Cuadro ${s_vieja?.cuadro || 'OTRO'}. ¿Pasar a ${sesionActual.cuadro}?`)) {
                     cerrarTarea(trabajador); asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
                 }
             }
-        } else { asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual); }
-        audioBeep.play(); guardarTodo(); renderMapa(); renderSession();
+        } else {
+            asignarFilaEspecifica(trabajador, buscarSiguienteFilaVacia(sesionActual), sesionActual);
+        }
+        audioBeep.play(); guardarTodo(); renderSession();
     }
 
     function buscarSiguienteFilaVacia(sesion) {
@@ -356,7 +360,7 @@
     }
 
     function asignarFilaEspecifica(t, fila, s) {
-        if(fila > s.fin) return alert("Cuadro lleno");
+        if(fila > s.fin) return alert("⚠️ Cuadro lleno.");
         t.fila = fila; t.cuadroUid = s.uid;
         DB.avance.push({ fila: fila, obrero: t.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act });
     }
@@ -369,8 +373,10 @@
 
     function renderMapa() {
         let s = DB.sesiones[DB.currentSessionId];
+        if(!s) return;
         const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
         let term = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
+        
         for(let i = s.inicio; i <= s.fin; i++) {
             let div = document.createElement('div');
             let gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
@@ -382,85 +388,85 @@
 
     function renderSession() {
         renderMapa();
-        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`;
+        document.getElementById('disp_count_global').innerText = `${DB.staff.length} / ${DB.globalConfig.totalStaff}`;
     }
 
     function registrarManual() {
-        let v = document.getElementById('manual_id').value.toUpperCase();
+        let v = document.getElementById('manual_id').value;
         if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
 
-    function ejecutarAvanceMasivoFix() {
-        let s_origen = DB.sesiones[DB.currentSessionId];
-        let activos = DB.staff.filter(st => st.cuadroUid === s_origen.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
-        let ptr = buscarSiguienteFilaVacia(s_origen);
-        if (ptr > s_origen.fin) {
-            let siguienteIdx = DB.currentSessionId + 1;
-            let s_destino = DB.sesiones[siguienteIdx];
-            if (s_destino) {
-                if (confirm(`¡CUADRO ${s_origen.cuadro} COMPLETADO! ¿Transferir personal al cuadro ${s_destino.cuadro}?`)) {
-                    activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s_destino), s_destino); });
-                    DB.currentSessionId = siguienteIdx;
-                    guardarTodo(); renderTabs(); renderSession();
-                }
-            } else { alert("⛔ CUADRO LLENO."); }
-        } else {
-            if (confirm(`¿Avanzar grupos en ${s_origen.cuadro}?`)) {
-                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-                let filas = Object.keys(grupos).map(Number).sort((a,b) => a - b);
-                filas.forEach(f => {
-                    let g = grupos[f]; let proximaFila = buscarSiguienteFilaVacia(s_origen);
-                    if(proximaFila <= s_origen.fin) { g.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, proximaFila, s_origen); }); }
-                });
-                guardarTodo(); renderMapa(); renderSession();
-            }
-        }
-    }
-
+    // --- LÓGICA DE REPORTES (RESTAURADA) ---
     function generarCorteParcial() {
         let qrData = {
             config: DB.globalConfig,
-            sesiones: DB.sesiones.map(s => ({ cuadro: s.cuadro })),
-            avance: DB.avance.map(a => ({ obrero: a.obrero, supAct: a.supAct, nomCuadro: a.nomCuadro }))
+            avance: DB.avance,
+            sesiones: DB.sesiones
         };
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewPartial').classList.add('open');
+        const modal = document.getElementById('viewPartial');
+        modal.classList.add('open');
         const qrContainer = document.getElementById('qrcode_partial');
-        qrContainer.innerHTML = ""; 
-        new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
+        qrContainer.innerHTML = "";
+        new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 250, height: 250 });
+        document.getElementById('partial_summary').innerText = `Avance: ${DB.avance.length} registros.`;
     }
 
     function descargarJSONReporte() {
-        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff };
+        let data = { config: DB.globalConfig, avance: DB.avance, sesiones: DB.sesiones, staff: DB.staff };
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
         let a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `AVANCE_${DB.globalConfig.resp}.json`;
+        a.download = `AVANCE_${DB.globalConfig.resp.replace(/\s/g,'_')}.json`;
         a.click();
-    }
-
-    function cerrarCorteParcial() { 
-        document.getElementById('viewPartial').classList.remove('open'); 
-        document.getElementById('viewMain').classList.add('open'); 
     }
 
     function abrirReporteAsistencia() {
         const container = document.getElementById('tablaAsistenciaContainer');
         const modal = document.getElementById('modalReporte');
-        let filas = [];
+        
         let jorObj = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
+        let supActObj = DB.actividades.find(a => a.desc === DB.globalConfig.supAct) || {id:"N/A"};
+        
+        // Fila del supervisor
+        let filas = [{
+            cred: DB.globalConfig.supId,
+            actId: supActObj.id,
+            actNom: DB.globalConfig.supAct,
+            cuaId: "SUP",
+            cuaNom: "ADMIN",
+            jorId: jorObj.id,
+            jorNom: DB.globalConfig.jornada,
+            lineas: 0
+        }];
+
+        // Filas del personal
         let idsObreros = [...new Set(DB.avance.map(a => a.obrero))];
         idsObreros.forEach(id => {
             let hist = DB.avance.filter(a => a.obrero === id);
-            let u = hist[hist.length - 1];
-            let aObj = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"};
-            let cObj = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
-            filas.push({id: id, act: aObj.id, nAct: u.supAct, cId: cObj.id, cNom: u.nomCuadro, jId: jorObj.id, jNom: DB.globalConfig.jornada, l: hist.length});
+            let u = hist[hist.length - 1]; // Ultimo registro
+            let actObj = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"};
+            let cuaObj = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
+            
+            filas.push({
+                cred: id,
+                actId: actObj.id,
+                actNom: u.supAct,
+                cuaId: cuaObj.id,
+                cuaNom: u.nomCuadro,
+                jorId: jorObj.id,
+                jorNom: DB.globalConfig.jornada,
+                lineas: hist.length
+            });
         });
-        let html = `<table style="width:100%; border-collapse:collapse; font-size:11px;"><tr style="background:#eee;"><th>ID</th><th>ACT</th><th>CUADRO</th><th>LÍNEAS</th></tr>`;
-        filas.forEach(f => { html += `<tr><td>${f.id}</td><td>${f.nAct}</td><td>${f.cNom}</td><td>${f.l}</td></tr>`; });
-        html += `</table>`; container.innerHTML = html; modal.classList.add('open');
+
+        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;">
+            <tr style="background:#ddd;"><th>CREDENTIAL</th><th>ID_ACT</th><th>ACT</th><th>ID_CUA</th><th>CUADRO</th><th>LINEAS</th></tr>`;
+        filas.forEach(f => {
+            html += `<tr><td>${f.cred}</td><td>${f.actId}</td><td>${f.actNom}</td><td>${f.cuaId}</td><td>${f.cuaNom}</td><td>${f.lineas}</td></tr>`;
+        });
+        html += `</table>`;
+        container.innerHTML = html;
+        modal.classList.add('open');
     }
 
     function descargarCSVAsistencia() {
@@ -474,31 +480,36 @@
         let blob = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
         let link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `Asistencia_${DB.globalConfig.resp}.csv`;
+        link.download = `REPORTE_${DB.globalConfig.resp.replace(/\s/g,'_')}.csv`;
         link.click();
     }
 
-    function abrirEditor() {
+    function ejecutarAvanceMasivoFix() {
         let s = DB.sesiones[DB.currentSessionId];
-        const list = document.getElementById('editorList'); list.innerHTML = "";
         let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-        activos.forEach(st => {
-            list.innerHTML += `<div class="edit-item"><b>${st.id}</b> - Fila: ${st.fila} <button onclick="borrarRegistroManual('${st.id}')">X</button></div>`;
-        });
-        document.getElementById('modalEditor').classList.add('open');
-    }
+        if (!activos.length) return alert("Sin personal activo.");
 
-    function borrarRegistroManual(id) {
-        if(!confirm(`¿Borrar a ${id}?`)) return;
-        let st = DB.staff.find(x=>x.id===id);
-        if(st) {
-            let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid);
-            if(idx !== -1) DB.avance.splice(idx, 1);
-            st.fila = null; st.cuadroUid = null;
-            guardarTodo(); renderMapa(); abrirEditor();
+        let ptr = buscarSiguienteFilaVacia(s);
+        if (ptr > s.fin) {
+            let nextS = DB.sesiones[DB.currentSessionId + 1];
+            if (nextS && confirm(`¡Cuadro completo! ¿Transferir a ${nextS.cuadro}?`)) {
+                activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(nextS), nextS); });
+                DB.currentSessionId++;
+                guardarTodo(); renderTabs(); renderSession();
+            } else { alert("Cuadro lleno."); }
+        } else {
+            if (confirm(`¿Avanzar grupos en ${s.cuadro}?`)) {
+                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+                Object.keys(grupos).sort((a,b)=>a-b).forEach(f => {
+                    let g = grupos[f]; let nextF = buscarSiguienteFilaVacia(s);
+                    if(nextF <= s.fin) g.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, nextF, s); });
+                });
+                guardarTodo(); renderSession();
+            }
         }
     }
 
+    // --- UTILIDADES ---
     function guardarTodo() {
         localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
         localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
@@ -506,25 +517,68 @@
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
+    function confirmarFinDia() {
+        if(confirm("¿Cerrar jornada definitivamente? Se borrará el mapa actual.")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            const backup = { fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] };
+            DB.archive.push(backup);
+            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+            
+            generarCorteParcial();
+            document.getElementById('btnCerrarReporte').onclick = () => {
+                localStorage.removeItem('v47_sesiones');
+                localStorage.removeItem('v47_avance');
+                localStorage.removeItem('v47_staff');
+                location.reload();
+            };
+        }
+    }
+
+    function abrirEditor() {
+        let s = DB.sesiones[DB.currentSessionId];
+        const list = document.getElementById('editorList');
+        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        list.innerHTML = activos.map(st => `
+            <div style="background:#222; padding:10px; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span><b>${st.id}</b> - Fila: ${st.fila}</span>
+                <button class="btn-sm btn-r" onclick="borrarRegistroEditor('${st.id}')">ELIMINAR</button>
+            </div>
+        `).join('');
+        document.getElementById('modalEditor').classList.add('open');
+    }
+
+    function borrarRegistroEditor(id) {
+        if(!confirm(`¿Eliminar registro de ${id}?`)) return;
+        let st = DB.staff.find(x => x.id === id);
+        if(st) {
+            let idx = DB.avance.findIndex(a => a.obrero === id && a.fin === null);
+            if(idx !== -1) DB.avance.splice(idx, 1);
+            st.fila = null; st.cuadroUid = null;
+            guardarTodo(); renderSession(); abrirEditor();
+        }
+    }
+
+    function cerrarCorteParcial() {
+        document.getElementById('viewPartial').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
+    }
+
     function abrirHistorial() {
-        if (DB.archive.length === 0) return alert("Sin cierres.");
-        let html = `<h2>📜 HISTORIAL</h2>`;
-        DB.archive.forEach((item, idx) => { html += `<div class="card"><b>${item.fecha}</b> <button onclick="descargarHistorialIdx(${idx})">⬇️</button></div>`; });
-        document.getElementById('editorList').innerHTML = html;
+        if (!DB.archive.length) return alert("Sin historial.");
+        let list = DB.archive.map((a, i) => `<div class="card">${a.fecha} - ${a.config.resp} <button class="btn btn-sm btn-b" onclick="descargarHistorialIdx(${i})">JSON</button></div>`).join('');
+        document.getElementById('editorList').innerHTML = list;
         document.getElementById('modalEditor').classList.add('open');
     }
 
     function descargarHistorialIdx(idx) {
-        const item = DB.archive[idx];
-        const data = { config: item.config, avance: item.avance, fecha_archivo: item.fecha };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const a = document.createElement("a");
+        let data = DB.archive[idx];
+        let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+        let a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `RECUPERADO_${item.fecha}.json`;
+        a.download = `BACKUP_${idx}.json`;
         a.click();
     }
 </script>
 </body>
 </html>
-
 
