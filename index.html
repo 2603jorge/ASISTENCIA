@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - PWA PRO</title>
+    <title>AgriCactus V47 - Pro Offline</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
@@ -15,7 +15,6 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
-        .btn-i { background: var(--info); }
         .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
@@ -45,8 +44,11 @@
 <div id="viewSetup" class="modal open">
     <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
     
-    <div id="offlineStatus" class="status-box status-ko">Verificando almacenamiento...</div>
-    <button class="btn btn-sm btn-b" onclick="verificarAlmacenamiento()" style="width:100%; margin-bottom:15px;">🔄 RE-VERIFICAR OFFLINE</button>
+    <div id="offlineStatus" class="status-box status-ko">Estado: Pendiente de verificación</div>
+    <div class="flex-row">
+        <button class="btn btn-sm btn-b" onclick="forzarDescarga()">📥 DESCARGAR CEREBRO</button>
+        <button class="btn btn-sm btn-g" onclick="verificarAlmacenamiento()">🔄 VERIFICAR</button>
+    </div>
 
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
@@ -113,7 +115,7 @@
         <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
         <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR REPORTE .JSON</button>
     </div>
-    <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
+    <button class="btn btn-b" id="btnCerrarReporte" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
 
 <div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
@@ -136,7 +138,7 @@
 <datalist id="lista_actividades"></datalist>
 
 <script>
-    const CACHE_NAME = 'agricactus-v47-cache-v1';
+    const CACHE_NAME = 'agricactus-v47-cache-v3';
 
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
@@ -156,46 +158,85 @@
     window.onload = () => {
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
-
-        // 🚀 REGISTRO PWA Y CACHÉ
+        
+        // Registro inicial
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE = '${CACHE_NAME}';
-                const assets = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(assets))));
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll([location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode']))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
             navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => {
-                console.log("Service Worker Registrado ✅");
-                setTimeout(verificarAlmacenamiento, 2000);
+                verificarAlmacenamiento();
             });
         }
     };
 
     async function verificarAlmacenamiento() {
-    const statusDiv = document.getElementById('offlineStatus');
-    
-    // 1. Verificar si el navegador permite guardar archivos
-    if (!window.isSecureContext) {
-        statusDiv.className = "status-box status-ko";
-        statusDiv.innerText = "❌ ERROR: Conexión no segura (Se requiere HTTPS)";
-        return;
+        const statusDiv = document.getElementById('offlineStatus');
+        if (!('caches' in window)) {
+            statusDiv.className = "status-box status-ko";
+            statusDiv.innerText = "❌ NAVEGADOR ANTIGUO";
+            return;
+        }
+        try {
+            const cache = await caches.open(CACHE_NAME);
+            const keys = await cache.keys();
+            const tieneQR = keys.some(k => k.url.includes('qrcode.min.js'));
+            const tieneCamara = keys.some(k => k.url.includes('html5-qrcode'));
+
+            if (tieneQR && tieneCamara) {
+                statusDiv.className = "status-box status-ok";
+                statusDiv.innerText = "✅ LISTO: TODO EN MEMORIA";
+            } else {
+                statusDiv.className = "status-box status-ko";
+                statusDiv.innerText = "⚠️ PENDIENTE: PICA 'DESCARGAR CEREBRO'";
+            }
+        } catch (e) { statusDiv.innerText = "❌ ERROR DE ACCESO"; }
     }
 
-    try {
-        const cache = await caches.open(CACHE_NAME);
-        const keys = await cache.keys();
-        // ... (resto del código de verificación)
-    } catch (e) {
-        statusDiv.innerText = "❌ ERROR DE ACCESO AL DISCO";
+    async function forzarDescarga() {
+        const statusDiv = document.getElementById('offlineStatus');
+        statusDiv.innerText = "⏳ DESCARGANDO... ESPERA";
+        try {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.add(location.href);
+            await cache.add('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
+            await cache.add('https://unpkg.com/html5-qrcode');
+            alert("✅ ¡Cerebro guardado! Ya puedes usarlo sin red.");
+            verificarAlmacenamiento();
+        } catch (e) { alert("❌ Error: Revisa tu internet para la descarga."); }
     }
-}
 
-    // --- FUNCIONES ORIGINALES RESTAURADAS ---
+    // --- LÓGICA DE CIERRE REVISADA ---
+    function confirmarFinDia() {
+        if(confirm("¿Finalizar jornada?")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            const cierreHoy = { fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] };
+            DB.archive.push(cierreHoy);
+            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+            
+            generarCorteParcial();
+            
+            // Re-configurar el botón de la ventana de reporte
+            const btn = document.getElementById('btnCerrarReporte');
+            btn.innerText = "🏁 FINALIZAR Y VOLVER AL INICIO";
+            btn.style.background = "var(--main)";
+            btn.onclick = () => {
+                if(confirm("¿Seguro que ya guardaste el JSON? Se borrará el mapa actual.")) {
+                    localStorage.removeItem('v47_sesiones');
+                    localStorage.removeItem('v47_avance');
+                    localStorage.removeItem('v47_staff');
+                    location.reload(); // Esto te manda al Setup
+                }
+            };
+            alert("Reporte generado. Guarda tu JSON y pica el botón verde para salir.");
+        }
+    }
 
+    // --- RESTO DE FUNCIONES (CATÁLOGOS, MAPA, REGISTRO) ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
-    
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
@@ -213,7 +254,6 @@
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         document.getElementById('modalDB').classList.remove('open');
-        alert("Catálogos cargados correctamente");
     }
 
     function actualizarSelectores() {
@@ -244,7 +284,6 @@
         const total = parseInt(document.getElementById('conf_total_global').value);
         if(!resp || isNaN(total)) return alert("Faltan datos");
         DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
-        DB.sesiones = []; DB.staff = []; DB.avance = [];
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
@@ -256,12 +295,6 @@
         DB.sesiones.push(sesion);
         DB.currentSessionId = DB.sesiones.length - 1;
         guardarTodo();
-    }
-
-    function confirmarNuevoCuadro() {
-        crearSesionDesdeForm('add');
-        document.getElementById('modalAddCuadro').classList.remove('open');
-        renderTabs(); renderSession();
     }
 
     function irAlMapa() {
@@ -407,7 +440,10 @@
         a.click();
     }
 
-    function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
+    function cerrarCorteParcial() { 
+        document.getElementById('viewPartial').classList.remove('open'); 
+        document.getElementById('viewMain').classList.add('open'); 
+    }
 
     function abrirReporteAsistencia() {
         const container = document.getElementById('tablaAsistenciaContainer');
@@ -487,57 +523,8 @@
         a.download = `RECUPERADO_${item.fecha}.json`;
         a.click();
     }
-
-  // --- FUNCIÓN DE CIERRE CORREGIDA ---
-    function confirmarFinDia() {
-        if(confirm("¿Finalizar jornada? Se generará el JSON y QR para el de asistencia.")) {
-            // 1. Cerramos las tareas de los que siguen activos
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-
-            // 2. Guardamos en el historial (Archivo)
-            const cierreHoy = { 
-                fecha: new Date().toLocaleDateString(), 
-                hora: new Date().toLocaleTimeString(), 
-                fecha_ms: Date.now(), 
-                config: DB.globalConfig, 
-                avance: [...DB.avance] 
-            };
-            DB.archive.push(cierreHoy);
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-
-            // 3. Generamos el reporte visual
-            generarCorteParcial();
-
-            // 4. CAMBIO CLAVE: Configuramos el botón de salida para resetear la app
-            const btnVolver = document.querySelector("#viewPartial .btn-b");
-            btnVolver.innerText = "🏁 FINALIZAR Y SALIR AL INICIO";
-            btnVolver.style.background = "var(--main)";
-            
-            btnVolver.onclick = () => {
-                if(confirm("¿Ya guardaste tu reporte? Al aceptar regresaremos al inicio.")) {
-                    // Limpiamos los datos del día actual de la memoria temporal
-                    localStorage.removeItem('v47_sesiones');
-                    localStorage.removeItem('v47_avance');
-                    localStorage.removeItem('v47_staff');
-                    
-                    // Recargamos la página para volver a la ventana de Setup
-                    location.reload(); 
-                }
-            };
-            
-            alert("JORNADA CERRADA.\n1. Muestra el QR.\n2. Descarga el JSON.\n3. Presiona FINALIZAR para volver al inicio.");
-        }
-    }
-
-    // Asegúrate que esta función solo cierre el modal de reporte parcial si NO es el fin del día
-    function cerrarCorteParcial() {
-        document.getElementById('viewPartial').classList.remove('open');
-        document.getElementById('viewMain').classList.add('open');
-    }
-    }
 </script>
 </body>
 </html>
-
 
 
