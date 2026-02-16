@@ -135,6 +135,7 @@
         currentSessionId: 0,
         avance: JSON.parse(localStorage.getItem('v47_avance')) || [],
         staff: JSON.parse(localStorage.getItem('v47_staff')) || [],
+        padron: JSON.parse(localStorage.getItem('v47_padron')) || [], // Memoria de IDs
         globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
         archive: JSON.parse(localStorage.getItem('v47_archive')) || []
     };
@@ -281,6 +282,11 @@ function renderTabs() {
         let now = Date.now();
         if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
         lastScanTime[id] = now;
+        // AGREGAR AL PADRÓN SI ES NUEVO
+        if (!DB.padron.includes(id)) {
+            DB.padron.push(id);
+            DB.padron.sort(); 
+        }
         let sesionActual = DB.sesiones[DB.currentSessionId];
         let trabajador = DB.staff.find(s => s.id === id);
         if(!trabajador) {
@@ -303,7 +309,40 @@ function renderTabs() {
         }
         audioBeep.play(); guardarTodo(); renderMapa(); renderSession();
     }
+// NUEVA FUNCIÓN: MODAL DE CUADRILLA
+    function abrirModalPadron() {
+        const modal = document.getElementById('modalPadron');
+        const container = document.getElementById('listaPadronContenedor');
+        container.innerHTML = "";
 
+        if (DB.padron.length === 0) {
+            container.innerHTML = "<p style='text-align:center; color:#666;'>No hay IDs guardados. Escanea o escribe uno para empezar.</p>";
+        }
+
+        DB.padron.forEach(id => {
+            const estaPresente = DB.staff.some(s => s.id === id);
+            const div = document.createElement('div');
+            div.className = `padron-item ${estaPresente ? 'presente' : 'ausente'}`;
+            div.innerHTML = `
+                <span>${estaPresente ? '✅' : '❌'} <b>${id}</b></span>
+                <button class="btn btn-sm ${estaPresente ? 'btn-g' : 'btn-b'}" 
+                        onclick="onScan('${id}'); abrirModalPadron();">
+                    ${estaPresente ? 'ASIGNAR OTRO' : 'PASAR LISTA'}
+                </button>
+            `;
+            container.appendChild(div);
+        });
+
+        modal.classList.add('open');
+    }
+
+    function guardarTodo() {
+        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
+        localStorage.setItem('v47_padron', JSON.stringify(DB.padron)); // GUARDAR PADRÓN
+    }
     function buscarSiguienteFilaVacia(sesion) {
         let quemadas = new Set(DB.avance.filter(a => a.cuadroUid === sesion.uid && a.fin !== null).map(a => a.fila));
         for(let i = sesion.inicio; i <= sesion.fin; i++) {
@@ -546,6 +585,7 @@ function renderTabs() {
 </script>
 </body>
 </html>
+
 
 
 
