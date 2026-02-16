@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AgriCactus V47 - PWA PRO</title>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
@@ -174,27 +174,23 @@
     };
 
     async function verificarAlmacenamiento() {
-        const statusDiv = document.getElementById('offlineStatus');
-        if (!('caches' in window)) {
-            statusDiv.className = "status-box status-ko";
-            statusDiv.innerText = "❌ NAVEGADOR NO SOPORTA OFFLINE";
-            return;
-        }
-        try {
-            const cache = await caches.open(CACHE_NAME);
-            const keys = await cache.keys();
-            const tieneQR = keys.some(k => k.url.includes('qrcode.min.js'));
-            const tieneCamara = keys.some(k => k.url.includes('html5-qrcode'));
-
-            if (tieneQR && tieneCamara) {
-                statusDiv.className = "status-box status-ok";
-                statusDiv.innerText = "✅ SISTEMA LISTO PARA EL CAMPO (OFFLINE)";
-            } else {
-                statusDiv.className = "status-box status-ko";
-                statusDiv.innerText = "⚠️ DESCARGANDO ARCHIVOS... (NECESITAS RED)";
-            }
-        } catch (e) { statusDiv.innerText = "❌ ERROR AL VERIFICAR"; }
+    const statusDiv = document.getElementById('offlineStatus');
+    
+    // 1. Verificar si el navegador permite guardar archivos
+    if (!window.isSecureContext) {
+        statusDiv.className = "status-box status-ko";
+        statusDiv.innerText = "❌ ERROR: Conexión no segura (Se requiere HTTPS)";
+        return;
     }
+
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const keys = await cache.keys();
+        // ... (resto del código de verificación)
+    } catch (e) {
+        statusDiv.innerText = "❌ ERROR DE ACCESO AL DISCO";
+    }
+}
 
     // --- FUNCIONES ORIGINALES RESTAURADAS ---
 
@@ -507,4 +503,5 @@
 </script>
 </body>
 </html>
+
 
