@@ -33,13 +33,12 @@
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
         #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px; border: 1px solid #333;}
-        .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main); margin-bottom:15px;">AgriCactus V47 PRO</h2>
+    <h2 style="text-align:center; color: var(--main); margin-bottom:15px;">AgriCactus V47</h2>
     
     <div class="button-grid">
         <button class="btn btn-b" onclick="alert('Modo Búnker Offline Activado')">🏰 MODO BÚNKER</button>
@@ -57,7 +56,7 @@
     </div>
 
     <div class="card">
-        <h3>📍 PRIMER CUADRO (IMAGEN 2)</h3>
+        <h3>📍 CONFIGURACIÓN DE CAMPO</h3>
         <label>🕒 JORNADA</label><select id="conf_jornada"></select>
         <label>🔍 CUADRO</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
         <label>🧭 ORIENTACIÓN</label><input type="text" id="conf_ori" list="lista_orientaciones">
@@ -86,14 +85,11 @@
         <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0; flex:1;">
         <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
     </div>
-
     <div id="mapGrid" class="grid-map"></div>
     
     <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
-    
-    <div class="button-grid">
-        <button class="btn btn-i" onclick="generarCorteParcial()">📡 CORTE PARCIAL</button>
-        <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 ASISTENCIA</button>
+    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
+    <div class="flex-row">
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
         <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
     </div>
@@ -142,10 +138,10 @@
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
         jornadas: JSON.parse(localStorage.getItem('v47_jornadas')) || [],
         sesiones: JSON.parse(localStorage.getItem('v47_sesiones')) || [],
-        currentSessionId: 0,
+        currentSessionId: parseInt(localStorage.getItem('v47_currentIdx')) || 0,
         avance: JSON.parse(localStorage.getItem('v47_avance')) || [],
         staff: JSON.parse(localStorage.getItem('v47_staff')) || [],
-        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
+        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || null,
         archive: JSON.parse(localStorage.getItem('v47_archive')) || []
     };
 
@@ -155,9 +151,12 @@
 
     window.onload = () => {
         actualizarSelectores();
-        if (DB.sesiones.length > 0) irAlMapa();
+        
+        // 🚀 CRÍTICO: Si ya hay una configuración guardada, ir directo al mapa al actualizar
+        if (DB.globalConfig && DB.sesiones.length > 0) {
+            irAlMapa();
+        }
 
-        // 🚀 SERVICE WORKER INTEGRADO PARA OFFLINE
         if ('serviceWorker' in navigator) {
             const swCode = `
                 const CACHE_NAME = 'agricactus-pwa-v47';
@@ -197,7 +196,7 @@
         if (regs.length > 0) {
             document.getElementById(prefix + '_inicio').value = 1;
             document.getElementById(prefix + '_fin').value = regs[0].max;
-            document.getElementById(prefix + '_ori').value = regs[0].ori; // 🎯 ORIENTACIÓN (POSICIÓN 3)
+            document.getElementById(prefix + '_ori').value = regs[0].ori; 
             const lO = document.getElementById('lista_orientaciones');
             lO.innerHTML = [...new Set(regs.map(r => r.ori))].map(o => `<option value="${o}">`).join('');
         }
@@ -214,7 +213,8 @@
     function crearSesionDesdeForm(p) {
         const c = document.getElementById(p + '_cuadro').value;
         DB.sesiones.push({ uid: Date.now(), cuadro: c, act: document.getElementById(p + '_act').value, inicio: parseInt(document.getElementById(p + '_inicio').value), fin: parseInt(document.getElementById(p + '_fin').value), modo: document.getElementById(p + '_modo').value });
-        DB.currentSessionId = DB.sesiones.length - 1; guardarTodo();
+        DB.currentSessionId = DB.sesiones.length - 1; 
+        guardarTodo();
     }
 
     function irAlMapa() {
@@ -294,7 +294,11 @@
     }
 
     function renderSession() { renderMapa(); document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`; }
-    function registrarManual() { let v = document.getElementById('manual_id').value.toUpperCase(); if(v) { onScan(v); document.getElementById('manual_id').value = ""; } }
+    
+    function registrarManual() { 
+        let v = document.getElementById('manual_id').value.toUpperCase(); 
+        if(v) { onScan(v); document.getElementById('manual_id').value = ""; } 
+    }
 
     function ejecutarAvanceMasivoFix() {
         let sO = DB.sesiones[DB.currentSessionId], activos = DB.staff.filter(st => st.cuadroUid === sO.uid && st.fila !== null);
@@ -322,6 +326,15 @@
 
     function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
 
+    function descargarCSVAsistencia() {
+        let csv = []; document.querySelectorAll("#tablaAsistenciaContainer tr").forEach(r => {
+            let row = []; r.querySelectorAll("td, th").forEach(c => row.push(c.innerText));
+            csv.push(row.join(","));
+        });
+        let b = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `Asistencia.csv`; l.click();
+    }
+
     function abrirReporteAsistencia() {
         const c = document.getElementById('tablaAsistenciaContainer'), m = document.getElementById('modalReporte');
         let ids = [...new Set(DB.avance.map(a => a.obrero))];
@@ -332,15 +345,6 @@
             h += `<tr><td>${id}</td><td>${u.supAct}</td><td>${u.nomCuadro}</td><td>${hist.length}</td></tr>`;
         });
         c.innerHTML = h + `</table>`; m.classList.add('open');
-    }
-
-    function descargarCSVAsistencia() {
-        let csv = []; document.querySelectorAll("#tablaAsistenciaContainer tr").forEach(r => {
-            let row = []; r.querySelectorAll("td, th").forEach(c => row.push(c.innerText));
-            csv.push(row.join(","));
-        });
-        let b = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `Asistencia.csv`; l.click();
     }
 
     function abrirEditor() {
@@ -369,13 +373,17 @@
             DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
             DB.archive.push({ fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] });
             guardarTodo(); generarCorteParcial();
-            document.getElementById("btnFinalCerrar").onclick = () => { localStorage.removeItem('v47_sesiones'); location.reload(); };
+            document.getElementById("btnFinalCerrar").onclick = () => { 
+                localStorage.removeItem('v47_sesiones'); 
+                localStorage.removeItem('v47_avance');
+                localStorage.removeItem('v47_staff');
+                localStorage.removeItem('v47_config');
+                location.reload(); 
+            };
         }
     }
 
     function confirmarNuevoCuadro() {
-        const c = document.getElementById('add_cuadro').value;
-        if(!c) return;
         crearSesionDesdeForm('add');
         document.getElementById('modalAddCuadro').classList.remove('open');
         renderTabs(); renderSession();
@@ -386,6 +394,7 @@
         localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v47_currentIdx', DB.currentSessionId);
         localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
         localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
@@ -404,4 +413,3 @@
 </script>
 </body>
 </html>
-
