@@ -40,7 +40,7 @@
 <div id="viewSetup" class="modal open">
     <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
     <div class="button-grid">
-        <button class="btn btn-b" onclick="alert('Offline Activo')">🏰 BÚNKER</button>
+        <button id="btnBunker" class="btn btn-b" onclick="alternarBunker()">🏰 BÚNKER: OFF</button>
         <button class="btn btn-g" onclick="location.reload()">🔄 RECARGAR</button>
         <button class="btn btn-b" onclick="abrirDB()">📂 CATÁLOGOS</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
@@ -150,7 +150,8 @@
         avance: JSON.parse(localStorage.getItem('v47_avance')) || [],
         staff: JSON.parse(localStorage.getItem('v47_staff')) || [],
         globalConfig: JSON.parse(localStorage.getItem('v47_config')) || null,
-        archive: JSON.parse(localStorage.getItem('v47_archive')) || []
+        archive: JSON.parse(localStorage.getItem('v47_archive')) || [],
+        bunker: JSON.parse(localStorage.getItem('v47_bunker')) || false
     };
 
     let html5QrCode = null;
@@ -159,8 +160,27 @@
 
     window.onload = () => {
         actualizarSelectores();
+        actualizarInterfazBunker();
         if (DB.globalConfig && DB.sesiones.length > 0) irAlMapa();
     };
+
+    // --- MODO BÚNKER PERSISTENTE ---
+    function alternarBunker() {
+        DB.bunker = !DB.bunker;
+        localStorage.setItem('v47_bunker', JSON.stringify(DB.bunker));
+        actualizarInterfazBunker();
+    }
+
+    function actualizarInterfazBunker() {
+        const btn = document.getElementById('btnBunker');
+        if (DB.bunker) {
+            btn.innerText = "🏰 BÚNKER: ACTIVADO";
+            btn.classList.replace('btn-b', 'btn-r');
+        } else {
+            btn.innerText = "🏰 BÚNKER: OFF";
+            btn.classList.replace('btn-r', 'btn-b');
+        }
+    }
 
     // --- LÓGICA DE ORIENTACIONES FILTRADAS ---
     function alEscribirCuadro(prefix) {
@@ -168,13 +188,12 @@
         const matches = DB.cuadros.filter(c => c.nombre === val);
         
         if (matches.length > 0) {
-            // Cargar orientaciones de ese cuadro específico
             const oris = [...new Set(matches.map(m => m.ori))];
             document.getElementById('lista_orientaciones').innerHTML = oris.map(o => `<option value="${o}">`).join('');
-            
-            // Sugerir datos de la primera coincidencia
             document.getElementById(prefix + '_inicio').value = 1;
             document.getElementById(prefix + '_fin').value = matches[0].max;
+            // Si solo hay una orientación, se pre-asigna
+            if(oris.length === 1) document.getElementById(prefix + '_ori').value = oris[0];
         }
     }
 
@@ -246,7 +265,7 @@
                 let n = prompt(`ID ${t.id} en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sA));
                 if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), sA); }
             } else {
-                if(confirm(`Viene de otro cuadro. ¿Pasar al cuadro actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
+                if(confirm(`Viene de otro cuadro. ¿Pasar al actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
             }
         } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
         guardarTodo(); renderSession();
@@ -274,7 +293,6 @@
         return s.fin + 1;
     }
 
-    // --- BOTONES Y FUNCIONES ---
     function ejecutarAvanceMasivoFix() {
         let sO = DB.sesiones[DB.currentSessionId];
         let activos = DB.staff.filter(st => st.cuadroUid === sO.uid && st.fila !== null);
@@ -310,7 +328,8 @@
             resp: DB.globalConfig.resp, 
             personal: DB.staff.length, 
             avance: DB.avance.length,
-            cuadro: DB.sesiones[DB.currentSessionId].cuadro
+            cuadro: DB.sesiones[DB.currentSessionId].cuadro,
+            bunker: DB.bunker
         };
         document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
@@ -343,7 +362,6 @@
         renderTabs(); renderSession();
     }
 
-    // --- UTILIDADES ---
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
         container.innerHTML = DB.sesiones.map((s, idx) => {
@@ -428,7 +446,7 @@
         let blob = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
         let link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `Asistencia_${DB.globalConfig.resp}.csv`;
+        link.download = `Asistencia.csv`;
         link.click();
     }
 
