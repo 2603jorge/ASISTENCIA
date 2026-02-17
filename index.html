@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V47 - TOTAL OFFLINE</title>
+    <title>AgriCactus V47 - TOTAL OFFLINE PRO</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
@@ -13,15 +15,21 @@
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 12px; cursor: pointer; text-transform: uppercase; color: white; display: block; box-sizing: border-box; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
+        .btn-i { background: var(--info); }
         .btn-sm { padding: 8px 12px; font-size: 11px; width: auto; margin: 0; display: inline-block; }
         .flex-row { display: flex; gap: 10px; margin-bottom: 12px; }
         .flex-row .btn { margin-bottom: 0; flex: 1; }
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
+        .tabs-container { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 10px; padding-bottom: 5px; }
+        .tab { background: #333; color: #aaa; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
+        .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); }
+        .tab-add { background: var(--blue); color: white; font-size: 16px; padding: 5px 15px; }
         .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; max-height: 280px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
         .row-item { height: 42px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
         .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
         .active-row { background: var(--sec); border-color: #ffca28; color: black; }
+        .row-tag { font-size: 7px; position: absolute; bottom: 2px; width: 100%; text-align: center; overflow: hidden; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
         #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 15px; min-height: 250px; }
@@ -35,29 +43,38 @@
 <div id="viewSetup" class="modal open">
     <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
     
-    <div id="offlineStatus" class="status-box status-ko">Estado: No guardado en teléfono</div>
+    <div id="offlineStatus" class="status-box status-ko">⏳ VERIFICANDO ALMACENAMIENTO...</div>
     <div class="flex-row">
-        <button class="btn btn-sm btn-b" onclick="forzarDescarga()">📥 DESCARGAR CEREBRO</button>
-        <button class="btn btn-sm btn-g" onclick="verificarAlmacenamiento()">🔄 VERIFICAR</button>
+        <button class="btn btn-sm btn-b" onclick="forzarDescargaManual()">📥 DESCARGAR CEREBRO</button>
+        <button class="btn btn-sm btn-g" onclick="verificarMemoria()">🔄 VERIFICAR</button>
     </div>
 
     <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirDB()">📂 BD</button>
+        <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
     </div>
-
+    
     <div class="card">
+        <h3>👷 DATOS SUPERVISOR</h3>
+        <label>ID Credencial</label><input type="text" id="conf_sup_id">
         <label>Nombre Supervisor</label><input type="text" id="conf_resp">
-        <label>👥 Total Personal</label><input type="number" id="conf_total_global">
+        <label>Actividad Supervisor</label><input type="text" id="conf_sup_act" list="lista_actividades">
+        <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global">
     </div>
-
     <div class="card">
+        <h3>PRIMER CUADRO</h3>
+        <label>🕒 JORNADA</label><select id="conf_jornada"></select>
         <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
+        <label>🧭 ORIENTACIÓN</label>
+        <input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Sugerencia de orientación...">
+        <datalist id="lista_orientaciones"></datalist>
         <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
         <div class="flex-row">
             <input type="number" id="conf_inicio" placeholder="Desde">
             <input type="number" id="conf_fin" placeholder="Hasta">
         </div>
+        <label>Modo</label>
+        <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
     <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
 </div>
@@ -65,76 +82,147 @@
 <div id="viewMain" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
-        <div id="disp_count_global" style="font-size:12px;">0/0</div>
+        <div id="disp_count_global" style="font-size:12px; background:#333; padding:5px 10px; border-radius:20px;">0/0</div>
     </div>
+    <div class="tabs-container" id="tabsContainer"></div>
     <div id="reader"></div>
+    <div class="flex-row">
+        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;">
+        <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
+    </div>
     <div id="mapGrid" class="grid-map"></div>
     <div style="margin-top:15px;">
-        <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE</button>
-        <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR DÍA</button>
+        <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
+        <div class="flex-row">
+            <button class="btn btn-i" onclick="generarCorteParcial()">📡 CORTE PARCIAL</button>
+            <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
+        </div>
+        <div class="flex-row">
+            <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
+            <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR JORNADA</button>
+        </div>
     </div>
 </div>
 
 <div id="viewPartial" class="modal" style="background:#111;">
-    <h2 style="text-align:center;">📡 REPORTE FINAL</h2>
+    <h2 style="color:var(--info); text-align:center;">📡 REPORTE DE AVANCE</h2>
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
-        <button class="btn btn-p" onclick="descargarJSONReporte()" style="margin-top:15px;">💾 GUARDAR JSON</button>
+        <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
+        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR REPORTE .JSON</button>
     </div>
-    <button class="btn btn-b" id="btnSalidaFinal" onclick="location.reload()">🏁 FINALIZAR Y VOLVER AL INICIO</button>
+    <button class="btn btn-b" id="btnSalidaFinal" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
 
-<div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
+<div id="modalReporte" class="modal">
+    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA PARA EXCEL</h2>
+    <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:10px; min-height:200px;"></div>
+    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV (EXCEL)</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER AL MAPA</button>
+</div>
+
+<div id="modalDB" class="modal">
+    <h3>📂 Catálogos</h3>
+    <label>CSV Cuadros</label><textarea id="csv_cuadros" rows="4"></textarea>
+    <label>CSV Actividades</label><textarea id="csv_act" rows="3"></textarea>
+    <label>CSV Jornadas</label><textarea id="csv_jor" rows="2"></textarea>
+    <button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR CATÁLOGOS</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button>
+</div>
+
+<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
+
+<div id="modalAddCuadro" class="modal">
+    <h2>➕ NUEVO CUADRO</h2>
+    <div class="card">
+        <label>Cuadro</label><input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
+        <label>Actividad</label><input type="text" id="add_act" list="lista_actividades">
+        <div class="flex-row">
+            <div><label>Desde</label><input type="number" id="add_inicio"></div>
+            <div><label>Hasta</label><input type="number" id="add_fin"></div>
+        </div>
+    </div>
+    <button class="btn btn-g" onclick="confirmarNuevoCuadro()">AÑADIR CUADRO</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
+</div>
+
+<datalist id="lista_cuadros"></datalist>
+<datalist id="lista_actividades"></datalist>
 
 <script>
-    const CACHE_NAME = 'agri-v47-cache-v1';
-    let DB = { 
-        cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [], 
+    const CACHE_NAME = 'agri-v47-bunker-v1';
+    let DB = {
+        cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v47_jornadas')) || [],
         sesiones: JSON.parse(localStorage.getItem('v47_sesiones')) || [],
+        currentSessionId: 0,
         avance: JSON.parse(localStorage.getItem('v47_avance')) || [],
         staff: JSON.parse(localStorage.getItem('v47_staff')) || [],
-        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", totalStaff: 0 },
+        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
         archive: JSON.parse(localStorage.getItem('v47_archive')) || []
     };
 
-    let scanner = null;
+    let scanner = null, lastScanTime = {};
+    const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
-    // --- 🚀 LÓGICA DE ALMACENAMIENTO OFFLINE ---
-    async function forzarDescarga() {
+    // --- 🛡️ SISTEMA BUNKER OFFLINE ---
+    window.onload = () => {
+        actualizarSelectores();
+        if (DB.sesiones.length > 0) irAlMapa();
+
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE = '${CACHE_NAME}';
+                const urls = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(urls))));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+            `;
+            const blob = new Blob([swCode], {type: 'text/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => {
+                setTimeout(verificarMemoria, 2000);
+            });
+        }
+    };
+
+    async function forzarDescargaManual() {
         const status = document.getElementById('offlineStatus');
-        status.innerText = "⏳ DESCARGANDO... NO CIERRES";
+        status.innerText = "⏳ DESCARGANDO CEREBRO...";
         try {
             const cache = await caches.open(CACHE_NAME);
-            const urls = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
-            for (const url of urls) { await cache.add(url); }
-            alert("✅ Cerebro guardado. Revisa ahora 'Datos almacenados' en Chrome.");
-            verificarAlmacenamiento();
-        } catch (e) { alert("❌ Error: Necesitas internet para descargar."); }
+            await cache.add('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
+            await cache.add('https://unpkg.com/html5-qrcode');
+            await cache.add(location.href);
+            alert("✅ CEREBRO GUARDADO. Ahora revisa 'Datos almacenados' en tu Chrome.");
+            verificarMemoria();
+        } catch (e) { alert("❌ Error: Requieres internet para esta descarga."); }
     }
 
-    async function verificarAlmacenamiento() {
+    async function verificarMemoria() {
         const status = document.getElementById('offlineStatus');
         if ('caches' in window) {
             const cache = await caches.open(CACHE_NAME);
             const keys = await cache.keys();
             if (keys.length >= 3) {
                 status.className = "status-box status-ok";
-                status.innerText = "✅ TODO GUARDADO: LISTO PARA EL CAMPO";
+                status.innerText = "✅ CEREBRO CARGADO: LISTO PARA EL CAMPO";
             } else {
-                status.innerText = "⚠️ NO GUARDADO: PICA 'DESCARGAR'";
+                status.innerText = "⚠️ PENDIENTE: PICA 'DESCARGAR CEREBRO'";
             }
         }
     }
 
-    // --- RESTO DE FUNCIONES RESTAURADAS ---
+    // --- 📊 LÓGICA DE REPORTES Y CATÁLOGOS (RESTAURADA) ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
         const txtJ = document.getElementById('csv_jor').value;
         if(txtC.trim()) {
-            DB.cuadros = txtC.split('\n').map(l => { let c = l.split(/[,\t]/); return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null }).filter(x => x);
+            DB.cuadros = txtC.split('\n').map(l => { 
+                let c = l.split(/[,\t]/); 
+                return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null 
+            }).filter(x => x);
         }
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
@@ -143,15 +231,13 @@
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores();
         document.getElementById('modalDB').classList.remove('open');
-        alert("Catálogos cargados correctamente");
+        alert("Catálogos guardados correctamente ✅");
     }
 
     function actualizarSelectores() {
-        const listaC = document.getElementById('lista_cuadros');
-        const listaA = document.getElementById('lista_actividades');
-        const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
-        listaC.innerHTML = nombresUnicos.map(nombre => `<option value="${nombre}">`).join('');
-        listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
+        const nombresC = [...new Set(DB.cuadros.map(c => c.nombre))];
+        document.getElementById('lista_cuadros').innerHTML = nombresC.map(n => `<option value="${n}">`).join('');
+        document.getElementById('lista_actividades').innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
         document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
 
@@ -159,38 +245,60 @@
         const val = document.getElementById(prefix + '_cuadro').value;
         const registros = DB.cuadros.filter(c => c.nombre === val);
         if (registros.length > 0) {
-            const primero = registros[0];
             document.getElementById(prefix + '_inicio').value = 1;
-            document.getElementById(prefix + '_fin').value = primero.max;
-            const listaOri = document.getElementById('lista_orientaciones');
-            const orientacionesUnicas = [...new Set(registros.map(r => r.ori))];
-            listaOri.innerHTML = orientacionesUnicas.map(o => `<option value="${o}">`).join('');
-            if (orientacionesUnicas.length === 1) document.getElementById(prefix + '_ori').value = orientacionesUnicas[0];
+            document.getElementById(prefix + '_fin').value = registros[0].max;
+            const oris = [...new Set(registros.map(r => r.ori))];
+            document.getElementById('lista_orientaciones').innerHTML = oris.map(o => `<option value="${o}">`).join('');
+            if (oris.length === 1) document.getElementById(prefix + '_ori').value = oris[0];
         }
     }
 
+    // --- 🏁 LÓGICA DE CIERRE Y REINICIO (CORREGIDA) ---
+    function confirmarFinDia() {
+        if(confirm("¿Finalizar jornada? Se generará el JSON y QR.")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            DB.archive.push({ fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), config: DB.globalConfig, avance: [...DB.avance] });
+            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+            generarCorteParcial();
+            
+            const btn = document.getElementById('btnSalidaFinal');
+            btn.innerText = "🏁 FINALIZAR Y VOLVER AL INICIO";
+            btn.style.background = "var(--main)";
+            btn.onclick = () => {
+                if(confirm("¿Seguro? Se limpiará la sesión actual.")) {
+                    localStorage.removeItem('v47_sesiones');
+                    localStorage.removeItem('v47_avance');
+                    localStorage.removeItem('v47_staff');
+                    location.reload(); // ESTO REGRESA AL SETUP
+                }
+            };
+        }
+    }
+
+    function generarCorteParcial() {
+        const qr = document.getElementById('qrcode_partial'); qr.innerHTML = "";
+        let qrData = { config: DB.globalConfig, avance: DB.avance.map(a=>({o:a.obrero, a:a.supAct, c:a.nomCuadro})) };
+        new QRCode(qr, { text: JSON.stringify(qrData), width: 250, height: 250 });
+        document.getElementById('viewMain').classList.remove('open');
+        document.getElementById('viewPartial').classList.add('open');
+    }
+
+    // --- 🗺️ LÓGICA DE MAPA Y REGISTRO ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const total = parseInt(document.getElementById('conf_total_global').value);
-        if(!resp || isNaN(total)) return alert("Faltan datos");
+        if(!resp || !total) return alert("Faltan datos");
         DB.globalConfig = { resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
-        DB.sesiones = []; DB.staff = []; DB.avance = [];
         crearSesionDesdeForm('conf');
         irAlMapa();
     }
 
     function crearSesionDesdeForm(prefix) {
         const cuadro = document.getElementById(prefix + '_cuadro').value;
-        if (!cuadro) return alert("Selecciona un cuadro");
+        if (!cuadro) return;
         DB.sesiones.push({ uid: Date.now(), cuadro, act: document.getElementById(prefix + '_act').value, inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1, fin: parseInt(document.getElementById(prefix + '_fin').value) || 10, modo: document.getElementById(prefix + '_modo').value });
         DB.currentSessionId = DB.sesiones.length - 1;
         guardarTodo();
-    }
-
-    function confirmarNuevoCuadro() {
-        crearSesionDesdeForm('add');
-        document.getElementById('modalAddCuadro').classList.remove('open');
-        renderTabs(); renderSession();
     }
 
     function irAlMapa() {
@@ -198,23 +306,11 @@
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs(); renderSession();
-        // CÁMARA MEJORADA OFFLINE
         if(!scanner) { 
-            scanner = new Html5QrcodeScanner("reader", { 
-                fps: 15, 
-                qrbox: 250, 
-                rememberLastUsedCamera: true 
-            }, false); // El false es vital para NO buscar archivos en internet
+            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); 
             scanner.render(onScan); 
         }
     }
-
-    function renderTabs() {
-        const container = document.getElementById('tabsContainer');
-        container.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
-    }
-
-    function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
     function onScan(id) {
         id = id.trim().toUpperCase();
@@ -230,10 +326,10 @@
         }
         if(t.fila !== null) {
             if(t.cuadroUid === s.uid) {
-                let n = prompt(`Ya está en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(s));
+                let n = prompt(`Ya en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(s));
                 if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), s); }
             } else {
-                if(confirm("¿Pasar a este cuadro actual?")) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s), s); }
+                if(confirm("¿Pasar a este cuadro?")) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s), s); }
             }
         } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s), s); }
         audioBeep.play(); guardarTodo(); renderSession();
@@ -261,52 +357,27 @@
         t.fila = null; t.cuadroUid = null;
     }
 
+    function renderTabs() {
+        const c = document.getElementById('tabsContainer');
+        c.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+    }
+
+    function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
+
     function renderSession() {
-        let s = DB.sesiones[DB.currentSessionId];
+        const s = DB.sesiones[DB.currentSessionId];
         const g = document.getElementById('mapGrid'); g.innerHTML = "";
         let term = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
         for(let i = s.inicio; i <= s.fin; i++) {
             let gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
             g.innerHTML += `<div class="row-item ${gente.length ? 'active-row' : (term.has(i) ? 'done' : '')}"><span>${i}</span><span class="row-tag">${gente.map(p=>p.id).join(',')}</span></div>`;
         }
-        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff} Personal`;
+        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`;
     }
-
-    // --- CORRECCIÓN DE CIERRE (SALIR AL INICIO) ---
-    function confirmarFinDia() {
-        if(confirm("¿Cerrar jornada definitivamente?")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), config: DB.globalConfig, avance: [...DB.avance] });
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-            generarCorteParcial();
-            const btn = document.getElementById('btnSalidaFinal');
-            btn.innerText = "🏁 FINALIZAR Y SALIR AL INICIO"; btn.style.background = "var(--main)";
-            btn.onclick = () => {
-                if(confirm("¿Seguro? Se limpiará el mapa actual.")) {
-                    localStorage.removeItem('v47_sesiones'); localStorage.removeItem('v47_avance'); localStorage.removeItem('v47_staff');
-                    location.reload(); // ESTO TE REGRESA A LA VENTANA SETUP
-                }
-            };
-        }
-    }
-
-    function generarCorteParcial() {
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewPartial').classList.add('open');
-        const qr = document.getElementById('qrcode_partial'); qr.innerHTML = "";
-        new QRCode(qr, { text: JSON.stringify({ config: DB.globalConfig, avance: DB.avance }), width: 250, height: 250 });
-    }
-
-    function descargarJSONReporte() {
-        let b = new Blob([JSON.stringify({ config: DB.globalConfig, avance: DB.avance, staff: DB.staff }, null, 2)], {type: "application/json"});
-        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `AVANCE_${DB.globalConfig.resp}.json`; a.click();
-    }
-
-    function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
 
     function abrirReporteAsistencia() {
-        const j = DB.jornadas.find(x => x.desc === DB.globalConfig.jornada) || {id:"N/A"};
-        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;"><tr style="background:#ddd;"><th>ID</th><th>ACT</th><th>CUADRO</th><th>LÍNEAS</th></tr>`;
+        const jor = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
+        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;"><tr style="background:#ddd;"><th>CREDENTIAL</th><th>ID_ACT</th><th>CUADRO</th><th>LINEAS</th></tr>`;
         [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
             let hist = DB.avance.filter(a => a.obrero === id);
             let u = hist[hist.length - 1];
@@ -317,14 +388,20 @@
         document.getElementById('modalReporte').classList.add('open');
     }
 
+    function descargarJSONReporte() {
+        let b = new Blob([JSON.stringify({ config: DB.globalConfig, avance: DB.avance, staff: DB.staff }, null, 2)], {type: "application/json"});
+        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `REPORTE_${DB.globalConfig.resp}.json`; a.click();
+    }
+
     function descargarCSVAsistencia() {
         let csv = [];
         document.querySelectorAll("#tablaAsistenciaContainer tr").forEach(tr => {
             let row = []; tr.querySelectorAll("td, th").forEach(col => row.push(col.innerText));
             csv.push(row.join(","));
         });
-        let a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv" }));
-        a.download = `Reporte_${DB.globalConfig.resp}.csv`; a.click();
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv" }));
+        a.download = `REPORTE_${DB.globalConfig.resp}.csv`; a.click();
     }
 
     function ejecutarAvanceMasivoFix() {
@@ -352,8 +429,10 @@
 
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
-        let list = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null).map(st => `<div class="edit-item"><span><b>${st.id}</b> - Fila: ${st.fila}</span><button class="btn-sm btn-r" onclick="borrarRegistroEditor('${st.id}')">BORRAR</button></div>`).join('');
-        document.getElementById('editorList').innerHTML = list || "Sin personal activo";
+        let list = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null).map(st => `
+            <div class="edit-item"><span><b>${st.id}</b> - Fila: ${st.fila}</span><button class="btn-sm btn-r" onclick="borrarRegistroEditor('${st.id}')">X</button></div>
+        `).join('');
+        document.getElementById('editorList').innerHTML = list || "Sin activos";
         document.getElementById('modalEditor').classList.add('open');
     }
 
@@ -368,14 +447,14 @@
     }
 
     function abrirHistorial() {
-        let h = DB.archive.slice(-5).map((a, i) => `<div class="card">${a.fecha} - ${a.config.resp} <button class="btn-sm btn-b" onclick="descargarHistIdx(${i})">JSON</button></div>`).join('');
-        document.getElementById('editorList').innerHTML = h || "Sin historial";
+        let list = DB.archive.slice(-5).map((a, i) => `<div class="card">${a.fecha} - ${a.config.resp} <button class="btn-sm btn-b" onclick="descargarHistorialIdx(${i})">JSON</button></div>`).join('');
+        document.getElementById('editorList').innerHTML = list || "Sin historial";
         document.getElementById('modalEditor').classList.add('open');
     }
 
-    function descargarHistIdx(i) {
+    function descargarHistorialIdx(i) {
         let b = new Blob([JSON.stringify(DB.archive[i], null, 2)], {type: "application/json"});
-        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `BACKUP_${i}.json`; a.click();
+        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `HISTORIAL_${i}.json`; a.click();
     }
 
     function guardarTodo() {
@@ -384,11 +463,14 @@
         localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
         localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
-    
+
     function registrarManual() {
         let v = document.getElementById('manual_id').value;
         if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
     }
+
+    function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
+    function confirmarNuevoCuadro() { crearSesionDesdeForm('add'); document.getElementById('modalAddCuadro').classList.remove('open'); renderTabs(); renderSession(); }
 </script>
 </body>
 </html>
