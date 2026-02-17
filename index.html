@@ -12,7 +12,7 @@
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
         .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 12px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 12px; cursor: pointer; text-transform: uppercase; color: white; display: block; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; text-align: center; display: block; box-sizing: border-box; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
         .btn-i { background: var(--info); }
@@ -32,28 +32,18 @@
         .row-tag { font-size: 7px; position: absolute; bottom: 2px; width: 100%; text-align: center; overflow: hidden; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
-        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 15px; min-height: 250px; }
-        .status-box { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; font-size: 12px; }
-        .status-ok { background: #1b5e20; color: #00e676; border: 1px solid #00e676; }
-        .status-ko { background: #b71c1c; color: #ff8a80; border: 1px solid #ff8a80; }
+        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 15px; }
+        .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
     <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
-    
-    <div id="offlineStatus" class="status-box status-ko">⏳ VERIFICANDO ALMACENAMIENTO...</div>
-    <div class="flex-row">
-        <button class="btn btn-sm btn-b" onclick="forzarDescargaManual()">📥 DESCARGAR CEREBRO</button>
-        <button class="btn btn-sm btn-g" onclick="verificarMemoria()">🔄 VERIFICAR</button>
-    </div>
-
     <div class="flex-row">
         <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
     </div>
-    
     <div class="card">
         <h3>👷 DATOS SUPERVISOR</h3>
         <label>ID Credencial</label><input type="text" id="conf_sup_id">
@@ -66,7 +56,7 @@
         <label>🕒 JORNADA</label><select id="conf_jornada"></select>
         <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
         <label>🧭 ORIENTACIÓN</label>
-        <input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Sugerencia de orientación...">
+        <input type="text" id="conf_ori" list="lista_orientaciones">
         <datalist id="lista_orientaciones"></datalist>
         <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
         <div class="flex-row">
@@ -76,13 +66,14 @@
         <label>Modo</label>
         <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
+    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR DÍA</button>
 </div>
 
 <div id="viewMain" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
-        <div id="disp_count_global" style="font-size:12px; background:#333; padding:5px 10px; border-radius:20px;">0/0</div>
+        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()">📡 CORTE PARCIAL</button>
+        <div id="disp_count_global">0/0</div>
     </div>
     <div class="tabs-container" id="tabsContainer"></div>
     <div id="reader"></div>
@@ -91,16 +82,11 @@
         <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
     </div>
     <div id="mapGrid" class="grid-map"></div>
-    <div style="margin-top:15px;">
-        <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
-        <div class="flex-row">
-            <button class="btn btn-i" onclick="generarCorteParcial()">📡 CORTE PARCIAL</button>
-            <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
-        </div>
-        <div class="flex-row">
-            <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
-            <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR JORNADA</button>
-        </div>
+    <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()" style="margin-top:10px;">⏩ AVANCE / TRANSFERIR</button>
+    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
+    <div class="flex-row">
+        <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
+        <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
     </div>
 </div>
 
@@ -117,20 +103,20 @@
 <div id="modalReporte" class="modal">
     <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA PARA EXCEL</h2>
     <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:10px; min-height:200px;"></div>
-    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV (EXCEL)</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER AL MAPA</button>
+    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER</button>
 </div>
 
 <div id="modalDB" class="modal">
     <h3>📂 Catálogos</h3>
-    <label>CSV Cuadros</label><textarea id="csv_cuadros" rows="4"></textarea>
-    <label>CSV Actividades</label><textarea id="csv_act" rows="3"></textarea>
-    <label>CSV Jornadas</label><textarea id="csv_jor" rows="2"></textarea>
-    <button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR CATÁLOGOS</button>
+    <textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="4"></textarea>
+    <textarea id="csv_act" placeholder="CSV Actividades" rows="3"></textarea>
+    <textarea id="csv_jor" placeholder="CSV Jornadas" rows="2"></textarea>
+    <button class="btn btn-g" onclick="procesarYGuardar()">💾 GUARDAR</button>
     <button class="btn btn-r" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button>
 </div>
 
-<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
+<div id="modalEditor" class="modal"><h2>✏️ EDITOR / HISTORIAL</h2><div id="editorList"></div><button class="btn btn-r" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
 
 <div id="modalAddCuadro" class="modal">
     <h2>➕ NUEVO CUADRO</h2>
@@ -141,6 +127,8 @@
             <div><label>Desde</label><input type="number" id="add_inicio"></div>
             <div><label>Hasta</label><input type="number" id="add_fin"></div>
         </div>
+        <label>Modo</label>
+        <select id="add_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
     <button class="btn btn-g" onclick="confirmarNuevoCuadro()">AÑADIR CUADRO</button>
     <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
@@ -150,7 +138,6 @@
 <datalist id="lista_actividades"></datalist>
 
 <script>
-    const CACHE_NAME = 'agri-v47-bunker-v1';
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -166,139 +153,76 @@
     let scanner = null, lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
-    // --- 🛡️ SISTEMA BUNKER OFFLINE ---
     window.onload = () => {
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
-
+        
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE = '${CACHE_NAME}';
-                const urls = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(urls))));
+                const CACHE = 'agri-v47-cache';
+                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll([location.href]))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => {
-                setTimeout(verificarMemoria, 2000);
-            });
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
         }
     };
 
-    async function forzarDescargaManual() {
-        const status = document.getElementById('offlineStatus');
-        status.innerText = "⏳ DESCARGANDO CEREBRO...";
-        try {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.add('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
-            await cache.add('https://unpkg.com/html5-qrcode');
-            await cache.add(location.href);
-            alert("✅ CEREBRO GUARDADO. Ahora revisa 'Datos almacenados' en tu Chrome.");
-            verificarMemoria();
-        } catch (e) { alert("❌ Error: Requieres internet para esta descarga."); }
-    }
-
-    async function verificarMemoria() {
-        const status = document.getElementById('offlineStatus');
-        if ('caches' in window) {
-            const cache = await caches.open(CACHE_NAME);
-            const keys = await cache.keys();
-            if (keys.length >= 3) {
-                status.className = "status-box status-ok";
-                status.innerText = "✅ CEREBRO CARGADO: LISTO PARA EL CAMPO";
-            } else {
-                status.innerText = "⚠️ PENDIENTE: PICA 'DESCARGAR CEREBRO'";
-            }
-        }
-    }
-
-    // --- 📊 LÓGICA DE REPORTES Y CATÁLOGOS (RESTAURADA) ---
+    // --- LÓGICA DE CATÁLOGOS ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value;
         const txtA = document.getElementById('csv_act').value;
         const txtJ = document.getElementById('csv_jor').value;
-        if(txtC.trim()) {
-            DB.cuadros = txtC.split('\n').map(l => { 
-                let c = l.split(/[,\t]/); 
-                return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null 
-            }).filter(x => x);
-        }
-        if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-        if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
+        if(txtC.trim()) DB.cuadros = txtC.split('\n').map(l => { let c = l.split(/[,\t]/); return (c.length>=6)?{id:c[0].trim(), nombre:c[1].trim(), ori:c[3].trim(), max:parseInt(c[5].trim())}:null; }).filter(x=>x);
+        if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2)?{id:c[0].trim(), desc:c[1].trim()}:null; }).filter(x=>x);
+        if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2)?{id:c[0].trim(), desc:c[1].trim()}:null; }).filter(x=>x);
         localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros));
         localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
-        actualizarSelectores();
-        document.getElementById('modalDB').classList.remove('open');
-        alert("Catálogos guardados correctamente ✅");
+        actualizarSelectores(); document.getElementById('modalDB').classList.remove('open');
     }
 
     function actualizarSelectores() {
-        const nombresC = [...new Set(DB.cuadros.map(c => c.nombre))];
-        document.getElementById('lista_cuadros').innerHTML = nombresC.map(n => `<option value="${n}">`).join('');
+        const names = [...new Set(DB.cuadros.map(c => c.nombre))];
+        document.getElementById('lista_cuadros').innerHTML = names.map(n => `<option value="${n}">`).join('');
         document.getElementById('lista_actividades').innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
         document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
 
     function alEscribirCuadro(prefix) {
         const val = document.getElementById(prefix + '_cuadro').value;
-        const registros = DB.cuadros.filter(c => c.nombre === val);
-        if (registros.length > 0) {
+        const regs = DB.cuadros.filter(c => c.nombre === val);
+        if (regs.length > 0) {
             document.getElementById(prefix + '_inicio').value = 1;
-            document.getElementById(prefix + '_fin').value = registros[0].max;
-            const oris = [...new Set(registros.map(r => r.ori))];
+            document.getElementById(prefix + '_fin').value = regs[0].max;
+            const oris = [...new Set(regs.map(r => r.ori))];
             document.getElementById('lista_orientaciones').innerHTML = oris.map(o => `<option value="${o}">`).join('');
             if (oris.length === 1) document.getElementById(prefix + '_ori').value = oris[0];
         }
     }
 
-    // --- 🏁 LÓGICA DE CIERRE Y REINICIO (CORREGIDA) ---
-    function confirmarFinDia() {
-        if(confirm("¿Finalizar jornada? Se generará el JSON y QR.")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), config: DB.globalConfig, avance: [...DB.avance] });
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-            generarCorteParcial();
-            
-            const btn = document.getElementById('btnSalidaFinal');
-            btn.innerText = "🏁 FINALIZAR Y VOLVER AL INICIO";
-            btn.style.background = "var(--main)";
-            btn.onclick = () => {
-                if(confirm("¿Seguro? Se limpiará la sesión actual.")) {
-                    localStorage.removeItem('v47_sesiones');
-                    localStorage.removeItem('v47_avance');
-                    localStorage.removeItem('v47_staff');
-                    location.reload(); // ESTO REGRESA AL SETUP
-                }
-            };
-        }
-    }
-
-    function generarCorteParcial() {
-        const qr = document.getElementById('qrcode_partial'); qr.innerHTML = "";
-        let qrData = { config: DB.globalConfig, avance: DB.avance.map(a=>({o:a.obrero, a:a.supAct, c:a.nomCuadro})) };
-        new QRCode(qr, { text: JSON.stringify(qrData), width: 250, height: 250 });
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewPartial').classList.add('open');
-    }
-
-    // --- 🗺️ LÓGICA DE MAPA Y REGISTRO ---
+    // --- SISTEMA ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value;
         const total = parseInt(document.getElementById('conf_total_global').value);
         if(!resp || !total) return alert("Faltan datos");
         DB.globalConfig = { resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
-        crearSesionDesdeForm('conf');
-        irAlMapa();
+        DB.sesiones = []; DB.staff = []; DB.avance = [];
+        crearSesionDesdeForm('conf'); irAlMapa();
     }
 
     function crearSesionDesdeForm(prefix) {
         const cuadro = document.getElementById(prefix + '_cuadro').value;
         if (!cuadro) return;
-        DB.sesiones.push({ uid: Date.now(), cuadro, act: document.getElementById(prefix + '_act').value, inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1, fin: parseInt(document.getElementById(prefix + '_fin').value) || 10, modo: document.getElementById(prefix + '_modo').value });
-        DB.currentSessionId = DB.sesiones.length - 1;
-        guardarTodo();
+        DB.sesiones.push({ 
+            uid: Date.now(), cuadro, 
+            act: document.getElementById(prefix + '_act').value, 
+            inicio: parseInt(document.getElementById(prefix + '_inicio').value) || 1, 
+            fin: parseInt(document.getElementById(prefix + '_fin').value) || 10, 
+            modo: document.getElementById(prefix + '_modo') ? document.getElementById(prefix + '_modo').value : 'PAREJAS' 
+        });
+        DB.currentSessionId = DB.sesiones.length - 1; guardarTodo();
     }
 
     function irAlMapa() {
@@ -306,12 +230,10 @@
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
         renderTabs(); renderSession();
-        if(!scanner) { 
-            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); 
-            scanner.render(onScan); 
-        }
+        if(!scanner) { scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250, rememberLastUsedCamera: true }, false); scanner.render(onScan); }
     }
 
+    // --- ESCANEO ---
     function onScan(id) {
         id = id.trim().toUpperCase();
         let now = Date.now();
@@ -321,28 +243,25 @@
         let t = DB.staff.find(x => x.id === id);
         if(!t) {
             if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite alcanzado");
-            t = { id, fila: null, cuadroUid: null };
-            DB.staff.push(t);
+            t = { id, fila: null, cuadroUid: null }; DB.staff.push(t);
         }
         if(t.fila !== null) {
             if(t.cuadroUid === s.uid) {
                 let n = prompt(`Ya en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(s));
                 if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), s); }
-            } else {
-                if(confirm("¿Pasar a este cuadro?")) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s), s); }
-            }
+            } else if(confirm("¿Pasar a este cuadro?")) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s), s); }
         } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(s), s); }
         audioBeep.play(); guardarTodo(); renderSession();
     }
 
-    function buscarSiguienteFilaVacia(sesion) {
-        let quemadas = new Set(DB.avance.filter(a => a.cuadroUid === sesion.uid && a.fin !== null).map(a => a.fila));
-        for(let i = sesion.inicio; i <= sesion.fin; i++) {
+    function buscarSiguienteFilaVacia(s) {
+        let quemadas = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
+        for(let i = s.inicio; i <= s.fin; i++) {
             if(quemadas.has(i)) continue;
-            let ocupantes = DB.staff.filter(s => s.cuadroUid === sesion.uid && s.fila === i).length;
-            if(sesion.modo === 'PAREJAS' ? ocupantes < 2 : ocupantes === 0) return i;
+            let ocu = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i).length;
+            if(s.modo === 'PAREJAS' ? ocu < 2 : ocu === 0) return i;
         }
-        return sesion.fin + 1;
+        return s.fin + 1;
     }
 
     function asignarFilaEspecifica(t, fila, s) {
@@ -357,9 +276,13 @@
         t.fila = null; t.cuadroUid = null;
     }
 
+    // --- UI ---
     function renderTabs() {
         const c = document.getElementById('tabsContainer');
-        c.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+        c.innerHTML = DB.sesiones.map((s, idx) => {
+            const cat = DB.cuadros.find(x => x.nombre === s.cuadro);
+            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}${cat?' - '+cat.ori:''}</div>`;
+        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
     }
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
@@ -369,22 +292,59 @@
         const g = document.getElementById('mapGrid'); g.innerHTML = "";
         let term = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
         for(let i = s.inicio; i <= s.fin; i++) {
-            let gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
-            g.innerHTML += `<div class="row-item ${gente.length ? 'active-row' : (term.has(i) ? 'done' : '')}"><span>${i}</span><span class="row-tag">${gente.map(p=>p.id).join(',')}</span></div>`;
+            let p = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
+            g.innerHTML += `<div class="row-item ${p.length?'active-row':(term.has(i)?'done':'')}"><span>${i}</span><span class="row-tag">${p.map(x=>x.id).join(',')}</span></div>`;
         }
         document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`;
     }
 
+    function ejecutarAvanceMasivoFix() {
+        let s = DB.sesiones[DB.currentSessionId];
+        let acts = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
+        if(!acts.length) return alert("Sin activos");
+        if(buscarSiguienteFilaVacia(s) > s.fin) {
+            let next = DB.sesiones[DB.currentSessionId+1];
+            if(next && confirm(`¿Transferir a ${next.cuadro}?`)) {
+                acts.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(next), next); });
+                DB.currentSessionId++; renderTabs(); renderSession();
+            }
+        } else if(confirm("¿Avanzar grupos?")) {
+            let grp = {}; acts.forEach(t => { if(!grp[t.fila]) grp[t.fila] = []; grp[t.fila].push(t); });
+            Object.keys(grp).sort((a,b)=>a-b).forEach(f => {
+                let nF = buscarSiguienteFilaVacia(s);
+                if(nF <= s.fin) grp[f].forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, nF, s); });
+            });
+            renderSession();
+        }
+        guardarTodo();
+    }
+
+    // --- REPORTES ---
+    function generarCorteParcial() {
+        const qr = document.getElementById('qrcode_partial'); qr.innerHTML = "";
+        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff };
+        new QRCode(qr, { text: JSON.stringify(data), width: 250, height: 250 });
+        document.getElementById('viewMain').classList.remove('open');
+        document.getElementById('viewPartial').classList.add('open');
+    }
+
+    function confirmarFinDia() {
+        if(confirm("¿Cerrar jornada?")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            DB.archive.push({ fecha: new Date().toLocaleDateString(), hora: new Date().toLocaleTimeString(), config: DB.globalConfig, avance: [...DB.avance] });
+            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
+            generarCorteParcial();
+            document.getElementById('btnSalidaFinal').onclick = () => { if(confirm("¿Borrar sesión?")) { localStorage.removeItem('v47_sesiones'); localStorage.removeItem('v47_avance'); localStorage.removeItem('v47_staff'); location.reload(); }};
+        }
+    }
+
     function abrirReporteAsistencia() {
-        const jor = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
-        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;"><tr style="background:#ddd;"><th>CREDENTIAL</th><th>ID_ACT</th><th>CUADRO</th><th>LINEAS</th></tr>`;
+        let html = `<table style="width:100%; border-collapse:collapse; font-size:10px;"><tr style="background:#ddd;"><th>CREDENTIAL</th><th>CUADRO</th><th>LINEAS</th></tr>`;
         [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
             let hist = DB.avance.filter(a => a.obrero === id);
-            let u = hist[hist.length - 1];
-            let act = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"};
-            html += `<tr><td>${id}</td><td>${act.id}</td><td>${u.nomCuadro}</td><td>${hist.length}</td></tr>`;
+            html += `<tr><td>${id}</td><td>${hist[hist.length-1].nomCuadro}</td><td>${hist.length}</td></tr>`;
         });
-        document.getElementById('tablaAsistenciaContainer').innerHTML = html + `</table>`;
+        document.getElementById('tablaAsistenciaContainer').innerHTML = html + "</table>";
         document.getElementById('modalReporte').classList.add('open');
     }
 
@@ -394,43 +354,27 @@
     }
 
     function descargarCSVAsistencia() {
-        let csv = [];
-        document.querySelectorAll("#tablaAsistenciaContainer tr").forEach(tr => {
-            let row = []; tr.querySelectorAll("td, th").forEach(col => row.push(col.innerText));
-            csv.push(row.join(","));
+        let csv = ["CREDENTIAL,CUADRO,LINEAS"];
+        [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
+            let hist = DB.avance.filter(a => a.obrero === id);
+            csv.push(`${id},${hist[hist.length-1].nomCuadro},${hist.length}`);
         });
         let a = document.createElement("a");
         a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv" }));
-        a.download = `REPORTE_${DB.globalConfig.resp}.csv`; a.click();
+        a.download = `ASISTENCIA_${DB.globalConfig.resp}.csv`; a.click();
     }
 
-    function ejecutarAvanceMasivoFix() {
-        let s = DB.sesiones[DB.currentSessionId];
-        let activos = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
-        let ptr = buscarSiguienteFilaVacia(s);
-        if (ptr > s.fin) {
-            let nS = DB.sesiones[DB.currentSessionId + 1];
-            if (nS && confirm(`¿Transferir a ${nS.cuadro}?`)) {
-                activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(nS), nS); });
-                DB.currentSessionId++; guardarTodo(); renderTabs(); renderSession();
-            }
-        } else {
-            if (confirm("¿Avanzar grupos?")) {
-                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-                Object.keys(grupos).sort((a,b)=>a-b).forEach(f => {
-                    let nextF = buscarSiguienteFilaVacia(s);
-                    if(nextF <= s.fin) grupos[f].forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, nextF, s); });
-                });
-                guardarTodo(); renderSession();
-            }
-        }
+    function guardarTodo() {
+        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
+        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
+        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
+        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
     function abrirEditor() {
         let s = DB.sesiones[DB.currentSessionId];
         let list = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null).map(st => `
-            <div class="edit-item"><span><b>${st.id}</b> - Fila: ${st.fila}</span><button class="btn-sm btn-r" onclick="borrarRegistroEditor('${st.id}')">X</button></div>
+            <div class="edit-item"><span><b>${st.id}</b> - Fila: ${st.fila}</span><button class="btn-sm btn-r" onclick="borrarRegistroEditor('${st.id}')">BORRAR</button></div>
         `).join('');
         document.getElementById('editorList').innerHTML = list || "Sin activos";
         document.getElementById('modalEditor').classList.add('open');
@@ -441,8 +385,7 @@
         if(t) {
             let idx = DB.avance.findIndex(a => a.obrero === id && a.fin === null);
             if(idx !== -1) DB.avance.splice(idx, 1);
-            t.fila = null; t.cuadroUid = null;
-            guardarTodo(); renderSession(); abrirEditor();
+            t.fila = null; t.cuadroUid = null; guardarTodo(); renderSession(); abrirEditor();
         }
     }
 
@@ -455,13 +398,6 @@
     function descargarHistorialIdx(i) {
         let b = new Blob([JSON.stringify(DB.archive[i], null, 2)], {type: "application/json"});
         let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `HISTORIAL_${i}.json`; a.click();
-    }
-
-    function guardarTodo() {
-        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
-        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
-        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
     }
 
     function registrarManual() {
