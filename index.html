@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2e7d32">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>AgriCactus V47 - PWA PRO</title>
+    <link rel="manifest" href="manifest.json">
+    <title>AgriCactus V47 - TOTAL PRO</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -14,18 +14,17 @@
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
         .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
-        .btn-i { background: var(--info); }
         .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
         .tabs-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
         .tab { background: #333; color: #aaa; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
         .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); }
-        .tab-add { background: var(--blue); color: white; font-size: 16px; padding: 5px 15px; }
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.5); border-radius: 10px; }
         .row-item { height: 40px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
         .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
         .active-row { background: var(--sec); border-color: #ffca28; color: black; }
@@ -33,18 +32,22 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
         .flex-row { display: flex; gap: 10px; }
-        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px;}
+        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px; border: 1px solid #333;}
         .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
-    <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
+    <h2 style="text-align:center; color: var(--main); margin-bottom:15px;">AgriCactus V47 PRO</h2>
+    
+    <div class="button-grid">
+        <button class="btn btn-b" onclick="alert('Modo Búnker Offline Activado')">🏰 MODO BÚNKER</button>
+        <button class="btn btn-g" onclick="location.reload()">🔄 ACTUALIZAR</button>
+        <button class="btn btn-b" onclick="abrirDB()">📂 CATÁLOGOS</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
     </div>
+
     <div class="card">
         <h3>👷 DATOS SUPERVISOR</h3>
         <label>ID Credencial</label><input type="text" id="conf_sup_id">
@@ -52,63 +55,68 @@
         <label>Actividad Supervisor</label><input type="text" id="conf_sup_act" list="lista_actividades">
         <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global">
     </div>
+
     <div class="card">
-        <h3>PRIMER CUADRO</h3>
+        <h3>📍 PRIMER CUADRO (IMAGEN 2)</h3>
         <label>🕒 JORNADA</label><select id="conf_jornada"></select>
-        <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
-        <label>🧭 ORIENTACIÓN</label>
-        <input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Sugerencia de orientación...">
-        <datalist id="lista_orientaciones"></datalist>
-        <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
+        <label>🔍 CUADRO</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
+        <label>🧭 ORIENTACIÓN</label><input type="text" id="conf_ori" list="lista_orientaciones">
+        <label>ACTIVIDAD DEL GRUPO</label><input type="text" id="conf_act" list="lista_actividades">
         <div class="flex-row">
-            <input type="number" id="conf_inicio" placeholder="Desde">
-            <input type="number" id="conf_fin" placeholder="Hasta">
+            <div style="flex:1"><label>DESDE</label><input type="number" id="conf_inicio"></div>
+            <div style="flex:1"><label>HASTA</label><input type="number" id="conf_fin"></div>
         </div>
-        <label>Modo</label>
+        <label>MODO</label>
         <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR DÍA</button>
+    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
 </div>
 
 <div id="viewMain" class="modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
         <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
-        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="width:auto; margin:0;">📡 CORTE PARCIAL</button>
         <div id="disp_count_global" style="font-size:12px;">0/0</div>
     </div>
     <div class="tabs-container" id="tabsContainer"></div>
+    
     <div id="reader"></div>
+    <button class="btn btn-b btn-sm" id="retryCam" style="display:none; width:100%; margin-bottom:10px;" onclick="forzarCamara()">📷 REINTENTAR CÁMARA</button>
+
     <div class="flex-row" style="margin-bottom: 10px;">
-        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;">
+        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0; flex:1;">
         <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
     </div>
+
     <div id="mapGrid" class="grid-map"></div>
+    
     <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
-    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
-    <div class="flex-row">
+    
+    <div class="button-grid">
+        <button class="btn btn-i" onclick="generarCorteParcial()">📡 CORTE PARCIAL</button>
+        <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 ASISTENCIA</button>
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
         <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
     </div>
 </div>
 
 <div id="modalReporte" class="modal">
-    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA PARA EXCEL</h2>
+    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA</h2>
     <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:5px; min-height:200px;"></div>
     <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV</button>
     <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER</button>
 </div>
 
 <div id="viewPartial" class="modal" style="background:#111;">
-    <h2 style="color:var(--info); text-align:center;">📡 REPORTE DE AVANCE</h2>
+    <h2 style="color:var(--info); text-align:center;">📡 REPORTE</h2>
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
         <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR .JSON</button>
     </div>
-    <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER</button>
+    <button class="btn btn-b" id="btnFinalCerrar" onclick="cerrarCorteParcial()">🔙 VOLVER</button>
 </div>
 
-<div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
+<div id="modalDB" class="modal"><h3>📂 CATÁLOGOS</h3><textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
 <div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
 <div id="modalAddCuadro" class="modal">
     <h2>➕ NUEVO CUADRO</h2>
@@ -126,9 +134,9 @@
 
 <datalist id="lista_cuadros"></datalist>
 <datalist id="lista_actividades"></datalist>
+<datalist id="lista_orientaciones"></datalist>
 
 <script>
-    // --- LÓGICA DE PERSISTENCIA ---
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -141,32 +149,30 @@
         archive: JSON.parse(localStorage.getItem('v47_archive')) || []
     };
 
-    let scanner = null, lastScanTime = {};
+    let html5QrCode = null;
+    let lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
     window.onload = () => {
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
 
-        // 🚀 SERVICE WORKER PARA MODO OFFLINE SEGURO
+        // 🚀 SERVICE WORKER INTEGRADO PARA OFFLINE
         if ('serviceWorker' in navigator) {
             const swCode = `
-                const CACHE_NAME = 'agricactus-cache-v47';
+                const CACHE_NAME = 'agricactus-pwa-v47';
                 const assets = [location.href, 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js', 'https://unpkg.com/html5-qrcode'];
                 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(assets))));
                 self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
             `;
             const blob = new Blob([swCode], {type: 'text/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => console.log("Offline Ready ✅"));
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
         }
     };
 
-    // --- FUNCIONES DE CATALOGO ---
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
-        const txtC = document.getElementById('csv_cuadros').value;
-        const txtA = document.getElementById('csv_act').value;
-        const txtJ = document.getElementById('csv_jor').value;
+        const txtC = document.getElementById('csv_cuadros').value, txtA = document.getElementById('csv_act').value, txtJ = document.getElementById('csv_jor').value;
         if(txtC.trim()) {
             DB.cuadros = txtC.split('\n').map(l => { 
                 let c = l.split(/[,\t]/); 
@@ -175,18 +181,12 @@
         }
         if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
         if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-        localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
-        actualizarSelectores();
-        document.getElementById('modalDB').classList.remove('open');
+        guardarTodo(); actualizarSelectores(); document.getElementById('modalDB').classList.remove('open');
     }
 
     function actualizarSelectores() {
-        const listaC = document.getElementById('lista_cuadros');
-        const listaA = document.getElementById('lista_actividades');
-        const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
-        listaC.innerHTML = nombresUnicos.map(n => `<option value="${n}">`).join('');
+        const listaC = document.getElementById('lista_cuadros'), listaA = document.getElementById('lista_actividades');
+        listaC.innerHTML = [...new Set(DB.cuadros.map(c => c.nombre))].map(n => `<option value="${n}">`).join('');
         listaA.innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
         document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
     }
@@ -197,38 +197,43 @@
         if (regs.length > 0) {
             document.getElementById(prefix + '_inicio').value = 1;
             document.getElementById(prefix + '_fin').value = regs[0].max;
-            const lO = document.getElementById('lista_orientaciones'), oU = [...new Set(regs.map(r => r.ori))];
-            lO.innerHTML = oU.map(o => `<option value="${o}">`).join('');
-            if (oU.length === 1) document.getElementById(prefix + '_ori').value = oU[0];
+            document.getElementById(prefix + '_ori').value = regs[0].ori; // 🎯 ORIENTACIÓN (POSICIÓN 3)
+            const lO = document.getElementById('lista_orientaciones');
+            lO.innerHTML = [...new Set(regs.map(r => r.ori))].map(o => `<option value="${o}">`).join('');
         }
     }
 
-    // --- FLUJO DE TRABAJO ---
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value, total = parseInt(document.getElementById('conf_total_global').value);
         if(!resp || isNaN(total)) return alert("Faltan datos");
-        DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
+        DB.globalConfig = { resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
         DB.sesiones = []; DB.staff = []; DB.avance = []; 
-        crearSesionDesdeForm('conf'); 
-        irAlMapa();
+        crearSesionDesdeForm('conf'); irAlMapa();
     }
 
     function crearSesionDesdeForm(p) {
         const c = document.getElementById(p + '_cuadro').value;
-        let s = { uid: Date.now(), cuadro: c, act: document.getElementById(p + '_act').value, inicio: parseInt(document.getElementById(p + '_inicio').value) || 1, fin: parseInt(document.getElementById(p + '_fin').value) || 10, modo: document.getElementById(p + '_modo').value };
-        DB.sesiones.push(s); DB.currentSessionId = DB.sesiones.length - 1; 
-        guardarTodo();
+        DB.sesiones.push({ uid: Date.now(), cuadro: c, act: document.getElementById(p + '_act').value, inicio: parseInt(document.getElementById(p + '_inicio').value), fin: parseInt(document.getElementById(p + '_fin').value), modo: document.getElementById(p + '_modo').value });
+        DB.currentSessionId = DB.sesiones.length - 1; guardarTodo();
     }
 
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
         document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
-        renderTabs(); renderSession();
-        if(!scanner) { 
-            scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); 
-            scanner.render(onScan); 
-        }
+        renderTabs(); renderSession(); forzarCamara();
+    }
+
+    function forzarCamara() {
+        if(html5QrCode) html5QrCode.stop().then(() => startCam()).catch(() => startCam());
+        else startCam();
+    }
+
+    function startCam() {
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, onScan).catch(() => {
+            document.getElementById('retryCam').style.display = 'block';
+        });
     }
 
     function onScan(id) {
@@ -236,22 +241,35 @@
         let now = Date.now();
         if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
         lastScanTime[id] = now;
-        let sA = DB.sesiones[DB.currentSessionId];
-        let t = DB.staff.find(s => s.id === id);
-        if(!t) {
-            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite alcanzado");
-            t = { id: id, fila: null, cuadroUid: null }; DB.staff.push(t);
+        audioBeep.play();
+        
+        let sA = DB.sesiones[DB.currentSessionId], t = DB.staff.find(s => s.id === id);
+        if(!t) { 
+            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("Límite personal!");
+            t = { id, fila: null, cuadroUid: null }; DB.staff.push(t); 
         }
+        
         if(t.fila !== null) {
             if(t.cuadroUid === sA.uid) {
-                let n = prompt(`Ya está en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sA));
+                let n = prompt(`Fila ${t.fila}. ¿Mover?`, buscarSiguienteFilaVacia(sA));
                 if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), sA); }
             } else {
-                let sV = DB.sesiones.find(s => s.uid === t.cuadroUid);
-                if(confirm(`Viene de ${sV?sV.cuadro:'OTRO'}. ¿Pasar al actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
+                if(confirm(`Viene de otro cuadro. ¿Pasar al actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
             }
         } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
-        audioBeep.play(); guardarTodo(); renderMapa(); renderSession();
+        guardarTodo(); renderSession();
+    }
+
+    function asignarFilaEspecifica(t, f, s) {
+        if(f > s.fin) return alert("Lleno!");
+        t.fila = f; t.cuadroUid = s.uid;
+        DB.avance.push({ fila: f, obrero: t.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act });
+    }
+
+    function cerrarTarea(t) {
+        let reg = DB.avance.find(a => a.obrero === t.id && a.fin === null);
+        if(reg) reg.fin = new Date().toLocaleTimeString();
+        t.fila = null; t.cuadroUid = null;
     }
 
     function buscarSiguienteFilaVacia(s) {
@@ -264,21 +282,8 @@
         return s.fin + 1;
     }
 
-    function asignarFilaEspecifica(t, f, s) {
-        if(f > s.fin) return alert("Cuadro lleno");
-        t.fila = f; t.cuadroUid = s.uid;
-        DB.avance.push({ fila: f, obrero: t.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act });
-    }
-
-    function cerrarTarea(t) {
-        let reg = DB.avance.find(a => a.obrero === t.id && a.fin === null);
-        if(reg) reg.fin = new Date().toLocaleTimeString();
-        t.fila = null; t.cuadroUid = null;
-    }
-
     function renderMapa() {
-        let s = DB.sesiones[DB.currentSessionId];
-        const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
+        let s = DB.sesiones[DB.currentSessionId]; const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
         let term = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
         for(let i = s.inicio; i <= s.fin; i++) {
             let div = document.createElement('div'), gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
@@ -288,70 +293,54 @@
         }
     }
 
-    function renderSession() {
-        renderMapa();
-        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff} Personal`;
-    }
-
-    function registrarManual() {
-        let v = document.getElementById('manual_id').value.toUpperCase();
-        if(v) { onScan(v); document.getElementById('manual_id').value = ""; }
-    }
+    function renderSession() { renderMapa(); document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`; }
+    function registrarManual() { let v = document.getElementById('manual_id').value.toUpperCase(); if(v) { onScan(v); document.getElementById('manual_id').value = ""; } }
 
     function ejecutarAvanceMasivoFix() {
         let sO = DB.sesiones[DB.currentSessionId], activos = DB.staff.filter(st => st.cuadroUid === sO.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
-        if (confirm(`¿Avanzar grupos en ${sO.cuadro}?`)) {
+        if (!activos.length) return;
+        if (confirm(`¿Avanzar grupos?`)) {
             let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
             Object.keys(grupos).map(Number).sort((a,b)=>a-b).forEach(f => {
                 let pF = buscarSiguienteFilaVacia(sO);
                 if(pF <= sO.fin) { grupos[f].forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, pF, sO); }); }
             });
-            guardarTodo(); renderMapa(); renderSession();
+            guardarTodo(); renderSession();
         }
     }
 
     function generarCorteParcial() {
-        let qrData = { config: DB.globalConfig, avance: DB.avance.map(a => ({ obrero: a.obrero, act: a.supAct, cuadro: a.nomCuadro })) };
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewPartial').classList.add('open');
-        const qC = document.getElementById('qrcode_partial'); qC.innerHTML = ""; 
-        new QRCode(qC, { text: JSON.stringify(qrData), width: 260, height: 260 });
+        let qrData = { config: DB.globalConfig, staff: DB.staff.length, avance: DB.avance.length };
+        document.getElementById('viewMain').classList.remove('open'); document.getElementById('viewPartial').classList.add('open');
+        const qC = document.getElementById('qrcode_partial'); qC.innerHTML = ""; new QRCode(qC, { text: JSON.stringify(qrData), width: 260, height: 260 });
     }
 
     function descargarJSONReporte() {
-        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff };
-        let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-        let a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-        a.download = `AVANCE_${DB.globalConfig.resp}.json`; a.click();
+        let blob = new Blob([JSON.stringify({ config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance }, null, 2)], {type: "application/json"});
+        let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `AVANCE_${DB.globalConfig.resp}.json`; a.click();
     }
 
     function cerrarCorteParcial() { document.getElementById('viewPartial').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); }
 
     function abrirReporteAsistencia() {
         const c = document.getElementById('tablaAsistenciaContainer'), m = document.getElementById('modalReporte');
-        let filas = [];
-        [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
-            let h = DB.avance.filter(a => a.obrero === id);
-            let u = h[h.length - 1];
-            filas.push({id: id, act: u.supAct, cNom: u.nomCuadro, l: h.length});
+        let ids = [...new Set(DB.avance.map(a => a.obrero))];
+        let h = `<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr><th>ID</th><th>ACT</th><th>CUADRO</th><th>FILAS</th></tr>`;
+        ids.forEach(id => {
+            let hist = DB.avance.filter(a => a.obrero === id);
+            let u = hist[hist.length - 1];
+            h += `<tr><td>${id}</td><td>${u.supAct}</td><td>${u.nomCuadro}</td><td>${hist.length}</td></tr>`;
         });
-        let h = `<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr><th>ID</th><th>ACT</th><th>CUADRO</th><th>LÍNEAS</th></tr>`;
-        filas.forEach(f => { h += `<tr><td>${f.id}</td><td>${f.act}</td><td>${f.cNom}</td><td>${f.l}</td></tr>`; });
         c.innerHTML = h + `</table>`; m.classList.add('open');
     }
 
     function descargarCSVAsistencia() {
-        const rows = document.querySelectorAll("#tablaAsistenciaContainer tr");
-        let csv = [];
-        for (let i = 0; i < rows.length; i++) {
-            let r = [], cols = rows[i].querySelectorAll("td, th");
-            for (let j = 0; j < cols.length; j++) r.push(cols[j].innerText);
-            csv.push(r.join(","));
-        }
+        let csv = []; document.querySelectorAll("#tablaAsistenciaContainer tr").forEach(r => {
+            let row = []; r.querySelectorAll("td, th").forEach(c => row.push(c.innerText));
+            csv.push(row.join(","));
+        });
         let b = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-        let l = document.createElement("a"); l.href = URL.createObjectURL(b);
-        l.download = `Asistencia_${DB.globalConfig.resp}.csv`; l.click();
+        let l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = `Asistencia.csv`; l.click();
     }
 
     function abrirEditor() {
@@ -363,15 +352,33 @@
         document.getElementById('modalEditor').classList.add('open');
     }
 
-    function borrarRegistroManual(id) {
-        if(!confirm(`¿Borrar a ${id}?`)) return;
-        let st = DB.staff.find(x=>x.id===id);
-        if(st) {
-            let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid);
-            if(idx !== -1) DB.avance.splice(idx, 1);
-            st.fila = null; st.cuadroUid = null;
-            guardarTodo(); renderMapa(); abrirEditor();
+    function abrirHistorial() {
+        if (!DB.archive.length) return alert("Vacio");
+        let h = `<h2>📜 HISTORIAL</h2>`;
+        DB.archive.forEach((item, idx) => { h += `<div class="card">${item.fecha} <button class="btn-sm btn-b" onclick="descargarHistorialIdx(${idx})">⬇️</button></div>`; });
+        document.getElementById('editorList').innerHTML = h; document.getElementById('modalEditor').classList.add('open');
+    }
+
+    function descargarHistorialIdx(idx) {
+        let b = new Blob([JSON.stringify(DB.archive[idx], null, 2)], {type: 'application/json'});
+        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `HISTORICO.json`; a.click();
+    }
+
+    function confirmarFinDia() {
+        if(confirm("¿Cerrar?")) {
+            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
+            DB.archive.push({ fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] });
+            guardarTodo(); generarCorteParcial();
+            document.getElementById("btnFinalCerrar").onclick = () => { localStorage.removeItem('v47_sesiones'); location.reload(); };
         }
+    }
+
+    function confirmarNuevoCuadro() {
+        const c = document.getElementById('add_cuadro').value;
+        if(!c) return;
+        crearSesionDesdeForm('add');
+        document.getElementById('modalAddCuadro').classList.remove('open');
+        renderTabs(); renderSession();
     }
 
     function guardarTodo() {
@@ -390,50 +397,11 @@
         container.innerHTML = DB.sesiones.map((s, idx) => {
             const dC = DB.cuadros.find(c => c.nombre === s.cuadro);
             return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}${dC?' - '+dC.ori:''}</div>`;
-        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+        }).join('') + `<div class="tab" style="background:var(--blue);color:white" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
     }
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
-
-    function abrirHistorial() {
-        if (DB.archive.length === 0) return alert("Sin cierres.");
-        let h = `<h2>📜 HISTORIAL</h2>`;
-        DB.archive.forEach((item, idx) => { h += `<div class="card"><b>${item.fecha}</b> - ${item.config.resp} <button class="btn-sm btn-b" onclick="descargarHistorialIdx(${idx})">⬇️</button></div>`; });
-        document.getElementById('editorList').innerHTML = h; document.getElementById('modalEditor').classList.add('open');
-    }
-
-    function descargarHistorialIdx(idx) {
-        const item = DB.archive[idx];
-        const data = { config: item.config, avance: item.avance, fecha: item.fecha };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-        a.download = `RECUPERADO_${item.fecha}.json`; a.click();
-    }
-
-    function confirmarFinDia() {
-        if(confirm("¿Finalizar jornada?")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleDateString(), config: DB.globalConfig, avance: [...DB.avance] });
-            guardarTodo();
-            generarCorteParcial();
-            const btnV = document.querySelector("#viewPartial .btn-b");
-            btnV.innerText = "LIMPIAR Y NUEVO DÍA";
-            btnV.onclick = () => { 
-                localStorage.removeItem('v47_sesiones'); 
-                localStorage.removeItem('v47_avance'); 
-                localStorage.removeItem('v47_staff'); 
-                location.reload(); 
-            };
-        }
-    }
-
-    function confirmarNuevoCuadro() {
-        const c = document.getElementById('add_cuadro').value;
-        if(!c) return;
-        crearSesionDesdeForm('add');
-        document.getElementById('modalAddCuadro').classList.remove('open');
-        renderTabs(); renderSession();
-    }
 </script>
 </body>
 </html>
+
