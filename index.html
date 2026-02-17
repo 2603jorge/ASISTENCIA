@@ -9,107 +9,144 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 
     <style>
-        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
-        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; }
+        :root { 
+            --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; 
+            --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 12px; padding-bottom: 50px; }
+        
+        /* Layout de Botones Superiores */
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        
+        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        .card h3 { margin: 0 0 10px 0; font-size: 14px; color: var(--main); border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; }
+
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
         .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
         .btn-i { background: var(--info); }
-        .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
-        label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; width: auto; }
+        .btn-full { grid-column: span 2; margin-top: 10px; font-size: 15px; }
+
+        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
+        label { font-size: 10px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 3px; font-weight: bold; margin-top: 5px; }
+        
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; }
+        .flex-row > div { flex: 1; }
+
+        /* Tabs y Mapa */
         .tabs-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
         .tab { background: #333; color: #aaa; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
         .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); }
         .tab-add { background: var(--blue); color: white; font-size: 16px; padding: 5px 15px; }
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.2); border-radius: 10px; }
-        .row-item { height: 40px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
+
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; max-height: 300px; overflow-y: auto; padding: 8px; background: #000; border-radius: 10px; margin-bottom: 15px; }
+        .row-item { height: 45px; background: #222; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 1px solid #333; position: relative; }
         .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
         .active-row { background: var(--sec); border-color: #ffca28; color: black; }
-        .row-tag { font-size: 7px; position: absolute; bottom: 1px; width: 100%; text-align: center; overflow: hidden; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
+        .row-tag { font-size: 8px; position: absolute; bottom: 2px; width: 95%; text-align: center; overflow: hidden; white-space: nowrap; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 15px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
-        .flex-row { display: flex; gap: 10px; }
-        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px;}
+        
+        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 200px; border: 1px solid #333; }
         .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
 <body>
 
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
-    <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BD</button>
+    <h2 style="text-align:center; color: var(--main); margin-bottom: 15px;">AgriCactus V47 PRO</h2>
+    
+    <div class="button-grid">
+        <button class="btn btn-b" onclick="alert('Modo Búnker Activado')">🏰 MODO BÚNKER</button>
+        <button class="btn btn-g" onclick="location.reload()">🔄 ACTUALIZAR</button>
+        <button class="btn btn-b" onclick="abrirDB()">📂 CATÁLOGOS</button>
         <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
     </div>
+
     <div class="card">
         <h3>👷 DATOS SUPERVISOR</h3>
-        <label>ID Credencial</label><input type="text" id="conf_sup_id">
-        <label>Nombre Supervisor</label><input type="text" id="conf_resp">
+        <label>ID Credencial</label><input type="text" id="conf_sup_id" placeholder="ID">
+        <label>Nombre Supervisor</label><input type="text" id="conf_resp" placeholder="Nombre completo">
         <label>Actividad Supervisor</label><input type="text" id="conf_sup_act" list="lista_actividades">
-        <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global">
+        <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global" placeholder="0">
     </div>
+
     <div class="card">
-        <h3>PRIMER CUADRO</h3>
+        <h3>📍 CONFIGURACIÓN DE CAMPO</h3>
         <label>🕒 JORNADA</label><select id="conf_jornada"></select>
-        <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
-        <label>🧭 ORIENTACIÓN</label>
-        <input type="text" id="conf_ori" list="lista_orientaciones" placeholder="Orientación...">
-        <label>Actividad</label><input type="text" id="conf_act" list="lista_actividades">
+        
         <div class="flex-row">
-            <input type="number" id="conf_inicio" placeholder="Desde">
-            <input type="number" id="conf_fin" placeholder="Hasta">
+            <div><label>📄 FOLIO</label><input type="text" id="conf_folio"></div>
+            <div><label>🏗️ LOTE</label><input type="text" id="conf_lote"></div>
         </div>
+
+        <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
+        <label>🧭 ORIENTACIÓN</label><input type="text" id="conf_ori" list="lista_orientaciones">
+        <label>Actividad del Grupo</label><input type="text" id="conf_act" list="lista_actividades">
+        
+        <div class="flex-row">
+            <div><label>Desde (Fila)</label><input type="number" id="conf_inicio"></div>
+            <div><label>Hasta (Fila)</label><input type="number" id="conf_fin"></div>
+        </div>
+        
         <label>Modo</label>
         <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
     </div>
-    <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR DÍA</button>
+    
+    <button class="btn btn-g btn-full" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
 </div>
 
 <div id="viewMain" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
-        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="width:auto; margin:0;">📡 CORTE PARCIAL</button>
-        <div id="disp_count_global" style="font-size:12px;">0/0</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div id="disp_resp" style="font-weight:bold; color:var(--main); font-size: 14px;">--</div>
+        <div id="disp_count_global" style="font-size:12px; background: #333; padding: 4px 8px; border-radius: 4px;">0/0 Personal</div>
     </div>
+
     <div class="tabs-container" id="tabsContainer"></div>
+    
     <div id="reader"></div>
-    <div class="flex-row" style="margin-bottom: 10px;">
+
+    <div class="flex-row" style="margin-bottom: 12px;">
         <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;">
-        <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
+        <button class="btn btn-b" style="width:70px; margin:0;" onclick="registrarManual()">OK</button>
     </div>
+
     <div id="mapGrid" class="grid-map"></div>
-    <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
-    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
-    <div class="flex-row">
+
+    <button class="btn btn-o" style="margin-bottom: 10px;" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
+    
+    <div class="button-grid">
+        <button class="btn btn-i" onclick="generarCorteParcial()">📡 CORTE PARCIAL</button>
+        <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 ASISTENCIA</button>
         <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
         <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR</button>
     </div>
 </div>
 
 <div id="modalReporte" class="modal">
-    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA PARA EXCEL</h2>
+    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA</h2>
     <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:5px; min-height:200px;"></div>
-    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV (EXCEL)</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER AL MAPA</button>
+    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR EXCEL (CSV)</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')" style="margin-top:10px;">VOLVER AL MAPA</button>
 </div>
 
-<div id="viewPartial" class="modal" style="background:#111;">
+<div id="viewPartial" class="modal">
     <h2 style="color:var(--info); text-align:center;">📡 REPORTE DE AVANCE</h2>
     <div class="card" style="text-align:center;">
         <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
         <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
-        <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
-        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR REPORTE .JSON</button>
+        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR .JSON</button>
     </div>
-    <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
+    <button class="btn btn-b" id="btnCerrarParcial" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
 </div>
 
-<div id="modalDB" class="modal"><h3>📂 Catálogos</h3><textarea id="csv_cuadros" placeholder="CSV Cuadros" rows="5"></textarea><textarea id="csv_act" placeholder="CSV Actividades" rows="5"></textarea><textarea id="csv_jor" placeholder="CSV Jornadas" rows="5"></textarea><button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
-<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
+<div id="modalDB" class="modal"><h3>📂 CARGAR CATÁLOGOS</h3><label>CSV Cuadros</label><textarea id="csv_cuadros" placeholder="ID,Nombre,Hectareas,Orientacion,Distancia,Surcos" rows="4" style="width:100%; background:#222; color:white;"></textarea><label>CSV Actividades</label><textarea id="csv_act" placeholder="ID,Actividad" rows="3" style="width:100%; background:#222; color:white;"></textarea><label>CSV Jornadas</label><textarea id="csv_jor" placeholder="ID,Jornada" rows="2" style="width:100%; background:#222; color:white;"></textarea><button class="btn btn-g" onclick="procesarYGuardar()" style="margin-top:10px;">GUARDAR TODO</button><button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button></div>
+<div id="modalEditor" class="modal"><h2>✏️ EDITOR DE FILAS</h2><div id="editorList"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
+
 <div id="modalAddCuadro" class="modal">
-    <h2>➕ NUEVO CUADRO</h2>
+    <h2>➕ AÑADIR OTRO CUADRO</h2>
     <div class="card">
         <label>Cuadro</label><input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
         <label>Actividad</label><input type="text" id="add_act" list="lista_actividades">
@@ -118,8 +155,8 @@
             <div><label>Hasta</label><input type="number" id="add_fin"></div>
         </div>
     </div>
-    <button class="btn btn-g" onclick="confirmarNuevoCuadro()">AÑADIR</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
+    <button class="btn btn-g" onclick="confirmarNuevoCuadro()">AÑADIR AL DÍA</button>
+    <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')" style="margin-top:10px;">CANCELAR</button>
 </div>
 
 <datalist id="lista_cuadros"></datalist>
@@ -127,7 +164,7 @@
 <datalist id="lista_orientaciones"></datalist>
 
 <script>
-    // FUSION DE LÓGICA DB
+    // BASE DE DATOS LOCAL
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -136,7 +173,7 @@
         currentSessionId: 0,
         avance: JSON.parse(localStorage.getItem('v47_avance')) || [],
         staff: JSON.parse(localStorage.getItem('v47_staff')) || [],
-        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0 },
+        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || { resp: "", supId: "", supAct: "", jornada: "", totalStaff: 0, folio: "", lote: "" },
         archive: JSON.parse(localStorage.getItem('v47_archive')) || []
     };
 
@@ -146,20 +183,9 @@
     window.onload = () => {
         actualizarSelectores();
         if (DB.sesiones.length > 0) irAlMapa();
-        
-        // REGISTRO DE SERVICE WORKER INTEGRADO
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'agricactus-v47-cache';
-                self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.href]))));
-                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
-            `;
-            const blob = new Blob([swCode], {type: 'text/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).then(() => console.log("Offline Ready ✅"));
-        }
     };
 
-    // FUNCIONES DE CONTROL DE CATALOGO
+    // FUNCIONES DE CATALOGO
     function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value, txtA = document.getElementById('csv_act').value, txtJ = document.getElementById('csv_jor').value;
@@ -170,6 +196,7 @@
         localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
         localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
         actualizarSelectores(); document.getElementById('modalDB').classList.remove('open');
+        alert("Catálogos actualizados correctamente");
     }
 
     function actualizarSelectores() {
@@ -192,18 +219,38 @@
         }
     }
 
-    // FLUJO DE TRABAJO
+    // FLUJO DE OPERACION
     function iniciarSistema() {
         const resp = document.getElementById('conf_resp').value, total = parseInt(document.getElementById('conf_total_global').value);
-        if(!resp || isNaN(total)) return alert("Faltan datos");
-        DB.globalConfig = { resp: resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
-        DB.sesiones = []; DB.staff = []; DB.avance = []; crearSesionDesdeForm('conf'); irAlMapa();
+        if(!resp || isNaN(total)) return alert("Nombre y Total de Personal son obligatorios");
+        
+        DB.globalConfig = { 
+            resp: resp, 
+            supId: document.getElementById('conf_sup_id').value, 
+            supAct: document.getElementById('conf_sup_act').value, 
+            jornada: document.getElementById('conf_jornada').value, 
+            totalStaff: total,
+            folio: document.getElementById('conf_folio').value,
+            lote: document.getElementById('conf_lote').value
+        };
+        
+        DB.sesiones = []; DB.staff = []; DB.avance = []; 
+        crearSesionDesdeForm('conf'); 
+        irAlMapa();
     }
 
     function crearSesionDesdeForm(p) {
         const c = document.getElementById(p + '_cuadro').value;
-        let s = { uid: Date.now(), cuadro: c, act: document.getElementById(p + '_act').value, inicio: parseInt(document.getElementById(p + '_inicio').value) || 1, fin: parseInt(document.getElementById(p + '_fin').value) || 10, modo: document.getElementById(p + '_modo') ? document.getElementById(p + '_modo').value : 'PAREJAS' };
-        DB.sesiones.push(s); DB.currentSessionId = DB.sesiones.length - 1; guardarTodo();
+        let s = { 
+            uid: Date.now(), 
+            cuadro: c, 
+            act: document.getElementById(p + '_act').value, 
+            inicio: parseInt(document.getElementById(p + '_inicio').value) || 1, 
+            fin: parseInt(document.getElementById(p + '_fin').value) || 10, 
+            modo: document.getElementById(p + '_modo') ? document.getElementById(p + '_modo').value : 'PAREJAS' 
+        };
+        DB.sesiones.push(s); DB.currentSessionId = DB.sesiones.length - 1; 
+        guardarTodo();
     }
 
     function confirmarNuevoCuadro() { crearSesionDesdeForm('add'); document.getElementById('modalAddCuadro').classList.remove('open'); renderTabs(); renderSession(); }
@@ -211,7 +258,7 @@
     function irAlMapa() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
         document.getElementById('viewMain').classList.add('open');
-        document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
+        document.getElementById('disp_resp').innerText = `RESP: ${DB.globalConfig.resp}`;
         renderTabs(); renderSession();
         if(!scanner) { 
             scanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250, rememberLastUsedCamera: true }, false); 
@@ -219,33 +266,41 @@
         }
     }
 
+    // LOGICA DE ESCANEO Y FILAS
     function onScan(id) {
-        id = id.trim(); let now = Date.now(); if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
-        lastScanTime[id] = now; let sA = DB.sesiones[DB.currentSessionId], t = DB.staff.find(s => s.id === id);
+        id = id.trim().toUpperCase(); 
+        let now = Date.now(); 
+        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
+        lastScanTime[id] = now; 
+        
+        let sA = DB.sesiones[DB.currentSessionId], t = DB.staff.find(s => s.id === id);
+        
         if(!t) { 
-            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite alcanzado");
+            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("⛔ Límite de personal alcanzado");
             t = { id: id, fila: null, cuadroUid: null }; DB.staff.push(t); 
         }
+
         if(t.fila !== null) {
             if(t.cuadroUid === sA.uid) {
-                let n = prompt(`Ya está en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sA));
+                let n = prompt(`Ya está en Fila ${t.fila}. ¿Mover a qué fila?`, buscarSiguienteFilaVacia(sA));
                 if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), sA); }
             } else {
                 let sV = DB.sesiones.find(s => s.uid === t.cuadroUid);
-                if(confirm(`Viene de ${sV?sV.cuadro:'OTRO'}. ¿Pasar al cuadro ACTUAL?`)) { 
+                if(confirm(`Viene de ${sV?sV.cuadro:'OTRO'}. ¿Mover al cuadro ACTUAL?`)) { 
                     cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); 
                 }
             }
         } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
-        audioBeep.play(); guardarTodo(); renderMapa(); renderSession();
+        
+        audioBeep.play(); guardarTodo(); renderSession();
     }
 
     function buscarSiguienteFilaVacia(s) {
-        let q = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
+        let completas = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
         for(let i = s.inicio; i <= s.fin; i++) {
-            if(q.has(i)) continue;
-            let o = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i).length;
-            if(s.modo === 'PAREJAS' ? o < 2 : o === 0) return i;
+            if(completas.has(i)) continue;
+            let ocupantes = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i).length;
+            if(s.modo === 'PAREJAS' ? ocupantes < 2 : ocupantes === 0) return i;
         }
         return s.fin + 1;
     }
@@ -253,7 +308,11 @@
     function asignarFilaEspecifica(t, f, s) {
         if(f > s.fin) return alert("Cuadro lleno");
         t.fila = f; t.cuadroUid = s.uid;
-        DB.avance.push({ fila: f, obrero: t.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act });
+        DB.avance.push({ 
+            fila: f, obrero: t.id, inicio: new Date().toLocaleTimeString(), 
+            fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act,
+            folio: DB.globalConfig.folio, lote: DB.globalConfig.lote
+        });
     }
 
     function cerrarTarea(t) { 
@@ -278,44 +337,29 @@
 
     function ejecutarAvanceMasivoFix() {
         let sO = DB.sesiones[DB.currentSessionId], activos = DB.staff.filter(st => st.cuadroUid === sO.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
-        let ptr = buscarSiguienteFilaVacia(sO);
-        if (ptr > sO.fin) {
-            let sD = DB.sesiones[DB.currentSessionId + 1];
-            if (sD) { 
-                if (confirm(`¡COMPLETADO! ¿Pasar a ${sD.cuadro}?`)) { 
-                    activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sD), sD); }); 
-                    DB.currentSessionId++; guardarTodo(); renderTabs(); renderSession(); 
-                }
-            } else { alert("⛔ CUADRO LLENO."); }
-        } else {
-            if (confirm(`¿Avanzar grupos en ${sO.cuadro}?`)) {
-                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-                Object.keys(grupos).map(Number).sort((a,b)=>a-b).forEach(f => { 
-                    let pF = buscarSiguienteFilaVacia(sO); 
-                    if(pF <= sO.fin) { grupos[f].forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, pF, sO); }); } 
-                });
-                guardarTodo(); renderMapa(); renderSession();
-            }
+        if (!activos.length) return alert("No hay personal trabajando en este cuadro.");
+        
+        if (confirm(`¿Avanzar a todos los grupos a la siguiente fila disponible?`)) {
+            let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
+            Object.keys(grupos).map(Number).sort((a,b)=>a-b).forEach(f => { 
+                let pF = buscarSiguienteFilaVacia(sO); 
+                if(pF <= sO.fin) { grupos[f].forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, pF, sO); }); } 
+            });
+            guardarTodo(); renderSession();
         }
     }
 
-    // EXPORTACIÓN Y QR
+    // EXPORTACIÓN
     function generarCorteParcial() {
-        let qrData = { 
-            config: DB.globalConfig, 
-            sesiones: DB.sesiones.map(s => ({ cuadro: s.cuadro, act: s.act })), 
-            avance: DB.avance.map(a => ({ obrero: a.obrero, supAct: a.supAct, nomCuadro: a.nomCuadro })),
-            catalogos: { cuadros: DB.cuadros.map(c => ({ id: c.id, nombre: c.nombre })), actividades: DB.actividades, jornadas: DB.jornadas }
-        };
+        let qrData = { config: DB.globalConfig, avance_count: DB.avance.length, staff_count: DB.staff.length };
         document.getElementById('viewMain').classList.remove('open'); document.getElementById('viewPartial').classList.add('open');
         const qC = document.getElementById('qrcode_partial'); qC.innerHTML = "";
-        new QRCode(qC, { text: JSON.stringify(qrData), width: 260, height: 260, correctLevel: QRCode.CorrectLevel.L });
-        document.getElementById('partial_summary').innerText = `Personal: ${DB.staff.length} | Filas: ${DB.avance.length}`;
+        new QRCode(qC, { text: JSON.stringify(qrData), width: 220, height: 220 });
+        document.getElementById('partial_summary').innerText = `Folio: ${DB.globalConfig.folio} | Lote: ${DB.globalConfig.lote}\nPersonal: ${DB.staff.length} | Registros: ${DB.avance.length}`;
     }
 
     function descargarJSONReporte() {
-        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff, catalogos: { cuadros: DB.cuadros, actividades: DB.actividades, jornadas: DB.jornadas } };
+        let data = { config: DB.globalConfig, sesiones: DB.sesiones, avance: DB.avance, staff: DB.staff };
         let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"}), a = document.createElement("a");
         a.href = URL.createObjectURL(blob); a.download = `AVANCE_${DB.globalConfig.resp.replace(/\s+/g,'_')}.json`; a.click();
     }
@@ -333,43 +377,41 @@
 
     function modificarFilaManual(id) {
         let s = DB.sesiones[DB.currentSessionId], t = DB.staff.find(x=>x.id===id), n = prompt("Cambiar a fila:", t.fila);
-        if (n && !isNaN(n)) {
-            cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), s); guardarTodo(); renderMapa(); abrirEditor();
-        }
+        if (n && !isNaN(n)) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), s); guardarTodo(); renderSession(); abrirEditor(); }
     }
 
     function borrarRegistroManual(id) {
-        if(!confirm(`¿Borrar a ${id}?`)) return; let st = DB.staff.find(x=>x.id===id);
+        if(!confirm(`¿Borrar registro de ${id}?`)) return; 
+        let st = DB.staff.find(x=>x.id===id);
         if(st) { 
             let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid); 
             if(idx !== -1) DB.avance.splice(idx, 1); 
-            st.fila = null; st.cuadroUid = null; guardarTodo(); renderMapa(); renderSession(); abrirEditor(); 
+            st.fila = null; st.cuadroUid = null; guardarTodo(); renderSession(); abrirEditor(); 
         }
     }
 
     function abrirHistorial() {
-        const TRES_DIAS = 3 * 24 * 60 * 60 * 1000;
-        DB.archive = DB.archive.filter(i => (Date.now() - (i.fecha_ms || 0)) < TRES_DIAS);
-        if (DB.archive.length === 0) return alert("Sin cierres recientes.");
-        let h = `<h2>📜 HISTORIAL (72H)</h2>`;
-        DB.archive.forEach((item, idx) => { h += `<div class="card"><b>${item.fecha}</b> - ${item.config.resp}<br><button class="btn btn-p btn-sm" onclick="descargarHistorialIdx(${idx})">⬇️ JSON</button></div>`; });
+        if (DB.archive.length === 0) return alert("No hay cierres guardados.");
+        let h = `<h2>📜 HISTORIAL RECIENTE</h2>`;
+        DB.archive.slice(-5).forEach((item, idx) => { h += `<div class="card"><b>${item.fecha}</b> - Folio: ${item.config.folio}<br><button class="btn btn-p btn-sm" onclick="descargarHistorialIdx(${idx})">Descargar JSON</button></div>`; });
         document.getElementById('editorList').innerHTML = h; document.getElementById('modalEditor').classList.add('open');
     }
 
     function descargarHistorialIdx(idx) {
-        const i = DB.archive[idx], data = { config: i.config, avance: i.avance, fecha: i.fecha };
-        const b = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}), a = document.createElement("a");
-        a.href = URL.createObjectURL(b); a.download = `RECUPERADO_${i.fecha}.json`; a.click();
+        const i = DB.archive[idx];
+        const b = new Blob([JSON.stringify(i, null, 2)], {type: 'application/json'}), a = document.createElement("a");
+        a.href = URL.createObjectURL(b); a.download = `CIERRE_${i.fecha}.json`; a.click();
     }
 
     function confirmarFinDia() {
-        if(confirm("¿Cerrar día?")) {
+        if(confirm("¿Cerrar la jornada actual? Se guardará en el historial.")) {
             DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleDateString(), fecha_ms: Date.now(), config: DB.globalConfig, avance: [...DB.avance] });
+            DB.archive.push({ fecha: new Date().toLocaleString(), config: DB.globalConfig, avance: [...DB.avance] });
             localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
             generarCorteParcial();
-            const btnV = document.querySelector("#viewPartial .btn-b");
-            btnV.innerText = "🏁 FINALIZAR Y LIMPIAR";
+            const btnV = document.getElementById("btnCerrarParcial");
+            btnV.innerText = "🏁 FINALIZAR Y LIMPIAR TODO";
+            btnV.classList.replace('btn-b', 'btn-r');
             btnV.onclick = () => { localStorage.removeItem('v47_sesiones'); localStorage.removeItem('v47_avance'); localStorage.removeItem('v47_staff'); location.reload(); };
         }
     }
@@ -383,25 +425,20 @@
 
     function renderTabs() {
         const container = document.getElementById('tabsContainer');
-        container.innerHTML = DB.sesiones.map((s, idx) => {
-            const dC = DB.cuadros.find(c => c.nombre === s.cuadro);
-            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}${dC?' - '+dC.ori:''}</div>`;
-        }).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
+        container.innerHTML = DB.sesiones.map((s, idx) => `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro}</div>`).join('') + `<div class="tab tab-add" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
     }
 
     function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
 
-    // REPORTE ASISTENCIA
     function abrirReporteAsistencia() {
         const c = document.getElementById('tablaAsistenciaContainer'), m = document.getElementById('modalReporte'); 
         let filas = [];
-        let jO = DB.jornadas.find(j => j.desc === DB.globalConfig.jornada) || {id:"N/A"};
         [...new Set(DB.avance.map(a => a.obrero))].forEach(id => {
-            let hist = DB.avance.filter(a => a.obrero === id), u = hist[hist.length - 1], aO = DB.actividades.find(a => a.desc === u.supAct) || {id:"N/A"}, cO = DB.cuadros.find(c => c.nombre === u.nomCuadro) || {id:"N/A"};
-            filas.push({id: id, act: aO.id, cNom: u.nomCuadro, jNom: DB.globalConfig.jornada, l: hist.length});
+            let hist = DB.avance.filter(a => a.obrero === id), u = hist[hist.length - 1];
+            filas.push({id: id, act: u.supAct, cNom: u.nomCuadro, l: hist.length});
         });
-        let h = `<table style="width:100%; border-collapse:collapse; font-size:11px;"><tr><th>ID</th><th>ACT</th><th>CUADRO</th><th>LÍNEAS</th></tr>`;
-        filas.forEach(f => { h += `<tr><td>${f.id}</td><td>${f.act}</td><td>${f.cNom}</td><td>${f.l}</td></tr>`; });
+        let h = `<table style="width:100%; border-collapse:collapse; font-size:12px;"><tr><th>ID</th><th>ACTIVIDAD</th><th>CUADRO</th><th>FILAS</th></tr>`;
+        filas.forEach(f => { h += `<tr style="border-bottom:1px solid #ddd;"><td>${f.id}</td><td>${f.act}</td><td>${f.cNom}</td><td align="center">${f.l}</td></tr>`; });
         c.innerHTML = h + `</table>`; m.classList.add('open');
     }
 
@@ -409,12 +446,9 @@
         const rS = document.querySelectorAll("#tablaAsistenciaContainer tr"); let csv = [];
         for (let i = 0; i < rS.length; i++) { let r = [], cols = rS[i].querySelectorAll("td, th"); for (let j = 0; j < cols.length; j++) r.push(cols[j].innerText); csv.push(r.join(",")); }
         let b = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" }), l = document.createElement("a");
-        l.href = URL.createObjectURL(b); l.download = `Asistencia.csv`; l.click();
+        l.href = URL.createObjectURL(b); l.download = `Asistencia_Folio_${DB.globalConfig.folio}.csv`; l.click();
     }
 </script>
 </body>
 </html>
-
-
-
 
