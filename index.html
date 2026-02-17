@@ -12,6 +12,14 @@
     <style>
         :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
+        
+        /* Semáforo de Estado */
+        #status-bar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px; font-size: 10px; background: #000; border-bottom: 1px solid #333; }
+        .led { width: 10px; height: 10px; border-radius: 50%; background: #555; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        .led-red { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .led-yellow { background: var(--sec); box-shadow: 0 0 8px var(--sec); }
+        .led-green { background: var(--active-tab); box-shadow: 0 0 8px var(--active-tab); }
+
         .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
@@ -36,6 +44,11 @@
     </style>
 </head>
 <body>
+
+<div id="status-bar">
+    <div id="led-indicator" class="led led-red"></div>
+    <span id="status-text">CARGANDO RECURSOS...</span>
+</div>
 
 <div id="viewSetup" class="modal open">
     <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
@@ -141,6 +154,7 @@
 <datalist id="lista_orientaciones"></datalist>
 
 <script>
+    // --- PERSISTENCIA Y BÚNKER ---
     let DB = {
         cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
         actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
@@ -158,13 +172,40 @@
     let lastScanTime = {};
     const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
+    // --- REGISTRO DE SERVICE WORKER PARA CARGA OFFLINE TOTAL ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                const CACHE_NAME = 'agricactus-v47-bunker-v1';
+                const urlsToCache = [
+                    '${location.href}',
+                    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+                    'https://unpkg.com/html5-qrcode'
+                ];
+                self.addEventListener('install', event => {
+                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+                });
+                self.addEventListener('fetch', event => {
+                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
+                });
+            `;
+            const blob = new Blob([swCode], {type: 'text/javascript'});
+            const url = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(url).then(reg => {
+                console.log("Sistema Búnker Instalado");
+                actualizarSemaforo('green', 'DISPOSITIVO LISTO (OFFLINE)');
+            }).catch(() => {
+                actualizarSemaforo('red', 'ERROR DE CARGA');
+            });
+        });
+    }
+
     window.onload = () => {
         actualizarSelectores();
         actualizarInterfazBunker();
         if (DB.globalConfig && DB.sesiones.length > 0) irAlMapa();
     };
 
-    // --- MODO BÚNKER PERSISTENTE ---
     function alternarBunker() {
         DB.bunker = !DB.bunker;
         localStorage.setItem('v47_bunker', JSON.stringify(DB.bunker));
@@ -175,25 +216,32 @@
         const btn = document.getElementById('btnBunker');
         if (DB.bunker) {
             btn.innerText = "🏰 BÚNKER: ACTIVADO";
-            btn.classList.replace('btn-b', 'btn-r');
+            btn.style.background = "var(--danger)";
+            actualizarSemaforo('yellow', 'MODO BÚNKER ACTIVO');
         } else {
             btn.innerText = "🏰 BÚNKER: OFF";
-            btn.classList.replace('btn-r', 'btn-b');
+            btn.style.background = "var(--blue)";
+            // El semáforo volverá a verde si el SW está listo
+            actualizarSemaforo('green', 'SISTEMA ONLINE / OFFLINE LISTO');
         }
     }
 
-    // --- LÓGICA DE ORIENTACIONES FILTRADAS ---
+    function actualizarSemaforo(color, texto) {
+        const led = document.getElementById('led-indicator');
+        const txt = document.getElementById('status-text');
+        led.className = 'led led-' + color;
+        txt.innerText = texto;
+    }
+
+    // --- LÓGICA DE ORIENTACIONES ---
     function alEscribirCuadro(prefix) {
         const val = document.getElementById(prefix + '_cuadro').value;
         const matches = DB.cuadros.filter(c => c.nombre === val);
-        
         if (matches.length > 0) {
             const oris = [...new Set(matches.map(m => m.ori))];
             document.getElementById('lista_orientaciones').innerHTML = oris.map(o => `<option value="${o}">`).join('');
             document.getElementById(prefix + '_inicio').value = 1;
             document.getElementById(prefix + '_fin').value = matches[0].max;
-            // Si solo hay una orientación, se pre-asigna
-            if(oris.length === 1) document.getElementById(prefix + '_ori').value = oris[0];
         }
     }
 
@@ -265,7 +313,7 @@
                 let n = prompt(`ID ${t.id} en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sA));
                 if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), sA); }
             } else {
-                if(confirm(`Viene de otro cuadro. ¿Pasar al actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
+                if(confirm(`Viene de otro cuadro. ¿Pasar al cuadro actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
             }
         } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
         guardarTodo(); renderSession();
@@ -293,10 +341,11 @@
         return s.fin + 1;
     }
 
+    // --- FUNCIONES DE BOTÓN ---
     function ejecutarAvanceMasivoFix() {
         let sO = DB.sesiones[DB.currentSessionId];
         let activos = DB.staff.filter(st => st.cuadroUid === sO.uid && st.fila !== null);
-        if (!activos.length) return alert("No hay personal en filas.");
+        if (!activos.length) return alert("Sin personal activo.");
 
         let pF = buscarSiguienteFilaVacia(sO);
         if (pF > sO.fin) {
@@ -328,8 +377,7 @@
             resp: DB.globalConfig.resp, 
             personal: DB.staff.length, 
             avance: DB.avance.length,
-            cuadro: DB.sesiones[DB.currentSessionId].cuadro,
-            bunker: DB.bunker
+            cuadro: DB.sesiones[DB.currentSessionId].cuadro
         };
         document.getElementById('viewMain').classList.remove('open');
         document.getElementById('viewPartial').classList.add('open');
@@ -384,8 +432,6 @@
     }
 
     function renderSession() { renderMapa(); if(DB.globalConfig) document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`; }
-
-    function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
 
     function procesarYGuardar() {
         const txtC = document.getElementById('csv_cuadros').value, txtA = document.getElementById('csv_act').value, txtJ = document.getElementById('csv_jor').value;
