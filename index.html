@@ -3,518 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#2e7d32">
-    <title>AgriCactus V47 - TOTAL PRO</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
+    <title>AgriCactus V86 - REPORTE FINAL</title>
     <style>
-        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --info: #0288d1; }
+        :root { --main: #2e7d32; --sec: #ff6f00; --dark: #121212; --card: #1e1e1e; --blue: #1565c0; --danger: #c62828; --purple: #7b1fa2; --active-tab: #00e676; --burnt: #1b5e20; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 10px; padding-bottom: 50px; }
-        
-        /* Semáforo de Estado */
-        #status-bar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px; font-size: 10px; background: #000; border-bottom: 1px solid #333; }
-        .led { width: 10px; height: 10px; border-radius: 50%; background: #555; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-        .led-red { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
-        .led-yellow { background: var(--sec); box-shadow: 0 0 8px var(--sec); }
-        .led-green { background: var(--active-tab); box-shadow: 0 0 8px var(--active-tab); }
-
         .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; color: white; display: flex; align-items: center; justify-content: center; }
         .btn-g { background: var(--main); } .btn-o { background: var(--sec); color: black; }
-        .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-p { background: var(--purple); }
-        .btn-i { background: var(--info); } .btn-sm { padding: 5px 10px; font-size: 11px; width: auto; margin: 0; }
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
+        .btn-b { background: var(--blue); } .btn-r { background: var(--danger); }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #2c2c2c; color: white; font-size: 16px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; font-weight: bold; }
         .tabs-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 10px; padding-bottom: 5px; }
         .tab { background: #333; color: #aaa; padding: 10px 15px; border-radius: 8px; font-size: 12px; font-weight: bold; white-space: nowrap; cursor: pointer; border: 1px solid #444; }
         .tab.active { background: var(--active-tab); color: black; border-color: var(--active-tab); }
-        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 4px; max-height: 250px; overflow-y: auto; padding: 5px; background: rgba(0,0,0,0.5); border-radius: 10px; }
-        .row-item { height: 40px; background: #333; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #444; position: relative; }
-        .done { background: var(--main); border-color: #66bb6a; opacity: 0.5; }
-        .active-row { background: var(--sec); border-color: #ffca28; color: black; }
-        .row-tag { font-size: 7px; position: absolute; bottom: 1px; width: 100%; text-align: center; overflow: hidden; }
+        .checklist-box { background: #1a1a1a; border-radius: 12px; max-height: 200px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #444; text-align: left; }
+        .check-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; gap: 10px; justify-content: flex-start; }
+        .check-item input { width: 22px; height: 22px; margin: 0; flex-shrink: 0; }
+        .grid-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); gap: 5px; max-height: 250px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid #444; }
+        .row-item { height: 45px; background: #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 1px solid #555; position: relative; }
+        .active-row { background: var(--sec); color: black; border-color: #ffca28; }
+        .done-row { background: var(--burnt); color: #81c784; opacity: 0.9; }
+        .row-tag { font-size: 8px; position: absolute; bottom: 2px; width: 95%; text-align: center; overflow: hidden; white-space: nowrap; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 20px; box-sizing: border-box; display: none; overflow-y: auto; }
         .modal.open { display: block; }
-        .flex-row { display: flex; gap: 10px; }
-        #reader { width: 100% !important; border-radius: 12px; overflow: hidden; background: black; margin-bottom: 10px; min-height: 250px; border: 1px solid #333;}
-        .edit-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; background: #222; margin-bottom: 5px; border-radius: 8px;}
     </style>
 </head>
 <body>
 
-<div id="status-bar">
-    <div id="led-indicator" class="led led-red"></div>
-    <span id="status-text">CARGANDO RECURSOS...</span>
-</div>
-
 <div id="viewSetup" class="modal open">
-    <h2 style="text-align:center; color: var(--main);">AgriCactus V47</h2>
-    <div class="button-grid">
-        <button id="btnBunker" class="btn btn-b" onclick="alternarBunker()">🏰 BÚNKER: OFF</button>
-        <button class="btn btn-g" onclick="location.reload()">🔄 RECARGAR</button>
-        <button class="btn btn-b" onclick="abrirDB()">📂 CATÁLOGOS</button>
-        <button class="btn btn-p" onclick="abrirHistorial()">📜 HISTORIAL</button>
+    <h2 style="text-align:center; color: var(--main);">AgriCactus V86</h2>
+    <button class="btn btn-b" onclick="abrirDB()">📂 CARGAR BASE DE DATOS</button>
+    <div class="card">
+        <h3>👷 SUPERVISORES</h3>
+        <div id="lista_sups_config"></div>
+        <input type="text" id="add_sup_id" placeholder="ID Supervisor" list="lista_personal" onchange="vincularID('add_sup_id', 'add_sup_nom', DB.personal)">
+        <input type="text" id="add_sup_nom" placeholder="Nombre" readonly>
+        <input type="text" id="add_sup_act" placeholder="Actividad" list="lista_actividades">
+        <button class="btn btn-b" onclick="agregarSupervisor()">+ AÑADIR SUPERVISOR</button>
+        <label>Meta Personal Total (Límite)</label><input type="number" id="conf_total_global" value="40">
     </div>
     <div class="card">
-        <h3>👷 SUPERVISOR</h3>
-        <label>ID Credencial</label><input type="text" id="conf_sup_id">
-        <label>Nombre Supervisor</label><input type="text" id="conf_resp">
-        <label>Actividad Supervisor</label><input type="text" id="conf_sup_act" list="lista_actividades">
-        <label>👥 TOTAL PERSONAL</label><input type="number" id="conf_total_global">
-    </div>
-    <div class="card">
-        <h3>📍 PRIMER CUADRO</h3>
-        <label>🕒 JORNADA</label><select id="conf_jornada"></select>
-        <label>🔍 CUADRO</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
-        <label>🧭 ORIENTACIÓN</label><input type="text" id="conf_ori" list="lista_orientaciones">
-        <label>ACTIVIDAD GRUPO</label><input type="text" id="conf_act" list="lista_actividades">
-        <div class="flex-row">
-            <div style="flex:1"><label>DESDE</label><input type="number" id="conf_inicio"></div>
-            <div style="flex:1"><label>HASTA</label><input type="number" id="conf_fin"></div>
-        </div>
-        <label>MODO</label>
-        <select id="conf_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
+        <h3>📍 CONFIGURACIÓN INICIAL</h3>
+        <label>🕒 Jornada</label><select id="conf_jornada"></select>
+        <label>🔍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('conf')">
+        <label>🧭 Orientación</label><select id="conf_ori"></select>
+        <label>🚜 Actividad</label><input type="text" id="conf_act" list="lista_actividades">
+        <div style="display:flex; gap:10px;"><input type="number" id="conf_inicio" placeholder="Inicio"><input type="number" id="conf_fin" placeholder="Fin"></div>
     </div>
     <button class="btn btn-g" onclick="iniciarSistema()">🚀 INICIAR JORNADA</button>
 </div>
 
 <div id="viewMain" class="modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <div id="disp_resp" style="font-weight:bold; color:var(--main);">--</div>
-        <button class="btn btn-i btn-sm" onclick="generarCorteParcial()" style="width:auto; margin:0;">📡 CORTE PARCIAL</button>
-        <div id="disp_count_global" style="font-size:12px;">0/0</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div id="disp_sups" style="font-size: 11px; color: var(--active-tab); font-weight: bold;">--</div>
+        <div id="disp_count_global" style="background: #333; padding: 5px 12px; border-radius: 20px; font-weight: bold; border: 1px solid var(--active-tab);">0/0</div>
     </div>
     <div class="tabs-container" id="tabsContainer"></div>
-    <div id="reader"></div>
-    <button class="btn btn-b btn-sm" id="retryCam" style="display:none; width:100%; margin-bottom:10px;" onclick="forzarCamara()">📷 REINTENTAR CÁMARA</button>
-    
-    <div class="flex-row" style="margin-bottom: 10px;">
-        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0; flex:1;">
-        <button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
+    <div id="checklistPersonal" class="checklist-box"></div>
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <input type="text" id="manual_id" placeholder="ID Manual" style="margin:0;"><button class="btn btn-b" style="width:80px; margin:0;" onclick="registrarManual()">OK</button>
     </div>
-
     <div id="mapGrid" class="grid-map"></div>
-    
-    <button class="btn btn-o" onclick="ejecutarAvanceMasivoFix()">⏩ AVANCE MASIVO / TRANSFERIR</button>
-    <button class="btn btn-p" onclick="abrirReporteAsistencia()">📊 REPORTE ASISTENCIA</button>
-    <div class="flex-row">
-        <button class="btn btn-b" onclick="abrirEditor()">✏️ EDITAR</button>
-        <button class="btn btn-r" onclick="confirmarFinDia()">🏁 CERRAR JORNADA</button>
+    <button class="btn btn-o" style="margin-top:15px;" onclick="avanceMasivoFlow()">⏩ AVANCE 1-CLIC (INTELIGENTE)</button>
+    <div style="display:flex; gap:10px;">
+        <button class="btn" style="background:var(--purple)" onclick="abrirReporte()">📊 REPORTE PARCIAL</button>
+        <button class="btn" style="background:var(--blue)" onclick="abrirEditor()">✏️ EDITOR</button>
     </div>
-</div>
-
-<div id="viewPartial" class="modal" style="background:#111;">
-    <h2 id="partial_title" style="color:var(--info); text-align:center;">📡 REPORTE</h2>
-    <div class="card" style="text-align:center;">
-        <div id="qrcode_partial" style="background:white; padding:10px; display:inline-block; border-radius:10px;"></div>
-        <p id="partial_summary" style="font-size:12px; color:#aaa; margin:15px 0;"></p>
-        <button class="btn btn-p" onclick="descargarJSONReporte()">💾 DESCARGAR .JSON</button>
-    </div>
-    <button class="btn btn-b" onclick="cerrarCorteParcial()">🔙 VOLVER AL MAPA</button>
+    <button class="btn btn-r" onclick="descargarReporteFinal()">🏁 FINALIZAR DÍA Y GUARDAR JSON</button>
 </div>
 
 <div id="modalAddCuadro" class="modal">
-    <h2>➕ NUEVO CUADRO</h2>
-    <div class="card">
+    <h2>➕ CUADRO AGOTADO</h2>
+    <div class="card" style="border: 2px solid var(--sec);">
         <label>Cuadro</label><input type="text" id="add_cuadro" list="lista_cuadros" oninput="alEscribirCuadro('add')">
-        <label>Orientación</label><input type="text" id="add_ori" list="lista_orientaciones">
+        <label>Orientación</label><select id="add_ori"></select>
         <label>Actividad</label><input type="text" id="add_act" list="lista_actividades">
-        <div class="flex-row">
-            <div style="flex:1"><label>Desde</label><input type="number" id="add_inicio"></div>
-            <div style="flex:1"><label>Hasta</label><input type="number" id="add_fin"></div>
-        </div>
-        <label>Modo</label><select id="add_modo"><option value="PAREJAS">PAREJAS</option><option value="INDIVIDUAL">INDIVIDUAL</option></select>
+        <div style="display:flex; gap:10px;"><input type="number" id="add_inicio"><input type="number" id="add_fin"></div>
     </div>
-    <button class="btn btn-g" onclick="confirmarNuevoCuadro()">AÑADIR</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalAddCuadro').classList.remove('open')">CANCELAR</button>
-</div>
-
-<div id="modalDB" class="modal">
-    <h3>📂 CATÁLOGOS</h3>
-    <textarea id="csv_cuadros" placeholder="ID,Nombre,Hect,Ori,Plantas,Filas" rows="5"></textarea>
-    <textarea id="csv_act" placeholder="ID,Actividad" rows="5"></textarea>
-    <textarea id="csv_jor" placeholder="ID,Jornada" rows="5"></textarea>
-    <button class="btn btn-g" onclick="procesarYGuardar()">GUARDAR</button>
-    <button class="btn" onclick="document.getElementById('modalDB').classList.remove('open')">VOLVER</button>
+    <button class="btn btn-g" onclick="confirmarNuevoCuadro()">HABILITAR Y DESBORDAR</button>
+    <button class="btn btn-r" onclick="cerrarModal('modalAddCuadro')">CANCELAR</button>
 </div>
 
 <div id="modalReporte" class="modal">
-    <h2 style="color:var(--active-tab); text-align:center;">📋 ASISTENCIA</h2>
-    <div id="tablaAsistenciaContainer" style="overflow-x:auto; background:#fff; color:#000; border-radius:8px; padding:5px; min-height:200px;"></div>
-    <button class="btn btn-g" onclick="descargarCSVAsistencia()" style="margin-top:15px;">💾 DESCARGAR CSV</button>
-    <button class="btn btn-r" onclick="document.getElementById('modalReporte').classList.remove('open')">VOLVER</button>
+    <h3>📋 REPORTE ACTUAL</h3>
+    <button class="btn btn-b" onclick="descargarJSONParcial()">📡 GENERAR JSON PARCIAL</button>
+    <div id="tablaReporte" style="background:white; color:black; padding:10px; border-radius:8px; overflow-x:auto; font-size:10px;"></div>
+    <button class="btn btn-r" onclick="cerrarModal('modalReporte')">VOLVER</button>
 </div>
-<div id="modalEditor" class="modal"><h2>✏️ EDITOR</h2><div id="editorList"></div><button class="btn" onclick="document.getElementById('modalEditor').classList.remove('open')">CERRAR</button></div>
 
-<datalist id="lista_cuadros"></datalist>
-<datalist id="lista_actividades"></datalist>
-<datalist id="lista_orientaciones"></datalist>
+<div id="modalDB" class="modal">
+    <textarea id="csv_personal" rows="4" placeholder="ID,Nombre,Contratista,Cuadrilla"></textarea>
+    <textarea id="csv_cuadros" rows="4" placeholder="ID,Num,Var,Ori,Area,Lin"></textarea>
+    <textarea id="csv_act" rows="2" placeholder="ID,Actividad"></textarea>
+    <textarea id="csv_jor" rows="2" placeholder="ID,Jornada"></textarea>
+    <button class="btn btn-g" onclick="procesarYGuardarBD()">💾 GUARDAR</button>
+    <button class="btn btn-r" onclick="cerrarModal('modalDB')">VOLVER</button>
+</div>
+
+<div id="modalEditor" class="modal"><h3>✏️ EDITOR</h3><div id="editorList"></div><button class="btn btn-r" onclick="cerrarModal('modalEditor')">CERRAR</button></div>
+
+<datalist id="lista_personal"></datalist><datalist id="lista_cuadros"></datalist><datalist id="lista_actividades"></datalist>
 
 <script>
-    // --- PERSISTENCIA Y BÚNKER ---
     let DB = {
-        cuadros: JSON.parse(localStorage.getItem('v47_cuadros')) || [],
-        actividades: JSON.parse(localStorage.getItem('v47_act')) || [],
-        jornadas: JSON.parse(localStorage.getItem('v47_jornadas')) || [],
-        sesiones: JSON.parse(localStorage.getItem('v47_sesiones')) || [],
-        currentSessionId: parseInt(localStorage.getItem('v47_currentIdx')) || 0,
-        avance: JSON.parse(localStorage.getItem('v47_avance')) || [],
-        staff: JSON.parse(localStorage.getItem('v47_staff')) || [],
-        globalConfig: JSON.parse(localStorage.getItem('v47_config')) || null,
-        archive: JSON.parse(localStorage.getItem('v47_archive')) || [],
-        bunker: JSON.parse(localStorage.getItem('v47_bunker')) || false
+        personal: JSON.parse(localStorage.getItem('v86_p')) || [],
+        cuadros: JSON.parse(localStorage.getItem('v86_c')) || [],
+        actividades: JSON.parse(localStorage.getItem('v86_a')) || [],
+        jornadas: JSON.parse(localStorage.getItem('v86_j')) || [],
+        sesiones: [], currentIdx: 0, avance: [], staff: [], config: { sups: [] }
     };
 
-    let html5QrCode = null;
-    let lastScanTime = {};
-    const audioBeep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    window.onload = actualizarSelectores;
 
-    // --- REGISTRO DE SERVICE WORKER PARA CARGA OFFLINE TOTAL ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const swCode = `
-                const CACHE_NAME = 'agricactus-v47-bunker-v1';
-                const urlsToCache = [
-                    '${location.href}',
-                    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-                    'https://unpkg.com/html5-qrcode'
-                ];
-                self.addEventListener('install', event => {
-                    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
-                });
-                self.addEventListener('fetch', event => {
-                    event.respondWith(caches.match(event.request).then(response => response || fetch(event.request)));
-                });
-            `;
-            const blob = new Blob([swCode], {type: 'text/javascript'});
-            const url = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(url).then(reg => {
-                console.log("Sistema Búnker Instalado");
-                actualizarSemaforo('green', 'DISPOSITIVO LISTO (OFFLINE)');
-            }).catch(() => {
-                actualizarSemaforo('red', 'ERROR DE CARGA');
-            });
-        });
-    }
+    function descargarJSONParcial() {
+        const nombreSup = DB.config.sups.length > 0 ? DB.config.sups[0].nom.replace(/\s+/g, '_') : "Sin_Supervisor";
+        const fecha = new Date().toISOString().slice(0, 10);
+        const hora = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}).replace(':', 'h');
+        const nombreArchivo = `Parcial_${nombreSup}_${fecha}_${hora}.json`;
 
-    window.onload = () => {
-        actualizarSelectores();
-        actualizarInterfazBunker();
-        if (DB.globalConfig && DB.sesiones.length > 0) irAlMapa();
-    };
-
-    function alternarBunker() {
-        DB.bunker = !DB.bunker;
-        localStorage.setItem('v47_bunker', JSON.stringify(DB.bunker));
-        actualizarInterfazBunker();
-    }
-
-    function actualizarInterfazBunker() {
-        const btn = document.getElementById('btnBunker');
-        if (DB.bunker) {
-            btn.innerText = "🏰 BÚNKER: ACTIVADO";
-            btn.style.background = "var(--danger)";
-            actualizarSemaforo('yellow', 'MODO BÚNKER ACTIVO');
-        } else {
-            btn.innerText = "🏰 BÚNKER: OFF";
-            btn.style.background = "var(--blue)";
-            // El semáforo volverá a verde si el SW está listo
-            actualizarSemaforo('green', 'SISTEMA ONLINE / OFFLINE LISTO');
-        }
-    }
-
-    function actualizarSemaforo(color, texto) {
-        const led = document.getElementById('led-indicator');
-        const txt = document.getElementById('status-text');
-        led.className = 'led led-' + color;
-        txt.innerText = texto;
-    }
-
-    // --- LÓGICA DE ORIENTACIONES ---
-    function alEscribirCuadro(prefix) {
-        const val = document.getElementById(prefix + '_cuadro').value;
-        const matches = DB.cuadros.filter(c => c.nombre === val);
-        if (matches.length > 0) {
-            const oris = [...new Set(matches.map(m => m.ori))];
-            document.getElementById('lista_orientaciones').innerHTML = oris.map(o => `<option value="${o}">`).join('');
-            document.getElementById(prefix + '_inicio').value = 1;
-            document.getElementById(prefix + '_fin').value = matches[0].max;
-        }
-    }
-
-    function actualizarSelectores() {
-        const nombresUnicos = [...new Set(DB.cuadros.map(c => c.nombre))];
-        document.getElementById('lista_cuadros').innerHTML = nombresUnicos.map(n => `<option value="${n}">`).join('');
-        document.getElementById('lista_actividades').innerHTML = DB.actividades.map(a => `<option value="${a.desc}">`).join('');
-        document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j => `<option value="${j.desc}">${j.desc}</option>`).join('');
-    }
-
-    // --- SISTEMA ---
-    function iniciarSistema() {
-        const resp = document.getElementById('conf_resp').value, total = parseInt(document.getElementById('conf_total_global').value);
-        if(!resp || isNaN(total)) return alert("Faltan datos.");
-        DB.globalConfig = { resp, supId: document.getElementById('conf_sup_id').value, supAct: document.getElementById('conf_sup_act').value, jornada: document.getElementById('conf_jornada').value, totalStaff: total };
-        DB.sesiones = []; DB.staff = []; DB.avance = []; 
-        crearSesionDesdeForm('conf'); irAlMapa();
-    }
-
-    function crearSesionDesdeForm(p) {
-        DB.sesiones.push({ 
-            uid: Date.now(), 
-            cuadro: document.getElementById(p + '_cuadro').value, 
-            orientacion: document.getElementById(p + '_ori').value,
-            act: document.getElementById(p + '_act').value, 
-            inicio: parseInt(document.getElementById(p + '_inicio').value), 
-            fin: parseInt(document.getElementById(p + '_fin').value), 
-            modo: document.getElementById(p + '_modo').value 
-        });
-        DB.currentSessionId = DB.sesiones.length - 1; 
-        guardarTodo();
-    }
-
-    function irAlMapa() {
-        document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
-        document.getElementById('viewMain').classList.add('open');
-        document.getElementById('disp_resp').innerText = DB.globalConfig.resp;
-        renderTabs(); renderSession(); forzarCamara();
-    }
-
-    // --- ESCANER ---
-    function startCam() {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, onScan).catch(() => {
-            document.getElementById('retryCam').style.display = 'block';
-        });
-    }
-
-    function forzarCamara() {
-        if(html5QrCode) html5QrCode.stop().then(() => startCam()).catch(() => startCam());
-        else startCam();
-    }
-
-    function onScan(id) {
-        id = id.trim().toUpperCase();
-        let now = Date.now();
-        if (lastScanTime[id] && (now - lastScanTime[id] < 3000)) return;
-        lastScanTime[id] = now;
-        audioBeep.play();
-        
-        let sA = DB.sesiones[DB.currentSessionId], t = DB.staff.find(s => s.id === id);
-        if(!t) { 
-            if (DB.staff.length >= DB.globalConfig.totalStaff) return alert("¡Límite alcanzado!");
-            t = { id, fila: null, cuadroUid: null }; DB.staff.push(t); 
-        }
-        
-        if(t.fila !== null) {
-            if(t.cuadroUid === sA.uid) {
-                let n = prompt(`ID ${t.id} en Fila ${t.fila}. ¿Mover a?`, buscarSiguienteFilaVacia(sA));
-                if(n) { cerrarTarea(t); asignarFilaEspecifica(t, parseInt(n), sA); }
-            } else {
-                if(confirm(`Viene de otro cuadro. ¿Pasar al cuadro actual?`)) { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
-            }
-        } else { asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sA), sA); }
-        guardarTodo(); renderSession();
-    }
-
-    function asignarFilaEspecifica(t, f, s) {
-        if(f > s.fin) return alert("¡Cuadro lleno!");
-        t.fila = f; t.cuadroUid = s.uid;
-        DB.avance.push({ fila: f, obrero: t.id, inicio: new Date().toLocaleTimeString(), fin: null, nomCuadro: s.cuadro, cuadroUid: s.uid, supAct: s.act });
-    }
-
-    function cerrarTarea(t) {
-        let reg = DB.avance.find(a => a.obrero === t.id && a.fin === null);
-        if(reg) reg.fin = new Date().toLocaleTimeString();
-        t.fila = null; t.cuadroUid = null;
-    }
-
-    function buscarSiguienteFilaVacia(s) {
-        let ocupadas = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
-        for(let i = s.inicio; i <= s.fin; i++) {
-            if(ocupadas.has(i)) continue;
-            let o = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i).length;
-            if(s.modo === 'PAREJAS' ? o < 2 : o === 0) return i;
-        }
-        return s.fin + 1;
-    }
-
-    // --- FUNCIONES DE BOTÓN ---
-    function ejecutarAvanceMasivoFix() {
-        let sO = DB.sesiones[DB.currentSessionId];
-        let activos = DB.staff.filter(st => st.cuadroUid === sO.uid && st.fila !== null);
-        if (!activos.length) return alert("Sin personal activo.");
-
-        let pF = buscarSiguienteFilaVacia(sO);
-        if (pF > sO.fin) {
-            let siguienteIdx = DB.currentSessionId + 1;
-            let sDestino = DB.sesiones[siguienteIdx];
-            if (sDestino) {
-                if (confirm(`¿Transferir personal al cuadro ${sDestino.cuadro}?`)) {
-                    activos.forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, buscarSiguienteFilaVacia(sDestino), sDestino); });
-                    DB.currentSessionId = siguienteIdx;
-                    guardarTodo(); renderTabs(); renderSession();
-                }
-            } else {
-                if (confirm("Cuadro lleno. ¿Añadir otro ahora?")) document.getElementById('modalAddCuadro').classList.add('open');
-            }
-        } else {
-            if (confirm(`¿Avanzar grupos?`)) {
-                let grupos = {}; activos.forEach(t => { if(!grupos[t.fila]) grupos[t.fila] = []; grupos[t.fila].push(t); });
-                Object.keys(grupos).map(Number).sort((a,b)=>a-b).forEach(f => {
-                    let nextF = buscarSiguienteFilaVacia(sO);
-                    if(nextF <= sO.fin) { grupos[f].forEach(t => { cerrarTarea(t); asignarFilaEspecifica(t, nextF, sO); }); }
-                });
-                guardarTodo(); renderSession();
-            }
-        }
-    }
-
-    function generarCorteParcial() {
-        const qrData = { 
-            resp: DB.globalConfig.resp, 
-            personal: DB.staff.length, 
-            avance: DB.avance.length,
-            cuadro: DB.sesiones[DB.currentSessionId].cuadro
+        const data = { 
+            tipo: "PARCIAL", 
+            fecha: new Date().toLocaleString(), 
+            // AGREGAR ESTO:
+            catalogos: {
+                cuadros: DB.cuadros.map(c => ({ id: c.id, nombre: c.num })), 
+                actividades: DB.actividades.map(a => ({ id: a.id, desc: a.nom })),
+                jornadas: DB.jornadas.map(j => ({ id: j.id, desc: j.nom }))
+            },
+            config: {
+                resp: DB.config.sups[0]?.nom || "N/A",
+                supId: DB.config.sups[0]?.id || "N/A",
+                supAct: DB.config.sups[0]?.act || "N/A",
+                jornada: document.getElementById('conf_jornada').value,
+                meta: DB.config.meta,
+                totalStaff: DB.staff.length
+            },
+            sups: DB.config.sups, 
+            sesiones: DB.sesiones,
+            avance: DB.avance 
         };
-        document.getElementById('viewMain').classList.remove('open');
-        document.getElementById('viewPartial').classList.add('open');
-        const qC = document.getElementById('qrcode_partial'); qC.innerHTML = "";
-        new QRCode(qC, { text: JSON.stringify(qrData), width: 260, height: 260 });
-        document.getElementById('partial_summary').innerText = `Resp: ${qrData.resp} | Personal: ${qrData.personal} | Regs: ${qrData.avance}`;
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = nombreArchivo; 
+        a.click();
     }
 
-    function cerrarCorteParcial() {
-        document.getElementById('viewPartial').classList.remove('open');
-        document.getElementById('viewMain').classList.add('open');
-    }
+    function descargarReporteFinal() {
+    if(!confirm("¿Cerrar jornada?")) return;
+    
+    const sup = DB.config.sups[0] || { nom: "Sin_Sup", id: "0", act: "N/A" };
+    const fechaStr = new Date().toISOString().slice(0, 10);
+    
+    const dataReporte = {
+        tipo: "FINAL",
+        fecha: new Date().toLocaleString(),
+        // ESTO ES LO QUE FALTA PARA EL CONCENTRADOR:
+        catalogos: {
+            cuadros: DB.cuadros.map(c => ({ id: c.id || "7", nombre: c.num })), 
+            actividades: DB.actividades.map(a => ({ id: a.id || "8", desc: a.nom })),
+            jornadas: DB.jornadas.map(j => ({ id: j.id || "16", desc: j.nom }))
+        },
+        config: {
+            resp: sup.nom,
+            supId: sup.id,
+            supAct: sup.act,
+            jornada: document.getElementById('conf_jornada').value, // Importante para el ID_JOR
+            meta: DB.config.meta,
+            totalStaff: DB.staff.length
+        },
+        sesiones: DB.sesiones,
+        avance: DB.avance
+    };
 
-    function confirmarFinDia() {
-        if(confirm("¿Cerrar jornada completa?")) {
-            DB.staff.forEach(t => { if(t.fila) cerrarTarea(t); });
-            DB.archive.push({ fecha: new Date().toLocaleString(), config: DB.globalConfig, avance: [...DB.avance] });
-            localStorage.setItem('v47_archive', JSON.stringify(DB.archive));
-            localStorage.removeItem('v47_sesiones');
-            localStorage.removeItem('v47_avance');
-            localStorage.removeItem('v47_staff');
-            localStorage.removeItem('v47_config');
-            location.reload();
-        }
-    }
+    const blob = new Blob([JSON.stringify(dataReporte, null, 2)], {type: "application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `FINAL_${sup.nom.replace(/\s+/g, '_')}_${fechaStr}.json`;
+    a.click();
+    location.reload();
+}
 
-    function confirmarNuevoCuadro() {
-        crearSesionDesdeForm('add');
-        document.getElementById('modalAddCuadro').classList.remove('open');
-        renderTabs(); renderSession();
-    }
-
-    function renderTabs() {
-        const container = document.getElementById('tabsContainer');
-        container.innerHTML = DB.sesiones.map((s, idx) => {
-            return `<div class="tab ${idx === DB.currentSessionId ? 'active' : ''}" onclick="cambiarTab(${idx})">${s.cuadro} - ${s.orientacion}</div>`;
-        }).join('') + `<div class="tab" style="background:var(--blue);color:white" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`;
-    }
-
-    function cambiarTab(idx) { DB.currentSessionId = idx; renderTabs(); renderSession(); }
-
-    function renderMapa() {
-        let s = DB.sesiones[DB.currentSessionId]; if(!s) return;
-        const grid = document.getElementById('mapGrid'); grid.innerHTML = "";
-        let term = new Set(DB.avance.filter(a => a.cuadroUid === s.uid && a.fin !== null).map(a => a.fila));
+    function buscarEspacio(s) {
+        let quemadas = new Set(DB.avance.filter(a => a.uid === s.uid && a.fin !== null).map(a => a.f));
         for(let i = s.inicio; i <= s.fin; i++) {
-            let div = document.createElement('div'), gente = DB.staff.filter(st => st.cuadroUid === s.uid && st.fila === i);
-            div.className = "row-item " + (gente.length ? "active-row" : (term.has(i) ? "done" : ""));
-            div.innerHTML = `<span>${i}</span>` + (gente.length ? `<span class="row-tag">${gente.map(g=>g.id).join(',')}</span>` : "");
-            grid.appendChild(div);
+            if(quemadas.has(i)) continue;
+            let o = DB.staff.filter(st => st.uid === s.uid && st.f === i).length;
+            if(o < 2) return i;
         }
+        return null;
     }
 
-    function renderSession() { renderMapa(); if(DB.globalConfig) document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.globalConfig.totalStaff}`; }
-
-    function procesarYGuardar() {
-        const txtC = document.getElementById('csv_cuadros').value, txtA = document.getElementById('csv_act').value, txtJ = document.getElementById('csv_jor').value;
-        if(txtC.trim()) DB.cuadros = txtC.split('\n').map(l => { let c = l.split(/[,\t]/); return (c.length >= 6) ? { id: c[0].trim(), nombre: c[1].trim(), ori: c[3].trim(), max: parseInt(c[5].trim()) } : null }).filter(x => x);
-        if(txtA.trim()) DB.actividades = txtA.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-        if(txtJ.trim()) DB.jornadas = txtJ.split('\n').map(l => { let c=l.split(/[,\t]/); return (c.length>=2) ? {id:c[0].trim(), desc:c[1].trim()} : null }).filter(x=>x);
-        guardarTodo(); actualizarSelectores(); document.getElementById('modalDB').classList.remove('open');
-    }
-
-    function guardarTodo() {
-        localStorage.setItem('v47_cuadros', JSON.stringify(DB.cuadros));
-        localStorage.setItem('v47_act', JSON.stringify(DB.actividades));
-        localStorage.setItem('v47_jornadas', JSON.stringify(DB.jornadas));
-        localStorage.setItem('v47_sesiones', JSON.stringify(DB.sesiones));
-        localStorage.setItem('v47_currentIdx', DB.currentSessionId);
-        localStorage.setItem('v47_avance', JSON.stringify(DB.avance));
-        localStorage.setItem('v47_staff', JSON.stringify(DB.staff));
-        localStorage.setItem('v47_config', JSON.stringify(DB.globalConfig));
-    }
-
-    function registrarManual() { 
-        let v = document.getElementById('manual_id').value.toUpperCase(); 
-        if(v) { onScan(v); document.getElementById('manual_id').value = ""; } 
-    }
-
-    function abrirHistorial() {
-        if (!DB.archive.length) return alert("Vacio");
-        let h = `<h2>📜 HISTORIAL</h2>`;
-        DB.archive.forEach((item, idx) => { h += `<div class="card">${item.fecha} <button class="btn-sm btn-b" onclick="descargarHistorialIdx(${idx})">⬇️</button></div>`; });
-        document.getElementById('editorList').innerHTML = h; document.getElementById('modalEditor').classList.add('open');
-    }
-
-    function descargarHistorialIdx(idx) {
-        let b = new Blob([JSON.stringify(DB.archive[idx], null, 2)], {type: 'application/json'});
-        let a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `HISTORICO.json`; a.click();
-    }
-
-    function abrirReporteAsistencia() {
-        const c = document.getElementById('tablaAsistenciaContainer'), m = document.getElementById('modalReporte');
-        let ids = [...new Set(DB.avance.map(a => a.obrero))];
-        let h = `<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr><th>ID</th><th>ACT</th><th>CUADRO</th><th>FILAS</th></tr>`;
-        ids.forEach(id => {
-            let hist = DB.avance.filter(a => a.obrero === id);
-            let u = hist[hist.length - 1];
-            h += `<tr><td>${id}</td><td>${u.supAct}</td><td>${u.nomCuadro}</td><td>${hist.length}</td></tr>`;
+    function avanceMasivoFlow() {
+        const ahora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        let activos = DB.staff.filter(st => st.uid === DB.sesiones[DB.currentIdx].uid);
+        if(!activos.length) return;
+        let pendientes = [];
+        activos.forEach(st => {
+            let movido = false;
+            let r = DB.avance.find(a => a.obrero === st.id && a.uid === st.uid && !a.fin);
+            if(r) r.fin = ahora;
+            for(let i=0; i < DB.sesiones.length; i++) {
+                let idx = (DB.currentIdx + i) % DB.sesiones.length;
+                let f = buscarEspacio(DB.sesiones[idx]);
+                if(f) {
+                    st.f = f; st.uid = DB.sesiones[idx].uid;
+                    DB.avance.push({ obrero: st.id, n: st.nom, f: f, nomCuadro: DB.sesiones[idx].num,actividad: DB.sesiones[idx].act, inicio: ahora, fin: null, uid: st.uid });
+                    DB.currentIdx = idx; movido = true; break;
+                }
+            }
+            if(!movido) pendientes.push(st);
         });
-        c.innerHTML = h + `</table>`; m.classList.add('open');
+        if(pendientes.length > 0) { window.pendientes = pendientes; document.getElementById('modalAddCuadro').classList.add('open'); }
+        renderTabs(); renderSession(); renderChecklist();
     }
 
-    function descargarCSVAsistencia() {
-        const rows = document.querySelectorAll("#tablaAsistenciaContainer tr");
-        let csv = [];
-        for (let i = 0; i < rows.length; i++) {
-            let row = [], cols = rows[i].querySelectorAll("td, th");
-            for (let j = 0; j < cols.length; j++) row.push(cols[j].innerText);
-            csv.push(row.join(","));
+    function togglePersonal(id, check) {
+        const ahora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if(check) {
+            if(DB.staff.length >= DB.config.meta) { alert("LÍMITE ALCANZADO"); return renderChecklist(); }
+            let f = buscarEspacio(DB.sesiones[DB.currentIdx]);
+            if(!f) return alert("Cuadro lleno");
+            let p = DB.personal.find(x=>x.id===id);
+            DB.staff.push({ id, nom: p.nom, f, uid: DB.sesiones[DB.currentIdx].uid });
+            DB.avance.push({ obrero: id, n: p.nom, f:f, nomCuadro: DB.sesiones[DB.currentIdx].num,actividad: DB.sesiones[DB.currentIdx].act, inicio: ahora, fin: null, uid: DB.sesiones[DB.currentIdx].uid });
+        } else {
+            let idx = DB.staff.findIndex(st => st.id === id && st.uid === DB.sesiones[DB.currentIdx].uid);
+            if(idx > -1) {
+                let r = DB.avance.find(a => a.obrero === id && a.uid === DB.sesiones[DB.currentIdx].uid && !a.fin);
+                if(r) r.fin = ahora;
+                DB.staff.splice(idx, 1);
+            }
         }
-        let blob = new Blob(["\uFEFF" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `Asistencia.csv`;
-        link.click();
+        renderSession(); renderChecklist();
     }
 
-    function abrirEditor() {
-        let s = DB.sesiones[DB.currentSessionId];
-        const list = document.getElementById('editorList'); list.innerHTML = "";
-        DB.staff.filter(st => st.cuadroUid === s.uid && st.fila !== null).forEach(st => {
-            list.innerHTML += `<div class="edit-item"><b>${st.id}</b> - Fila: ${st.fila} <button class="btn-sm btn-r" onclick="borrarRegistroManual('${st.id}')">X</button></div>`;
-        });
-        document.getElementById('modalEditor').classList.add('open');
+    function renderSession() {
+        const s = DB.sesiones[DB.currentIdx], grid = document.getElementById('mapGrid'); grid.innerHTML = "";
+        let quemadas = new Set(DB.avance.filter(a => a.uid === s.uid && a.fin !== null).map(a => a.f));
+        for(let i = s.inicio; i <= s.fin; i++) {
+            let g = DB.staff.filter(st => st.uid === s.uid && st.f === i);
+            let clase = g.length ? 'active-row' : (quemadas.has(i) ? 'done-row' : '');
+            grid.innerHTML += `<div class="row-item ${clase}"><span>${i}</span><span class="row-tag">${g.map(x=>x.id).join(',')}</span></div>`;
+        }
+        document.getElementById('disp_count_global').innerText = `${DB.staff.length}/${DB.config.meta}`;
     }
 
-    function borrarRegistroManual(id) {
-        if(!confirm(`¿Eliminar?`)) return;
-        let st = DB.staff.find(x=>x.id===id);
-        if(st) {
-            let idx = DB.avance.findIndex(a=>a.obrero===id && a.fin===null && a.cuadroUid===st.cuadroUid);
-            if(idx !== -1) DB.avance.splice(idx, 1);
-            st.fila = null; st.cuadroUid = null;
-            guardarTodo(); renderSession(); abrirEditor();
+    function iniciarSistema() {
+        DB.config.meta = parseInt(document.getElementById('conf_total_global').value);
+        crearSesion('conf'); cerrarModal('viewSetup');
+        document.getElementById('viewMain').classList.add('open');
+        document.getElementById('disp_sups').innerText = "SUPS: " + DB.config.sups.map(s=>s.nom).join(', ');
+        renderTabs(); renderChecklist(); renderSession();
+    }
+
+    function alEscribirCuadro(p) {
+        const val = document.getElementById(p+'_cuadro').value;
+        const regs = DB.cuadros.filter(c=>c.num === val);
+        const sel = document.getElementById(p+'_ori');
+        if(regs.length > 0) {
+            sel.innerHTML = regs.map(o=>`<option value="${o.ori}">${o.ori}</option>`).join('');
+            document.getElementById(p+'_inicio').value = 1;
+            document.getElementById(p+'_fin').value = regs[0].lin;
         }
     }
+    function crearSesion(p) { DB.sesiones.push({ uid: Date.now(), num: document.getElementById(p+'_cuadro').value, ori: document.getElementById(p+'_ori').value, act: document.getElementById(p+'_act').value,inicio: parseInt(document.getElementById(p+'_inicio').value), fin: parseInt(document.getElementById(p+'_fin').value) }); DB.currentIdx = DB.sesiones.length - 1; }
+    
+    function confirmarNuevoCuadro() { 
+        const ahora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); 
+        crearSesion('add'); 
+        if(window.pendientes) { 
+            window.pendientes.forEach(st => { 
+                let f = buscarEspacio(DB.sesiones[DB.currentIdx]); 
+                if(f) { 
+                    let r = DB.avance.find(a => a.obrero === st.id && a.uid === st.uid && !a.fin); 
+                    if(r) r.fin = ahora; 
+                    st.f = f; st.uid = DB.sesiones[DB.currentIdx].uid; 
+                    DB.avance.push({ obrero: st.id, n: st.nom, f: f, nomCuadro: DB.sesiones[DB.currentIdx].num, actividad: DB.sesiones[DB.currentIdx].act,inicio: ahora, fin: null, uid: DB.sesiones[DB.currentIdx].uid }); 
+                } 
+            }); 
+        } 
+        window.pendientes = null; cerrarModal('modalAddCuadro'); renderTabs(); renderSession(); renderChecklist(); 
+    }
+    
+    function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+    function abrirDB() { document.getElementById('modalDB').classList.add('open'); }
+    function renderTabs() { document.getElementById('tabsContainer').innerHTML = DB.sesiones.map((s, i) => `<div class="tab ${i===DB.currentIdx?'active':''}" onclick="DB.currentIdx=${i};renderTabs();renderSession();renderChecklist();">${s.num}</div>`).join('') + `<div class="tab" onclick="document.getElementById('modalAddCuadro').classList.add('open')">+</div>`; }
+    function renderChecklist() { document.getElementById('checklistPersonal').innerHTML = DB.personal.filter(p=>!DB.config.sups.map(s=>s.id).includes(p.id)).sort((a,b)=>a.nom.localeCompare(b.nom)).map(p => { const act = DB.staff.some(st => st.id === p.id && st.uid === DB.sesiones[DB.currentIdx].uid); return `<div class="check-item"><input type="checkbox" ${act?'checked':''} onchange="togglePersonal('${p.id}', this.checked)"><span><b>${p.nom}</b> (${p.id})</span></div>`; }).join(''); }
+    function agregarSupervisor() { const id=document.getElementById('add_sup_id').value, nom=document.getElementById('add_sup_nom').value, act=document.getElementById('add_sup_act').value; if(id&&act){ DB.config.sups.push({id, nom, act}); renderSupsList(); } }
+    function renderSupsList() { document.getElementById('lista_sups_config').innerHTML = DB.config.sups.map((s, i) => `<div style="background:var(--blue); padding:5px; margin-bottom:2px;">${s.nom} <span onclick="DB.config.sups.splice(${i},1);renderSupsList();">✖</span></div>`).join(''); }
+    function actualizarSelectores() { document.getElementById('lista_personal').innerHTML = DB.personal.map(p=>`<option value="${p.id}">${p.nom}</option>`).join(''); document.getElementById('lista_cuadros').innerHTML = [...new Set(DB.cuadros.map(c=>c.num))].map(n=>`<option value="${n}">`).join(''); document.getElementById('lista_actividades').innerHTML = DB.actividades.map(a=>`<option value="${a.nom}">`).join(''); document.getElementById('conf_jornada').innerHTML = DB.jornadas.map(j=>`<option value="${j.nom}">${j.nom}</option>`).join(''); }
+    function vincularID(i, o, c) { const p = c.find(x=>x.id===document.getElementById(i).value); if(p) document.getElementById(o).value=p.nom; }
+    function procesarYGuardarBD() { 
+        const p = (id) => document.getElementById(id).value.trim().split('\n').filter(l=>l.includes(',')).map(l=>l.split(',').map(s=>s.trim())); 
+        
+        // Guardamos el ID (columna 0) y el Nombre (columna 1)
+        DB.personal = p('csv_personal').map(c=>({id:c[0], nom:c[1], con:c[2], cua:c[3]})); 
+        DB.cuadros = p('csv_cuadros').map(c=>({id:c[0], num:c[1], ori:c[3], lin:parseInt(c[5])})); 
+        DB.actividades = p('csv_act').map(c=>({id:c[0], nom:c[1]})); 
+        DB.jornadas = p('csv_jor').map(c=>({id:c[0], nom:c[1]})); 
+        
+        localStorage.setItem('v86_p', JSON.stringify(DB.personal)); 
+        localStorage.setItem('v86_c', JSON.stringify(DB.cuadros)); 
+        localStorage.setItem('v86_a', JSON.stringify(DB.actividades)); 
+        localStorage.setItem('v86_j', JSON.stringify(DB.jornadas)); 
+        
+        actualizarSelectores(); 
+        cerrarModal('modalDB'); 
+    }
+    
+    function abrirReporte() { 
+        let h = `<table style="width:100%; border-collapse:collapse;"><tr><th>ID</th><th>NOMBRE</th><th>CUADRO</th><th>IN</th><th>OUT</th></tr>`; 
+        DB.avance.forEach(a => { h += `<tr><td>${a.obrero}</td><td>${a.n}</td><td>${a.nomCuadro}</td><td>${a.inicio}</td><td>${a.fin||'ACTIVO'}</td></tr>`; }); 
+        document.getElementById('tablaReporte').innerHTML = h + "</table>"; 
+        document.getElementById('modalReporte').classList.add('open'); 
+    }
+    
+    function abrirEditor() { const l = document.getElementById('editorList'); l.innerHTML = DB.staff.filter(st => st.uid === DB.sesiones[DB.currentIdx].uid).map(st => `<div class="card" style="display:flex; justify-content:space-between; align-items:center;"><div><b>${st.nom}</b><br>Fila: <input type="number" value="${st.f}" style="width:60px;" onchange="cambiarFila('${st.id}', this.value)"></div><button class="btn btn-r" style="width:auto; padding:10px;" onclick="togglePersonal('${st.id}', false); abrirEditor();">QUITAR</button></div>`).join(''); document.getElementById('modalEditor').classList.add('open'); }
+    function cambiarFila(id, nf) { let st = DB.staff.find(x=>x.id===id && x.uid === DB.sesiones[DB.currentIdx].uid); if(st) { st.f = parseInt(nf); let r = DB.avance.find(a => a.obrero === id && !a.fin && a.uid === st.uid); if(r) r.f = parseInt(nf); } renderSession(); }
+    function registrarManual() { const v = document.getElementById('manual_id').value; if(v){ togglePersonal(v.trim().toUpperCase(), true); document.getElementById('manual_id').value=""; } }
 </script>
 </body>
 </html>
