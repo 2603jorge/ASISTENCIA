@@ -155,6 +155,30 @@
     
     const sup = DB.config.sups[0] || { nom: "Sin_Sup", id: "0", act: "N/A" };
     const fechaStr = new Date().toISOString().slice(0, 10);
+
+// --- INICIO DE LA MEJORA PARA INCLUIR SUPERVISORES ---
+        // Creamos una copia del avance actual
+        let avanceConSups = [...DB.avance];
+
+        // Obtenemos la jornada y actividad de la configuración actual
+        const jornadaActual = document.getElementById('conf_jornada').value;
+
+        // Insertamos a cada supervisor como un registro especial (con 0 líneas)
+        DB.config.sups.forEach(s => {
+            // Verificamos si el supervisor ya está en el avance para no duplicar
+            // (Usamos lin: 0 para que el concentrador sepa que es staff de control)
+            avanceConSups.unshift({
+                obrero: s.id,
+                n: s.nom,
+                f: 0,
+                nomCuadro: "104", // Cuadro estándar para supervisores
+                actividad: s.act,
+                inicio: "07:00",
+                fin: "07:00",
+                uid: "SUP-" + s.id
+            });
+        });
+        // --- FIN DE LA MEJORA
     
     const dataReporte = {
         tipo: "FINAL",
@@ -173,8 +197,9 @@
             meta: DB.config.meta,
             totalStaff: DB.staff.length
         },
-        sesiones: DB.sesiones,
-        avance: DB.avance
+       sups: DB.config.sups,
+            sesiones: DB.sesiones,
+            avance: avanceConSups
     };
 
     const blob = new Blob([JSON.stringify(dataReporte, null, 2)], {type: "application/json"});
