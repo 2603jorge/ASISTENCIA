@@ -45,9 +45,9 @@
                 <input type="text" id="manual_id" placeholder="ID Credencial">
                 <input type="number" id="manual_lineas" value="1" style="width:60px;">
             </div>
-            <input type="text" id="in_jor" list="list_jor" placeholder="Jornada (Escriba para sugerencias)">
-            <input type="text" id="in_act" list="list_act" placeholder="Actividad (Escriba para sugerencias)">
-            <input type="text" id="in_cua" list="list_cua" placeholder="Cuadro (Escriba para sugerencias)">
+            <input type="text" id="in_jor" list="list_jor" placeholder="Jornada">
+            <input type="text" id="in_act" list="list_act" placeholder="Actividad">
+            <input type="text" id="in_cua" list="list_cua" placeholder="Cuadro">
             <button class="btn btn-warn" onclick="registrarManual()">➕ AGREGAR AL CONCENTRADO</button>
         </div>
     </div>
@@ -97,25 +97,28 @@
     const scanner = new Html5Qrcode("reader");
     const norm = (s) => String(s || "").replace(/[.,\s]/g, "").toUpperCase();
 
-    // Iniciar Cámara
-    scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 200 }, (text) => {
-        if (view === 'sec_asistencia') {
-            try { procesarJSON(JSON.parse(text)); alert("Datos sumados al reporte ✅"); }
-            catch(e) { alert("Error: Use la pestaña INDIVIDUAL para escanear credenciales."); }
-        } else {
-            document.getElementById('manual_id').value = text.trim();
-            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
-        }
-    });
+    function nav(id) {
+        view = id;
+        document.getElementById('sec_escaner').classList.add('hidden');
+        document.getElementById('sec_asistencia').classList.add('hidden');
+        document.getElementById('sec_catalogos').classList.add('hidden');
+        document.getElementById(id).classList.remove('hidden');
+    }
 
     function procesarArchivo(input) {
         const reader = new FileReader();
-        reader.onload = (e) => { try { procesarJSON(JSON.parse(e.target.result)); } catch(err) { alert("Archivo inválido"); } };
+        reader.onload = (e) => { 
+            try { 
+                procesarJSON(JSON.parse(e.target.result)); 
+            } catch(err) { 
+                alert("Error al procesar el archivo JSON"); 
+            } 
+        };
         reader.readAsText(input.files[0]);
     }
 
     function procesarJSON(json) {
-        // Guardar catálogos si vienen
+        // 1. Guardar catálogos si vienen en el archivo
         if (json.catalogos) {
             CATS = json.catalogos;
             localStorage.setItem('agri_v57_cats', JSON.stringify(CATS));
@@ -123,62 +126,52 @@
         }
 
         const conf = json.config || {};
-        const jorD = CATS.jornadas.find(j => norm(j.desc) === norm(conf.jornada)) || {id:"?", desc:conf.jornada};
+        
+        // Función para buscar ID en catálogos ignorando mayúsculas/espacios
+        const buscarID = (lista, busqueda, campoNombre) => {
+            let encontrado = lista.find(item => norm(item[campoNombre]) === norm(busqueda));
+            return encontrado ? encontrado.id : "?";
+        };
 
-        // 1. Agregar Supervisor (Si tiene ID)
-        if (conf.supId) {
-            const sActD = CATS.actividades.find(a => norm(a.desc) === norm(conf.supAct)) || {id:"?", desc:conf.supAct};
-            sumarAlMaster({
-                cre: conf.supId, id_a: sActD.id, n_a: sActD.desc, 
-                id_c: "9", cua: "104", // Datos fijos según tu imagen
-                id_j: jorD.id, n_j: jorD.desc, lin: 0
+        const idJornada = buscarID(CATS.jornadas, conf.jornada, 'desc');
+
+        // 2. Procesar Supervisores (Registros de control con 0 líneas)
+        if (json.sups && json.sups.length > 0) {
+            json.sups.forEach(s => {
+                const idAct = buscarID(CATS.actividades, s.act, 'desc');
+                sumarAlMaster({
+                    cre: s.id, id_a: idAct, n_a: s.act, id_c: "9", cua: "104", 
+                    id_j: idJornada, n_j: conf.jornada, lin: 0
+                });
             });
         }
 
-        // 2. Agregar Obreros
+        // 3. Procesar Avance de Obreros
         (json.avance || []).forEach(a => {
-            const actNom = a.supAct || conf.supAct;
-            const aD = CATS.actividades.find(ac => norm(ac.desc) === norm(actNom)) || {id:"?", desc:actNom};
-            const cD = CATS.cuadros.find(cu => norm(cu.nombre) === norm(a.nomCuadro)) || {id:"?", nombre:a.nomCuadro};
+            // Se usa 'actividad' del registro individual; si no existe, usa la del config
+            const nombreActividad = a.actividad || conf.supAct;
+            const idAct = buscarID(CATS.actividades, nombreActividad, 'desc');
+            const idCua = buscarID(CATS.cuadros, a.nomCuadro, 'nombre');
             
             sumarAlMaster({
-                cre: a.obrero, id_a: aD.id, n_a: aD.desc,
-                id_c: cD.id, cua: cD.nombre,
-                id_j: jorD.id, n_j: jorD.desc, lin: 1
+                cre: a.obrero, id_a: idAct, n_a: nombreActividad,
+                id_c: idCua, cua: a.nomCuadro,
+                id_j: idJornada, n_j: conf.jornada, lin: 1
             });
         });
+
         render();
-    }
-
-    function registrarManual() {
-        const id = document.getElementById('manual_id').value.trim();
-        const nJ = document.getElementById('in_jor').value;
-        const nA = document.getElementById('in_act').value;
-        const nC = document.getElementById('in_cua').value;
-        const lin = parseInt(document.getElementById('manual_lineas').value) || 0;
-
-        if(!id || !nA || !nC) return alert("Faltan datos");
-
-        const jD = CATS.jornadas.find(j => norm(j.desc) === norm(nJ)) || {id:"?", desc:nJ};
-        const aD = CATS.actividades.find(a => norm(a.desc) === norm(nA)) || {id:"?", desc:nA};
-        const cD = CATS.cuadros.find(c => norm(c.nombre) === norm(nC)) || {id:"?", nombre:nC};
-
-        sumarAlMaster({
-            cre: id, id_a: aD.id, n_a: aD.desc,
-            id_c: cD.id, cua: cD.nombre,
-            id_j: jD.id, n_j: jD.desc, lin: lin
-        });
-        
-        document.getElementById('manual_id').value = "";
-        render();
+        alert("Archivo JSON procesado correctamente ✅");
     }
 
     function sumarAlMaster(n) {
-        let ex = CONCENTRADO.find(r => r.cre === n.cre);
-        if (ex) {
-            ex.lin += n.lin;
-            ex.n_a = n.n_a; // Actualiza a la última actividad
-            ex.cua = n.cua;
+        // Agrupar por Credencial, Actividad y Cuadro para no duplicar filas innecesariamente
+        let registroExistente = CONCENTRADO.find(r => 
+            r.cre === n.cre && r.id_a === n.id_a && r.cua === n.cua
+        );
+
+        if (registroExistente) {
+            registroExistente.lin += n.lin;
         } else {
             CONCENTRADO.push(n);
         }
@@ -196,52 +189,65 @@
         `).join('');
     }
 
-    function nav(id) {
-        view = id;
-        document.querySelectorAll('.container > div.hidden, .container > div:not(.card)').forEach(el => {
-            if(el.id) el.classList.add('hidden');
+    function registrarManual() {
+        const id = document.getElementById('manual_id').value.trim();
+        const nJ = document.getElementById('in_jor').value;
+        const nA = document.getElementById('in_act').value;
+        const nC = document.getElementById('in_cua').value;
+        const lin = parseInt(document.getElementById('manual_lineas').value) || 0;
+
+        if(!id || !nA || !nC) return alert("Faltan datos obligatorios");
+
+        const idJ = buscarID(CATS.jornadas, nJ, 'desc');
+        const idA = buscarID(CATS.actividades, nA, 'desc');
+        const idC = buscarID(CATS.cuadros, nC, 'nombre');
+
+        sumarAlMaster({
+            cre: id, id_a: idA, n_a: nA, id_c: idC, cua: nC,
+            id_j: idJ, n_j: nJ, lin: lin
         });
-        document.getElementById(id).classList.remove('hidden');
+        
+        document.getElementById('manual_id').value = "";
+        render();
     }
 
     function actualizarDatalists() {
-        document.getElementById('list_jor').innerHTML = CATS.jornadas.map(j => `<option value="${j.desc}">`).join('');
-        document.getElementById('list_act').innerHTML = CATS.actividades.map(a => `<option value="${a.desc}">`).join('');
-        document.getElementById('list_cua').innerHTML = CATS.cuadros.map(c => `<option value="${c.nombre}">`).join('');
-        document.getElementById('cat_cua').value = CATS.cuadros.map(c => `${c.id},${c.nombre}`).join('\n');
-        document.getElementById('cat_act').value = CATS.actividades.map(a => `${a.id},${a.desc}`).join('\n');
+        document.getElementById('list_jor').innerHTML = (CATS.jornadas || []).map(j => `<option value="${j.desc}">`).join('');
+        document.getElementById('list_act').innerHTML = (CATS.actividades || []).map(a => `<option value="${a.desc}">`).join('');
+        document.getElementById('list_cua').innerHTML = (CATS.cuadros || []).map(c => `<option value="${c.nombre}">`).join('');
+        document.getElementById('cat_cua').value = (CATS.cuadros || []).map(c => `${c.id},${c.nombre}`).join('\n');
+        document.getElementById('cat_act').value = (CATS.actividades || []).map(a => `${a.id},${a.desc}`).join('\n');
+        document.getElementById('cat_jor').value = (CATS.jornadas || []).map(j => `${j.id},${j.desc}`).join('\n');
     }
 
-   function descargarExcel() {
-    // 1. Creamos el objeto de fecha actual
-    const ahora = new Date();
-    
-    // 2. Formateamos la fecha (Día_Mes_Año) y la hora (Hora_Minutos)
-    const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
-    const hora = ahora.getHours() + "h" + ahora.getMinutes();
-    
-    // 3. Preparamos el contenido (ajusta las columnas si tu versión anterior tenía menos)
-    let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS\n";
-    CONCENTRADO.forEach(d => { 
-        csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin}\n`; 
-    });
+    function descargarExcel() {
+        const ahora = new Date();
+        const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
+        
+        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS\n";
+        CONCENTRADO.forEach(d => { 
+            csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin}\n`; 
+        });
 
-    // 4. Creamos el enlace de descarga con el nombre nuevo
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    
-    // Aquí es donde cambia el nombre:
-    link.download = "REPORTE_" + fecha + "_" + hora + ".csv"; 
-    
-    link.click();
-}
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "REPORTE_AGRI_" + fecha + ".csv";
+        link.click();
+    }
 
-    function borrarTodo() { if(confirm("¿Limpiar todo el concentrado del día?")) { CONCENTRADO = []; localStorage.removeItem('agri_v57_master'); render(); } }
+    function borrarTodo() { 
+        if(confirm("¿Estás seguro de limpiar todos los datos del día?")) { 
+            CONCENTRADO = []; 
+            localStorage.removeItem('agri_v57_master'); 
+            render(); 
+        } 
+    }
 
     window.onload = () => { actualizarDatalists(); render(); };
 </script>
 </body>
 </html>
+
 
 
