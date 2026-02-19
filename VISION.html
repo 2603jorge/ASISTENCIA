@@ -59,18 +59,18 @@
             
             <div class="table-wrapper">
                 <table id="tablaMaster">
-                    <thead>
-                        <tr>
-                            <th>CREDENTIAL</th>
-                            <th>ID_ACT</th>
-                            <th>NAME_ACT</th>
-                            <th>ID_CUA</th>
-                            <th>CUADRO</th>
-                            <th>ID_JOR</th>
-                            <th>DESC_JOR</th>
-                            <th>LÍNEAS</th>
-                        </tr>
-                    </thead>
+                   <thead>
+    <tr>
+        <th>CREDENTIAL</th>
+        <th>ID_ACT</th>
+        <th>NAME_ACT</th>
+        <th>ID_CUA</th>
+        <th>CUADRO</th>
+        <th>ID_JOR</th>
+        <th>DESC_JOR</th>
+        <th>LÍNEAS</th>
+        <th style="background: var(--main); color: white;">PLANTAS</th> </tr>
+</thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -117,74 +117,73 @@
         reader.readAsText(input.files[0]);
     }
 
-    function procesarJSON(json) {
-    // 1. Guardar catálogos si vienen
+   function procesarJSON(json) {
+    // 1. Guardar catálogos del JSON para que los IDs no salgan con "?"
     if (json.catalogos) {
         CATS = json.catalogos;
         localStorage.setItem('agri_v57_cats', JSON.stringify(CATS));
         actualizarDatalists();
     }
 
-    // 2. Compatibilidad con AgriCactus V86
-    // El V86 envía los supervisores en json.supervisor (array de nombres)
-    // y la jornada no viene explícita, la tomaremos del primer registro o pondremos "GENERAL"
     const avanceReal = json.avance || [];
     const jornadaDefault = json.jornada || "GENERAL"; 
 
-    // Función de normalización y búsqueda
     const buscarID = (lista, busqueda, campoNombre) => {
         if(!lista || !busqueda) return "?";
+        // Normalizamos ambos textos para que coincidan aunque tengan espacios o puntos
         let encontrado = lista.find(item => norm(item[campoNombre]) === norm(busqueda));
         return encontrado ? encontrado.id : "?";
     };
 
     const idJornada = buscarID(CATS.jornadas, jornadaDefault, 'desc');
 
-    // 3. Procesar Avance de Obreros (Aquí es donde está toda la información)
     avanceReal.forEach(a => {
-        const nombreActividad = a.actividad || "ACTIVIDAD";
-        const idAct = buscarID(CATS.actividades, nombreActividad, 'desc');
+        const idAct = buscarID(CATS.actividades, a.actividad, 'desc');
         const idCua = buscarID(CATS.cuadros, a.nomCuadro, 'nombre');
         
         sumarAlMaster({
-            cre: a.obrero, // ID del trabajador
-            id_a: idAct,   // ID de la actividad (del catálogo)
-            n_a: nombreActividad,
-            id_c: idCua,   // ID del cuadro (del catálogo)
+            cre: a.obrero,
+            id_a: idAct,
+            n_a: a.actividad,
+            id_c: idCua,
             cua: a.nomCuadro,
             id_j: idJornada,
             n_j: jornadaDefault,
-            lin: a.lineasContadas || 1 // Toma las líneas del reporte
+            lin: a.lineasContadas || 0,
+            plt: a.plantasDone || 0 // <--- LEEMOS PLANTAS DEL JSON
         });
     });
 
     render();
-    alert("Reporte de V86 procesado correctamente ✅");
+    alert("Archivo de V86 cargado: " + avanceReal.length + " registros procesados.");
 }
-    function sumarAlMaster(n) {
-        // Agrupar por Credencial, Actividad y Cuadro para no duplicar filas innecesariamente
-        let registroExistente = CONCENTRADO.find(r => 
-            r.cre === n.cre && r.id_a === n.id_a && r.cua === n.cua
-        );
 
-        if (registroExistente) {
-            registroExistente.lin += n.lin;
-        } else {
-            CONCENTRADO.push(n);
-        }
-        localStorage.setItem('agri_v57_master', JSON.stringify(CONCENTRADO));
-    }
+function sumarAlMaster(n) {
+    // Agrupamos por ID, Actividad y Cuadro
+    let registroExistente = CONCENTRADO.find(r => 
+        r.cre === n.cre && r.id_a === n.id_a && r.cua === n.cua
+    );
 
-    function render() {
-        const tbody = document.querySelector('#tablaMaster tbody');
-        tbody.innerHTML = CONCENTRADO.map(d => `
-            <tr class="${d.lin === 0 ? 'row-sup' : ''}">
-                <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
-                <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
-                <td>${d.n_j}</td><td><b>${d.lin}</b></td>
-            </tr>
-        `).join('');
+    if (registroExistente) {
+        registroExistente.lin += n.lin;
+        registroExistente.plt = (registroExistente.plt || 0) + n.plt; // SUMAR PLANTAS
+    } else {
+        CONCENTRADO.push(n);
     }
+    localStorage.setItem('agri_v57_master', JSON.stringify(CONCENTRADO));
+}
+
+function render() {
+    const tbody = document.querySelector('#tablaMaster tbody');
+    tbody.innerHTML = CONCENTRADO.map(d => `
+        <tr class="${d.lin === 0 ? 'row-sup' : ''}">
+            <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
+            <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
+            <td>${d.n_j}</td><td>${d.lin}</td>
+            <td style="font-weight:bold; color:var(--accent);">${d.plt || 0}</td>
+        </tr>
+    `).join('');
+}
 
     function registrarManual() {
         const id = document.getElementById('manual_id').value.trim();
@@ -218,20 +217,21 @@
     }
 
     function descargarExcel() {
-        const ahora = new Date();
-        const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
-        
-        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS\n";
-        CONCENTRADO.forEach(d => { 
-            csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin}\n`; 
-        });
+    const ahora = new Date();
+    const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
+    
+    // Añadimos PLANTAS al encabezado del CSV
+    let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS,PLANTAS\n";
+    CONCENTRADO.forEach(d => { 
+        csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin},${d.plt || 0}\n`; 
+    });
 
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "REPORTE_AGRI_" + fecha + ".csv";
-        link.click();
-    }
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "REPORTE_AGRI_" + fecha + ".csv";
+    link.click();
+}
 
     function borrarTodo() { 
         if(confirm("¿Estás seguro de limpiar todos los datos del día?")) { 
@@ -245,6 +245,7 @@
 </script>
 </body>
 </html>
+
 
 
 
