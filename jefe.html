@@ -98,14 +98,27 @@
             });
         }
 
-        function validarYAñadir(nuevo) {
-            const id = nuevo.sesiones[0]?.uid || nuevo.config.resp + nuevo.config.supId;
-            if (jsonData.some(e => (e.sesiones[0]?.uid || e.config.resp + e.config.supId) === id)) return;
-            jsonData.push(nuevo);
-            localStorage.setItem('agri_v50', JSON.stringify(jsonData));
-            actualizarDashboard();
-        }
-
+       function validarYAñadir(nuevo) {
+    // Traductor de V86 a Monitor V5
+    if (nuevo.tipo && (nuevo.tipo === "PARCIAL" || nuevo.tipo === "FINAL")) {
+        const adaptado = {
+            config: {
+                resp: Array.isArray(nuevo.supervisor) ? nuevo.supervisor.join(", ") : nuevo.supervisor,
+                supAct: nuevo.avance[0]?.actividad || "General",
+                totalStaff: [...new Set(nuevo.avance.map(a => a.obrero))].length
+            },
+            sesiones: [{ uid: Date.now(), inicio: 1, fin: nuevo.avance.length }], // Simulación para el KPI
+            avance: nuevo.avance
+        };
+        jsonData.push(adaptado);
+    } else {
+        // Si el archivo ya viene en formato viejo, lo añade normal
+        jsonData.push(nuevo);
+    }
+    
+    localStorage.setItem('agri_v50', JSON.stringify(jsonData));
+    actualizarDashboard();
+}
         function actualizarDashboard() {
             if (jsonData.length === 0) return;
             
@@ -114,7 +127,13 @@
             let tAssigned = 0, tFinished = 0, activityStats = {}, blockStats = {}, workerStats = {};
 
             jsonData.forEach((data, index) => {
-                let sAssigned = 0; data.sesiones.forEach(s => sAssigned += (s.fin - s.inicio + 1));
+               // Busca esto dentro de jsonData.forEach en actualizarDashboard:
+let sAssigned = 0; 
+if(data.sesiones) {
+    data.sesiones.forEach(s => sAssigned += (parseInt(s.fin) - parseInt(s.inicio) + 1));
+} else {
+    sAssigned = data.avance.length;
+}
                 let sFinished = data.avance.filter(a => a.fin !== null).length;
                 let pct = sAssigned > 0 ? Math.round((sFinished / sAssigned) * 100) : 0;
                 tAssigned += sAssigned; tFinished += sFinished;
@@ -246,5 +265,6 @@
     </script>
 </body>
 </html>
+
 
 
