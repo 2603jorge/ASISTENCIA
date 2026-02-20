@@ -19,7 +19,7 @@
         .flex-row { display: flex; gap: 5px; }
         .hidden { display: none; }
         .table-wrapper { overflow-x: auto; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 700px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid #334155; border-right: 1px solid #1e293b; }
         th { background: #1e293b; color: var(--accent); font-weight: bold; }
         .row-sup { background: rgba(21, 101, 192, 0.2); }
@@ -37,16 +37,6 @@
         <button class="btn btn-blue" onclick="nav('sec_asistencia')">📋 TABLA</button>
         <button class="btn btn-blue" onclick="nav('sec_escaner')">🆔 ESCANEO</button>
         <button class="btn btn-blue" onclick="nav('sec_catalogos')">📂 CATS</button>
-        <div class="card" style="background: #1e293b; border: 1px solid var(--accent); margin-top: 10px;">
-    <label style="color: var(--accent); font-weight: bold;">💰 DEFINIR PRECIO POR PLANTA ($)</label>
-    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-        <span style="font-size: 20px;">$</span>
-        <input type="number" id="precio_dinamico" value="0.00" step="0.01" 
-               oninput="render()" 
-               style="margin-bottom: 0; border-color: var(--accent); font-size: 20px; font-weight: bold; color: #00e676;">
-    </div>
-    <p style="font-size: 10px; color: #aaa; margin: 5px 0 0 0;">* Cambia el valor para recalcular toda la tabla automáticamente.</p>
-</div>
     </div>
 
     <div id="sec_escaner" class="hidden">
@@ -63,26 +53,37 @@
     </div>
 
     <div id="sec_asistencia">
+        <div class="card" style="background: #1e293b; border: 1px solid var(--accent); margin-top: 5px;">
+            <label style="color: var(--accent); font-weight: bold;">💰 PRECIO POR PLANTA ($)</label>
+            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                <span style="font-size: 20px;">$</span>
+                <input type="number" id="precio_dinamico" value="0.00" step="0.01" 
+                       oninput="render()" 
+                       style="margin-bottom: 0; border-color: var(--accent); font-size: 20px; font-weight: bold; color: #00e676;">
+            </div>
+            <p style="font-size: 10px; color: #aaa; margin: 3px 0 0 0;">* Cambia el valor para recalcular el pago automáticamente.</p>
+        </div>
+
         <div class="card">
             <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">📂 CARGAR ARCHIVO .JSON</button>
             <input type="file" id="fileInput" class="hidden" accept=".json" onchange="procesarArchivo(this)">
             
             <div class="table-wrapper">
                 <table id="tablaMaster">
-                  <thead>
-    <tr>
-        <th>CREDENTIAL</th>
-        <th>ID_ACT</th>
-        <th>NAME_ACT</th>
-        <th>ID_CUA</th>
-        <th>CUADRO</th>
-        <th>ID_JOR</th>
-        <th>DESC_JOR</th>
-        <th>LÍNEAS</th>
-        <th>PLANTAS</th>
-        <th style="background: #d32f2f; color: white;">TOTAL PAGO ($)</th>
-    </tr>
-</thead>
+                    <thead>
+                        <tr>
+                            <th>CREDENTIAL</th>
+                            <th>ID_ACT</th>
+                            <th>NAME_ACT</th>
+                            <th>ID_CUA</th>
+                            <th>CUADRO</th>
+                            <th>ID_JOR</th>
+                            <th>DESC_JOR</th>
+                            <th>LÍNEAS</th>
+                            <th>PLANTAS</th>
+                            <th style="background: #d32f2f; color: white;">TOTAL PAGO ($)</th>
+                        </tr>
+                    </thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -129,81 +130,75 @@
         reader.readAsText(input.files[0]);
     }
 
-   function procesarJSON(json) {
-    // 1. Guardar catálogos del JSON para que los IDs no salgan con "?"
-    if (json.catalogos) {
-        CATS = json.catalogos;
-        localStorage.setItem('agri_v57_cats', JSON.stringify(CATS));
-        actualizarDatalists();
-    }
+    function procesarJSON(json) {
+        if (json.catalogos) {
+            CATS = json.catalogos;
+            localStorage.setItem('agri_v57_cats', JSON.stringify(CATS));
+            actualizarDatalists();
+        }
 
-    const avanceReal = json.avance || [];
-    const jornadaDefault = json.jornada || "GENERAL"; 
+        const avanceReal = json.avance || [];
+        const jornadaDefault = json.jornada || "GENERAL"; 
 
-    const buscarID = (lista, busqueda, campoNombre) => {
-        if(!lista || !busqueda) return "?";
-        // Normalizamos ambos textos para que coincidan aunque tengan espacios o puntos
-        let encontrado = lista.find(item => norm(item[campoNombre]) === norm(busqueda));
-        return encontrado ? encontrado.id : "?";
-    };
+        const buscarID = (lista, busqueda, campoNombre) => {
+            if(!lista || !busqueda) return "?";
+            let encontrado = lista.find(item => norm(item[campoNombre]) === norm(busqueda));
+            return encontrado ? encontrado.id : "?";
+        };
 
-    const idJornada = buscarID(CATS.jornadas, jornadaDefault, 'desc');
+        const idJornada = buscarID(CATS.jornadas, jornadaDefault, 'desc');
 
-    avanceReal.forEach(a => {
-        const idAct = buscarID(CATS.actividades, a.actividad, 'desc');
-        const idCua = buscarID(CATS.cuadros, a.nomCuadro, 'nombre');
-        
-        sumarAlMaster({
-            cre: a.obrero,
-            id_a: idAct,
-            n_a: a.actividad,
-            id_c: idCua,
-            cua: a.nomCuadro,
-            id_j: idJornada,
-            n_j: jornadaDefault,
-            lin: a.lineasContadas || 0,
-            plt: a.plantasDone || 0 // <--- LEEMOS PLANTAS DEL JSON
+        avanceReal.forEach(a => {
+            const idAct = buscarID(CATS.actividades, a.actividad, 'desc');
+            const idCua = buscarID(CATS.cuadros, a.nomCuadro, 'nombre');
+            
+            sumarAlMaster({
+                cre: a.obrero,
+                id_a: idAct,
+                n_a: a.actividad,
+                id_c: idCua,
+                cua: a.nomCuadro,
+                id_j: idJornada,
+                n_j: jornadaDefault,
+                lin: a.lineasContadas || 0,
+                plt: a.plantasDone || 0
+            });
         });
-    });
 
-    render();
-    alert("Archivo de V86 cargado: " + avanceReal.length + " registros procesados.");
-}
-
-function sumarAlMaster(n) {
-    // Agrupamos por ID, Actividad y Cuadro
-    let registroExistente = CONCENTRADO.find(r => 
-        r.cre === n.cre && r.id_a === n.id_a && r.cua === n.cua
-    );
-
-    if (registroExistente) {
-        registroExistente.lin += n.lin;
-        registroExistente.plt = (registroExistente.plt || 0) + n.plt; // SUMAR PLANTAS
-    } else {
-        CONCENTRADO.push(n);
+        render();
+        alert("Archivo de V86 cargado correctamente.");
     }
-    localStorage.setItem('agri_v57_master', JSON.stringify(CONCENTRADO));
-}
 
-function render() {
-    const tbody = document.querySelector('#tablaMaster tbody');
-    // Captura el precio que escribiste en la pantalla
-    const precioManual = parseFloat(document.getElementById('precio_dinamico').value) || 0;
+    function sumarAlMaster(n) {
+        let registroExistente = CONCENTRADO.find(r => 
+            r.cre === n.cre && r.id_a === n.id_a && r.cua === n.cua
+        );
 
-    tbody.innerHTML = CONCENTRADO.map(d => {
-        // Multiplicación automática
-        const pagoObrero = (d.plt || 0) * precioManual;
-        
-        return `
-            <tr class="${d.lin === 0 ? 'row-sup' : ''}">
-                <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
-                <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
-                <td>${d.n_j}</td><td>${d.lin}</td><td>${d.plt || 0}</td>
-                <td style="font-weight:bold; color:#ffeb3b;">$${pagoObrero.toFixed(2)}</td>
-            </tr>
-        `;
-    }).join('');
-}
+        if (registroExistente) {
+            registroExistente.lin += n.lin;
+            registroExistente.plt = (registroExistente.plt || 0) + n.plt;
+        } else {
+            CONCENTRADO.push(n);
+        }
+        localStorage.setItem('agri_v57_master', JSON.stringify(CONCENTRADO));
+    }
+
+    function render() {
+        const tbody = document.querySelector('#tablaMaster tbody');
+        const precioManual = parseFloat(document.getElementById('precio_dinamico').value) || 0;
+
+        tbody.innerHTML = CONCENTRADO.map(d => {
+            const pagoObrero = (d.plt || 0) * precioManual;
+            return `
+                <tr class="${d.lin === 0 ? 'row-sup' : ''}">
+                    <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
+                    <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
+                    <td>${d.n_j}</td><td>${d.lin}</td><td>${d.plt || 0}</td>
+                    <td style="font-weight:bold; color:#ffeb3b;">$${pagoObrero.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
 
     function registrarManual() {
         const id = document.getElementById('manual_id').value.trim();
@@ -212,7 +207,12 @@ function render() {
         const nC = document.getElementById('in_cua').value;
         const lin = parseInt(document.getElementById('manual_lineas').value) || 0;
 
-        if(!id || !nA || !nC) return alert("Faltan datos obligatorios");
+        if(!id || !nA || !nC) return alert("Faltan datos");
+
+        const buscarID = (lista, busqueda, campoNombre) => {
+            let encontrado = lista.find(item => norm(item[campoNombre]) === norm(busqueda));
+            return encontrado ? encontrado.id : "?";
+        };
 
         const idJ = buscarID(CATS.jornadas, nJ, 'desc');
         const idA = buscarID(CATS.actividades, nA, 'desc');
@@ -220,7 +220,7 @@ function render() {
 
         sumarAlMaster({
             cre: id, id_a: idA, n_a: nA, id_c: idC, cua: nC,
-            id_j: idJ, n_j: nJ, lin: lin
+            id_j: idJ, n_j: nJ, lin: lin, plt: 0
         });
         
         document.getElementById('manual_id').value = "";
@@ -228,35 +228,32 @@ function render() {
     }
 
     function actualizarDatalists() {
-        document.getElementById('list_jor').innerHTML = (CATS.jornadas || []).map(j => `<option value="${j.desc}">`).join('');
-        document.getElementById('list_act').innerHTML = (CATS.actividades || []).map(a => `<option value="${a.desc}">`).join('');
-        document.getElementById('list_cua').innerHTML = (CATS.cuadros || []).map(c => `<option value="${c.nombre}">`).join('');
         document.getElementById('cat_cua').value = (CATS.cuadros || []).map(c => `${c.id},${c.nombre}`).join('\n');
         document.getElementById('cat_act').value = (CATS.actividades || []).map(a => `${a.id},${a.desc}`).join('\n');
         document.getElementById('cat_jor').value = (CATS.jornadas || []).map(j => `${j.id},${j.desc}`).join('\n');
     }
 
     function descargarExcel() {
-    const ahora = new Date();
-    const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
-    // Toma el precio actual de la pantalla para el reporte
-    const precioReporte = parseFloat(document.getElementById('precio_dinamico').value) || 0;
-    
-    let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS,PLANTAS,PRECIO_UNI,TOTAL_A_PAGAR\n";
-    
-    CONCENTRADO.forEach(d => { 
-        const total = (d.plt || 0) * precioReporte;
-        csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin},${d.plt || 0},${precioReporte},${total.toFixed(2)}\n`; 
-    });
+        const ahora = new Date();
+        const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
+        const precioReporte = parseFloat(document.getElementById('precio_dinamico').value) || 0;
+        
+        let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS,PLANTAS,PRECIO_UNI,TOTAL_A_PAGAR\n";
+        
+        CONCENTRADO.forEach(d => { 
+            const total = (d.plt || 0) * precioReporte;
+            csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin},${d.plt || 0},${precioReporte},${total.toFixed(2)}\n`; 
+        });
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "REPORTE_PAGOS_" + fecha + ".csv";
-    link.click();
-}
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "REPORTE_PAGOS_" + fecha + ".csv";
+        link.click();
+    }
+
     function borrarTodo() { 
-        if(confirm("¿Estás seguro de limpiar todos los datos del día?")) { 
+        if(confirm("¿Borrar todo?")) { 
             CONCENTRADO = []; 
             localStorage.removeItem('agri_v57_master'); 
             render(); 
@@ -267,7 +264,6 @@ function render() {
 </script>
 </body>
 </html>
-
 
 
 
