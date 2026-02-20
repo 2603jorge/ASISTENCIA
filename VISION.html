@@ -37,6 +37,16 @@
         <button class="btn btn-blue" onclick="nav('sec_asistencia')">📋 TABLA</button>
         <button class="btn btn-blue" onclick="nav('sec_escaner')">🆔 ESCANEO</button>
         <button class="btn btn-blue" onclick="nav('sec_catalogos')">📂 CATS</button>
+        <div class="card" style="background: #1e293b; border: 1px solid var(--accent); margin-top: 10px;">
+    <label style="color: var(--accent); font-weight: bold;">💰 DEFINIR PRECIO POR PLANTA ($)</label>
+    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+        <span style="font-size: 20px;">$</span>
+        <input type="number" id="precio_dinamico" value="0.00" step="0.01" 
+               oninput="render()" 
+               style="margin-bottom: 0; border-color: var(--accent); font-size: 20px; font-weight: bold; color: #00e676;">
+    </div>
+    <p style="font-size: 10px; color: #aaa; margin: 5px 0 0 0;">* Cambia el valor para recalcular toda la tabla automáticamente.</p>
+</div>
     </div>
 
     <div id="sec_escaner" class="hidden">
@@ -59,7 +69,7 @@
             
             <div class="table-wrapper">
                 <table id="tablaMaster">
-                   <thead>
+                  <thead>
     <tr>
         <th>CREDENTIAL</th>
         <th>ID_ACT</th>
@@ -69,7 +79,9 @@
         <th>ID_JOR</th>
         <th>DESC_JOR</th>
         <th>LÍNEAS</th>
-        <th style="background: var(--main); color: white;">PLANTAS</th> </tr>
+        <th>PLANTAS</th>
+        <th style="background: #d32f2f; color: white;">TOTAL PAGO ($)</th>
+    </tr>
 </thead>
                     <tbody></tbody>
                 </table>
@@ -175,14 +187,22 @@ function sumarAlMaster(n) {
 
 function render() {
     const tbody = document.querySelector('#tablaMaster tbody');
-    tbody.innerHTML = CONCENTRADO.map(d => `
-        <tr class="${d.lin === 0 ? 'row-sup' : ''}">
-            <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
-            <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
-            <td>${d.n_j}</td><td>${d.lin}</td>
-            <td style="font-weight:bold; color:var(--accent);">${d.plt || 0}</td>
-        </tr>
-    `).join('');
+    // Captura el precio que escribiste en la pantalla
+    const precioManual = parseFloat(document.getElementById('precio_dinamico').value) || 0;
+
+    tbody.innerHTML = CONCENTRADO.map(d => {
+        // Multiplicación automática
+        const pagoObrero = (d.plt || 0) * precioManual;
+        
+        return `
+            <tr class="${d.lin === 0 ? 'row-sup' : ''}">
+                <td>${d.cre}</td><td>${d.id_a}</td><td>${d.n_a}</td>
+                <td>${d.id_c}</td><td>${d.cua}</td><td>${d.id_j}</td>
+                <td>${d.n_j}</td><td>${d.lin}</td><td>${d.plt || 0}</td>
+                <td style="font-weight:bold; color:#ffeb3b;">$${pagoObrero.toFixed(2)}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
     function registrarManual() {
@@ -219,20 +239,22 @@ function render() {
     function descargarExcel() {
     const ahora = new Date();
     const fecha = ahora.getDate() + "_" + (ahora.getMonth() + 1) + "_" + ahora.getFullYear();
+    // Toma el precio actual de la pantalla para el reporte
+    const precioReporte = parseFloat(document.getElementById('precio_dinamico').value) || 0;
     
-    // Añadimos PLANTAS al encabezado del CSV
-    let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS,PLANTAS\n";
+    let csv = "\uFEFFCREDENTIAL,ID_ACT,NAME_ACT,ID_CUA,CUADRO,ID_JOR,DESC_JOR,LÍNEAS,PLANTAS,PRECIO_UNI,TOTAL_A_PAGAR\n";
+    
     CONCENTRADO.forEach(d => { 
-        csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin},${d.plt || 0}\n`; 
+        const total = (d.plt || 0) * precioReporte;
+        csv += `${d.cre},${d.id_a},${d.n_a},${d.id_c},${d.cua},${d.id_j},${d.n_j},${d.lin},${d.plt || 0},${precioReporte},${total.toFixed(2)}\n`; 
     });
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "REPORTE_AGRI_" + fecha + ".csv";
+    link.download = "REPORTE_PAGOS_" + fecha + ".csv";
     link.click();
 }
-
     function borrarTodo() { 
         if(confirm("¿Estás seguro de limpiar todos los datos del día?")) { 
             CONCENTRADO = []; 
@@ -245,6 +267,7 @@ function render() {
 </script>
 </body>
 </html>
+
 
 
 
