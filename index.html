@@ -2,179 +2,443 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriCactus Pay V6 - Exportador Excel</title>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AgriCactus V86 - ALTA VISIBILIDAD</title><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121420">
+
+<script>
+  // Registro del Service Worker para modo offline
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("AgriCactus listo para usar sin internet"))
+      .catch(err => console.log("Error de registro", err));
+  }
+</script>
     <style>
-        :root { --main: #00e676; --dark: #121420; --card: #1e2235; --text-dim: #b0bec5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; padding: 15px; }
-        .container { max-width: 1400px; margin: auto; }
-        .header { background: var(--card); padding: 15px; border-radius: 12px; border-left: 6px solid var(--main); margin-bottom: 15px; }
-        .catalog-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .controls { display: grid; grid-template-columns: 1.2fr 0.8fr 0.5fr 0.5fr 1fr; gap: 10px; background: #2c3149; padding: 15px; border-radius: 8px; margin-bottom: 15px; align-items: end; }
-        textarea { width: 100%; background: #1a1e2e; color: #00e676; border: 1px solid #444; border-radius: 5px; padding: 8px; font-family: monospace; font-size: 10px; box-sizing: border-box; }
-        input { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #121420; color: white; width: 100%; box-sizing: border-box; }
-        input[type="number"] { color: var(--main); font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow-x: auto; font-size: 11px; }
-        th, td { padding: 8px; text-align: center; border-bottom: 1px solid #333; }
-        th { background: rgba(255,255,255,0.05); color: var(--text-dim); text-transform: uppercase; font-size: 9px; }
-        .btn-excel { background: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
-        .total-row { background: rgba(0, 230, 118, 0.1); font-weight: bold; font-size: 13px; }
-        label { font-size: 9px; color: var(--text-dim); font-weight: bold; display: block; margin-bottom: 3px; }
+    /* VARIABLES MONITOR V5.0 */
+    :root { 
+        --main: #00e676;   /* Verde Neón */
+        --sec: #ffab40;    /* Naranja Alerta */
+        --dark: #121420;   /* Fondo Profundo */
+        --card: #1e2235;   /* Tarjetas Oscuras */
+        --blue: #2979ff;   /* Azul Ingeniería */
+        --danger: #ff5252; /* Rojo Crítico */
+        --active-tab: #00e676;
+        --text-dim: #b0bec5;
+    }
+
+    body { 
+        font-family: 'Segoe UI', sans-serif; 
+        background: var(--dark); 
+        color: white; 
+        margin: 0; 
+        padding: 5px; 
+    }
+
+    /* PESTAÑAS */
+    .hojas-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 5px; padding: 5px 0; border-bottom: 1px solid #444; }
+    .hoja { 
+        background: #2c3149; 
+        padding: 12px 20px; 
+        border-radius: 8px 8px 0 0; 
+        font-size: 14px; 
+        cursor: pointer; 
+        border: 1px solid #444; 
+        color: var(--text-dim); 
+        white-space: nowrap; 
+        font-weight: bold; 
+    }
+    .hoja.active { background: var(--active-tab); color: black; border-bottom: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
+
+    /* BANNERS Y TARJETAS */
+    .header-banner { 
+        background: var(--card); 
+        padding: 10px; 
+        border: 1px solid rgba(255,255,255,0.1); 
+        border-left: 6px solid var(--main); 
+        margin-bottom: 8px; 
+        font-size: 13px; 
+        color: white; 
+        border-radius: 4px; 
+    }
+
+    /* TABLA */
+    .table-container { overflow-x: auto; background: var(--card); border: 1px solid #333; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; color: white; table-layout: fixed; } 
+    th, td { border: 1px solid #333; padding: 2px; text-align: center; overflow: hidden; }
+    th { background: rgba(255,255,255,0.05); color: var(--text-dim); font-weight: bold; text-transform: uppercase; font-size: 10px; height: 35px; }
+
+    .col-eq { width: 8%; } 
+    .col-cred { width: 10%; } 
+    .col-nom { width: 25%; text-align: left !important; padding-left: 5px; font-size: 13px; color: var(--main); }
+    .col-linea { width: 7.5%; } 
+    .col-total { width: 13%; background: rgba(0, 230, 118, 0.15); color: var(--main); font-weight: bold; }
+
+    /* ENTRADAS DE DATOS */
+    .input-tabla { 
+        width: 100%; 
+        height: 48px; 
+        border: 1px solid #444; 
+        text-align: center; 
+        font-size: 22px; 
+        font-weight: 900; 
+        color: white !important; 
+        background: #1a1e2e; 
+        box-sizing: border-box; 
+        display: block; 
+        margin: 0; 
+    }
+    select { 
+        width: 100%; 
+        height: 35px; 
+        font-size: 14px; 
+        font-weight: bold; 
+        border: 1px solid #444; 
+        background: #2c3149; 
+        color: white;
+        margin-top: 2px; 
+    }
+
+    .active-row { background: rgba(255, 171, 64, 0.05) !important; }
+
+    /* VENTANAS MODALES */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 15px; box-sizing: border-box; display: none; overflow-y: auto; color: white; }
+    .modal.open { display: block; }
+
+    #viewSetup input, #viewSetup select, textarea { 
+        width: 100%; 
+        height: 50px; 
+        padding: 10px; 
+        background: #2c3149; 
+        border: 1px solid #444; 
+        color: white; 
+        border-radius: 8px; 
+        font-size: 16px; 
+        box-sizing: border-box; 
+    }
+    textarea { height: auto !important; }
+
+    label { display: block; margin-top: 12px; color: var(--text-dim); font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* BOTONES */
+    .btn { width: 100%; padding: 18px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; text-transform: uppercase; font-size: 14px; transition: 0.2s; }
+    .btn-g { background: var(--main); color: black; } 
+    .btn-b { background: var(--blue); } 
+    .btn-r { background: var(--danger); } 
+    .btn-o { background: var(--sec); color: black; }
+    .btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>💰 AgriCactus Pay V6</h1>
-        <p>Reporte de Nómina con IDs de Gestión y Exportación Excel</p>
+<div id="viewSetup" class="modal open">
+    <h2 style="text-align:center; color: var(--main);">AGRICACTUS V86</h2>
+    <div style="background: var(--card); padding: 15px; border: 1px solid #333; border-radius: 12px;">
+        <label>👤 Contratista</label>
+        <input type="text" id="conf_contratista" list="lista_personal" placeholder="Contratista...">
+        <label>👥 Añadir Cuadrilleros</label>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="input_add_cuadrillero" list="lista_personal" placeholder="Nombre...">
+            <button class="btn btn-b" style="width:50px; margin-top:0;" onclick="agregarCuadrilleroLista()">+</button>
+        </div>
+        <div id="lista_cuadrilleros_setup" style="margin-top:5px; border: 1px solid #444; background: rgba(0,0,0,0.2); border-radius: 8px; min-height: 40px; color:var(--main); font-size: 13px; padding: 5px;"></div>
+        <hr style="border:0.5px solid #444; margin: 15px 0;">
+        <label>📍 Cuadro</label><input type="text" id="conf_cuadro" list="lista_cuadros" oninput="alEscribirCuadro()">
+        <label>🧭 Orientación</label><select id="conf_ori"></select>
+        <label>🚜 Actividad</label><input type="text" id="conf_act" list="lista_actividades">
+        <label>🕒 Jornada</label><input type="text" id="conf_jornada" list="lista_jornadas">
     </div>
-
-    <div class="catalog-grid">
-        <div><label>Catálogo Cuadros (ID,Num...)</label><textarea id="txt_cuadros" rows="2"></textarea></div>
-        <div><label>Catálogo Personal (ID,Nom...)</label><textarea id="txt_personal" rows="2"></textarea></div>
-        <div><label>Actividades e Jornadas (ID,Nom...)</label><textarea id="txt_act_jor" rows="2" placeholder="Pega Actividades y luego Jornadas..."></textarea></div>
-    </div>
-
-    <div class="controls">
-        <div><label>Archivos JSON</label><input type="file" id="fileInput" multiple accept=".json"></div>
-        <div><label>Precio Planta ($)</label><input type="number" id="precioPlanta" value="0.00" step="0.01" oninput="renderTabla()"></div>
-        <div><label>% Cont.</label><input type="number" id="pctCont" value="10" oninput="renderTabla()"></div>
-        <div><label>% Cuad.</label><input type="number" id="pctCuad" value="5" oninput="renderTabla()"></div>
-        <button class="btn-excel" onclick="exportarExcel()">📊 GENERAR EXCEL</button>
-    </div>
-
-    <table id="tablaParaExcel">
-        <thead>
-            <tr>
-                <th>Credencial</th>
-                <th style="text-align:left;">Nombre</th>
-                <th>ID Cuadro</th>
-                <th>ID Actividad</th>
-                <th>ID Jornada</th>
-                <th>Desglose</th>
-                <th>Líneas</th>
-                <th>Plantas</th>
-                <th>Pago ($)</th>
-            </tr>
-        </thead>
-        <tbody id="tablaNomina">
-            <tr><td colspan="9" style="padding:20px;">Cargue catálogos y archivos...</td></tr>
-        </tbody>
-        <tfoot>
-            <tr class="total-row">
-                <td colspan="7" style="text-align:right;">TOTAL A DISPERSAR:</td>
-                <td id="granTotalPlantas">0</td>
-                <td id="granTotalPago">$0.00</td>
-            </tr>
-        </tfoot>
-    </table>
+    <button class="btn btn-b" onclick="abrirDB()">📂 BASE DE DATOS / CATÁLOGOS</button>
+    <button class="btn btn-g" onclick="iniciarOAgregarHoja()">🚀 INICIAR JORNADA</button>
+    <button id="btnCancelarConfig" class="btn btn-r" onclick="cancelarConfiguracion()" style="display:none;">✖ CANCELAR (VOLVER)</button>
 </div>
 
+<div id="viewMain" class="modal">
+    <div class="hojas-container" id="hojasTabs"></div>
+    <div class="header-banner">
+        <div style="display:flex; justify-content:space-between;">
+            <b id="disp_cont" style="color:var(--main)">--</b> <b id="disp_jor">--</b>
+        </div>
+        <div id="disp_cuad" style="font-weight: bold; font-size: 11px; margin-top:5px; color:var(--text-dim)">--</div>
+        <div style="margin-top:8px; display:flex; justify-content:space-between; border-top: 1px solid #444; padding-top:8px;">
+            <span><b>LOC:</b> <span id="disp_loc">--</span> | <span id="disp_act_val">--</span></span>
+            <span><b>ACTIVOS: <span id="disp_count" style="color:var(--main)">0</span></b></span>
+        </div>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-eq" style="background:rgba(255, 213, 79, 0.2); color:#ffd54f;">EQ.</th>
+                    <th class="col-cred">CRED.</th>
+                    <th class="col-nom">NOMBRE</th>
+                    <th class="col-linea">L-1</th><th class="col-linea">L-2</th><th class="col-linea">L-3</th><th class="col-linea">L-4</th><th class="col-linea">L-5</th><th class="col-linea">L-6</th>
+                    <th class="col-total">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody id="tablaCuerpo"></tbody>
+        </table>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <button class="btn btn-b" onclick="abrirConfigNuevaHoql()">➕ OTRO CUADRO</button>
+        <button class="btn btn-o" onclick="abrirResumen()">📊 RESUMEN</button>
+    </div>
+    <button class="btn" style="background:#455a64;" onclick="abrirHistorico()">📅 VER HISTORIAL</button>
+    <button class="btn btn-g" onclick="descargarReporte()">🏁 FINALIZAR DÍA Y GUARDAR</button>
+</div>
+
+<div id="modalDB" class="modal">
+    <h3 style="color:var(--main)">CATÁLOGOS COMPLETOS</h3>
+    <label>PERSONAL (ID,Nombre)</label><textarea id="csv_p" rows="4"></textarea>
+    <label>CUADROS (ID,Num,Var,Ori,Ex,Lin,Plt)</label><textarea id="csv_c" rows="4"></textarea>
+    <label>ACTIVIDADES (ID,Nombre)</label><textarea id="csv_a" rows="3"></textarea>
+    <label>JORNADAS (ID,Nombre)</label><textarea id="csv_j" rows="2"></textarea>
+    <button class="btn btn-g" onclick="guardarBD()">💾 GUARDAR CAMBIOS</button>
+    <button class="btn btn-r" onclick="cerrarModal('modalDB')">VOLVER</button>
+    <button class="btn" style="background:#444;" onclick="resetSistema()">⚠️ REINICIAR APP</button>
+</div>
+
+<div id="modalResumen" class="modal">
+    <h3 style="text-align:center; color:var(--main)">📊 RESUMEN ACUMULADO</h3>
+    <div class="table-container">
+        <table>
+            <thead><tr style="background:#333;"><th>EQ</th><th>CRED.</th><th style="text-align:left;">NOMBRE</th><th>CUADROS</th><th>TOTAL</th></tr></thead>
+            <tbody id="resumenCuerpo"></tbody>
+        </table>
+    </div>
+    <button class="btn btn-r" onclick="cerrarModal('modalResumen')">VOLVER</button>
+</div>
+
+<div id="modalHistorico" class="modal">
+    <h2 style="text-align:center; color:var(--main)">📅 HISTORIAL LOCAL</h2>
+    <div id="resumenMesVisual" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr style="background:#333;"><th>FECHA</th><th>CONTRATISTA</th><th>TOTAL</th></tr>
+            </thead>
+            <tbody id="cuerpoHistorico"></tbody>
+        </table>
+    </div>
+    <button class="btn btn-b" onclick="cerrarModal('modalHistorico')">VOLVER</button>
+    <button class="btn btn-r" onclick="if(confirm('¿Borrar todo el historial?')) { localStorage.removeItem('v86_historico'); abrirHistorico(); }">⚠️ BORRAR TODO</button>
+</div>
+
+<datalist id="lista_cuadros"></datalist><datalist id="lista_actividades"></datalist><datalist id="lista_jornadas"></datalist><datalist id="lista_personal"></datalist>
+
 <script>
-let datosConsolidados = {};
-let catCuadros = [], catPersonal = {}, catAct = {}, catJor = {};
-let infoLideres = { contratista: "", cuadrilleros: new Set() };
+let Libreta = {
+    hojas: JSON.parse(localStorage.getItem('v86_hojas')) || [], 
+    currentIdx: parseInt(localStorage.getItem('v86_idx')) >= 0 ? parseInt(localStorage.getItem('v86_idx')) : -1,
+    personal: JSON.parse(localStorage.getItem('v86_p')) || [],
+    cuadros: JSON.parse(localStorage.getItem('v86_c')) || [],
+    actividades: JSON.parse(localStorage.getItem('v86_a')) || [],
+    jornadas: JSON.parse(localStorage.getItem('v86_j')) || []
+};
 
-function cargarCatalogos() {
-    catCuadros = document.getElementById('txt_cuadros').value.split('\n').filter(l => l.includes(',')).map(l => {
-        const c = l.split(','); return { id: c[0].trim(), num: c[1].trim(), ori: c[3].trim(), plt: parseFloat(c[6]) || 0 };
-    });
-    document.getElementById('txt_personal').value.split('\n').filter(l => l.includes(',')).forEach(l => {
-        const c = l.split(','); catPersonal[c[0].trim()] = c[1].trim().toUpperCase();
-        catPersonal[c[1].trim().toUpperCase()] = c[0].trim();
-    });
-    document.getElementById('txt_act_jor').value.split('\n').filter(l => l.includes(',')).forEach(l => {
-        const c = l.split(','); 
-        catAct[c[1].trim().toUpperCase()] = c[0].trim();
-        catJor[c[1].trim().toUpperCase()] = c[0].trim();
-    });
+let listaCuadrillerosTemporal = [];
+
+function autoGuardar() {
+    localStorage.setItem('v86_hojas', JSON.stringify(Libreta.hojas));
+    localStorage.setItem('v86_idx', Libreta.currentIdx);
+    localStorage.setItem('v86_p', JSON.stringify(Libreta.personal));
+    localStorage.setItem('v86_c', JSON.stringify(Libreta.cuadros));
+    localStorage.setItem('v86_a', JSON.stringify(Libreta.actividades));
+    localStorage.setItem('v86_j', JSON.stringify(Libreta.jornadas));
 }
 
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    cargarCatalogos();
-    datosConsolidados = {};
-    infoLideres.cuadrilleros.clear();
-    let archivosLeidos = 0;
-    const files = e.target.files;
+function updFraccion(pid, campo, val, tipo) {
+    const h = Libreta.hojas[Libreta.currentIdx];
+    if(!h.avance[pid]) h.avance[pid] = {eq:"", l1:"", l2:"", l3:"", l4:"", l5:"", l6:"", tiempos: {}};
+    let valorGuardado = h.avance[pid][campo] || "";
+    let partes = valorGuardado.split(' ');
+    let nF = partes[0] || ""; let fr = partes[1] || ""; 
+    if (tipo === 'num') { nF = val; } 
+    else if (tipo === 'frac') {
+        let inputNum = document.querySelector(`input[onchange*="${pid}"][onchange*="${campo}"]`);
+        if(inputNum) nF = inputNum.value;
+        fr = val;
+    }
+    const ahora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    if(tipo === 'num' && val !== "") {
+        const campos = ['l1','l2','l3','l4','l5','l6'];
+        if(!h.avance[pid].tiempos) h.avance[pid].tiempos = {};
+        campos.forEach(c => { if(h.avance[pid].tiempos[c] && !h.avance[pid].tiempos[c].fin) h.avance[pid].tiempos[c].fin = ahora; });
+        h.avance[pid].tiempos[campo] = { inicio: ahora, fin: null };
+    }
+    h.avance[pid][campo] = (nF + " " + fr).trim();
+    autoGuardar(); renderLibreta();
+}
 
-    for (let i = 0; i < files.length; i++) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const data = JSON.parse(event.target.result);
-            if(data.hojas) {
-                infoLideres.contratista = data.hojas[0].contratista;
-                data.hojas.forEach(h => {
-                    h.cuadrilleros.forEach(c => infoLideres.cuadrilleros.add(c.toUpperCase()));
-                    const cInfo = catCuadros.find(cc => cc.num == h.cuadro && cc.ori == h.ori);
-                    const pxl = cInfo ? cInfo.plt : 0;
-                    const idCuad = cInfo ? cInfo.id : "S/ID";
-                    const idAct = catAct[h.act.toUpperCase()] || "S/ID";
-                    const idJor = catJor[h.jornada.toUpperCase()] || "S/ID";
-
-                    Object.keys(h.avance).forEach(pid => {
-                        const av = h.avance[pid];
-                        if(!datosConsolidados[pid]) {
-                            datosConsolidados[pid] = { nom: catPersonal[pid] || "S/N", idCuad, idAct, idJor, plt: 0, fracTotal: 0, detalle: "" };
-                        }
-                        
-                        let fH = 0; let dH = "";
-                        ['l1','l2','l3','l4','l5','l6'].forEach(lx => {
-                            if(av[lx]) {
-                                const val = av[lx].split(' ');
-                                const frStr = val[1] || "";
-                                const frNum = frStr==="1/4"?0.25 : frStr==="1/2"?0.50 : frStr==="3/4"?0.75 : frStr==="1"?1.00 : 0;
-                                if(frNum > 0) { fH += frNum; dH += `${lx.toUpperCase()}:${val[0]}(${frStr}) `; }
-                            }
-                        });
-                        datosConsolidados[pid].fracTotal += fH;
-                        datosConsolidados[pid].plt += (fH * pxl);
-                        datosConsolidados[pid].detalle += dH;
-                    });
-                });
+function descargarReporte() {
+    if (Libreta.hojas.length === 0) return alert("No hay datos");
+    const ahoraCierre = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    Libreta.hojas.forEach(hoja => {
+        Object.keys(hoja.avance).forEach(pid => {
+            const trabajador = hoja.avance[pid];
+            if(trabajador.tiempos) {
+                ['l1','l2','l3','l4','l5', 'l6'].forEach(l => { if(trabajador.tiempos[l] && !trabajador.tiempos[l].fin) trabajador.tiempos[l].fin = ahoraCierre; });
             }
-            archivosLeidos++;
-            if(archivosLeidos === files.length) renderTabla();
-        };
-        reader.readAsText(files[i]);
-    }
-});
-
-function renderTabla() {
-    const precio = parseFloat(document.getElementById('precioPlanta').value) || 0;
-    const pCont = (parseFloat(document.getElementById('pctCont').value) || 0) / 100;
-    const pCuad = (parseFloat(document.getElementById('pctCuad').value) || 0) / 100;
-    let html = "", sPlt = 0, sPagoOp = 0;
-
-    Object.keys(datosConsolidados).forEach(id => {
-        const p = datosConsolidados[id];
-        const pago = p.plt * precio;
-        sPlt += p.plt; sPagoOp += pago;
-        html += `<tr><td>${id}</td><td style="text-align:left;">${p.nom}</td><td>${p.idCuad}</td><td>${p.idAct}</td><td>${p.idJor}</td><td>${p.detalle}</td><td>${p.fracTotal.toFixed(2)}</td><td>${p.plt}</td><td>$${pago.toFixed(2)}</td></tr>`;
+        });
     });
 
-    let pContT = sPagoOp * pCont; let pCuadT = sPagoOp * pCuad;
-    if(infoLideres.contratista) {
-        html += `<tr style="color:#82b1ff;"><td>${catPersonal[infoLideres.contratista.toUpperCase()] || '-'}</td><td style="text-align:left;">${infoLideres.contratista}</td><td colspan="6">CONTRATISTA (${document.getElementById('pctCont').value}%)</td><td>$${pContT.toFixed(2)}</td></tr>`;
+    let o_reporte = prompt("Observaciones del día:", "Ninguna") || "Sin observaciones";
+    const hoy = new Date();
+    const fechaStr = `${hoy.getFullYear()}-${(hoy.getMonth()+1).toString().padStart(2,'0')}-${hoy.getDate().toString().padStart(2,'0')}`;
+    const nombreArchivo = (Libreta.hojas[0].contratista || "Reporte").replace(/\s+/g, '_');
+
+    const dataFinal = { 
+        tipo: "FINAL", contratista: Libreta.hojas[0].contratista, fecha: hoy.toLocaleString(), 
+        hojas: Libreta.hojas, pendientes: "0", observaciones: o_reporte 
+    };
+
+    let historial = JSON.parse(localStorage.getItem('v86_historico')) || [];
+    historial.push(dataFinal);
+    localStorage.setItem('v86_historico', JSON.stringify(historial));
+
+    const blob = new Blob([JSON.stringify(dataFinal, null, 2)], {type: "application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); 
+    a.download = `${nombreArchivo}_${fechaStr}.json`; a.click();
+
+    if(confirm("✅ Reporte guardado. ¿Limpiar pantalla?")) { 
+        Libreta.hojas = []; Libreta.currentIdx = -1; autoGuardar(); location.reload(); 
     }
-    infoLideres.cuadrilleros.forEach(c => {
-        html += `<tr style="color:#82b1ff;"><td>${catPersonal[c] || '-'}</td><td style="text-align:left;">${c}</td><td colspan="6">CUADRILLERO (${document.getElementById('pctCuad').value}%)</td><td>$${pCuadT.toFixed(2)}</td></tr>`;
+}
+
+function abrirHistorico() {
+    const historial = JSON.parse(localStorage.getItem('v86_historico')) || [];
+    const cuerpo = document.getElementById('cuerpoHistorico');
+    const resumenDiv = document.getElementById('resumenMesVisual');
+    let totalAcumulado = 0; let tablaHtml = "";
+
+    historial.forEach(rep => {
+        let totalDia = 0;
+        rep.hojas.forEach(hoja => {
+            Object.values(hoja.avance).forEach(av => { totalDia += calcularTotalFila(av); });
+        });
+        totalAcumulado += totalDia;
+        tablaHtml += `<tr><td>${rep.fecha.split(',')[0]}</td><td>${rep.contratista}</td><td style="font-weight:bold;">${totalDia.toFixed(2)}</td></tr>`;
     });
 
-    document.getElementById('tablaNomina').innerHTML = html;
-    document.getElementById('granTotalPlantas').innerText = sPlt;
-    document.getElementById('granTotalPago').innerText = "$" + (sPagoOp + pContT + (pCuadT * infoLideres.cuadrilleros.size)).toFixed(2);
+    resumenDiv.innerHTML = `
+        <div style="background:var(--card); padding:10px; border:1px solid #444; text-align:center; border-radius:8px;">
+            <label>ACUMULADO</label><br><b style="color:var(--main); font-size:18px;">${totalAcumulado.toFixed(2)}</b>
+        </div>
+        <div style="background:var(--card); padding:10px; border:1px solid #444; text-align:center; border-radius:8px;">
+            <label>REPORTES</label><br><b style="color:var(--blue); font-size:18px;">${historial.length}</b>
+        </div>`;
+
+    cuerpo.innerHTML = tablaHtml || "<tr><td colspan='3'>Sin datos</td></tr>";
+    document.getElementById('modalHistorico').classList.add('open');
 }
 
-function exportarExcel() {
-    const table = document.getElementById("tablaParaExcel");
-    const wb = XLSX.utils.table_to_book(table, {sheet: "Nomina AgriCactus"});
-    const fecha = new Date().toISOString().slice(0,10);
-    XLSX.writeFile(wb, `Nomina_${fecha}.xlsx`);
+function calcularTotalFila(d) {
+    const fn = (v) => { 
+        if(!v) return 0; 
+        let partes = v.toString().split(' ');
+        let fraccion = partes[1] || "";
+        if(fraccion === "1/4") return 0.25; if(fraccion === "1/2") return 0.50; 
+        if(fraccion === "3/4") return 0.75; if(fraccion === "1") return 1.00; 
+        return 0; 
+    };
+    return fn(d.l1) + fn(d.l2) + fn(d.l3) + fn(d.l4) + fn(d.l5) + fn(d.l6);
 }
+
+function renderLibreta() {
+    const hoja = Libreta.hojas[Libreta.currentIdx]; if (!hoja) return;
+    document.getElementById('hojasTabs').innerHTML = Libreta.hojas.map((h, i) => `<div class="hoja ${i===Libreta.currentIdx?'active':''}" onclick="cambiarHoja(${i})">${h.cuadro}</div>`).join('');
+    document.getElementById('disp_cont').innerText = "CONT: " + hoja.contratista;
+    document.getElementById('disp_jor').innerText = "JOR: " + hoja.jornada;
+    document.getElementById('disp_cuad').innerText = "CUADRILLEROS: " + hoja.cuadrilleros.join(', ');
+    document.getElementById('disp_loc').innerText = `${hoja.cuadro} (${hoja.ori}) | SURCOS: ${hoja.maxLin}`;
+    document.getElementById('disp_act_val').innerText = hoja.act;
+    const cuerpo = document.getElementById('tablaCuerpo');
+    const lista = [...Libreta.personal].sort((a,b) => (parseInt(hoja.avance[a.id]?.eq) || 999) - (parseInt(hoja.avance[b.id]?.eq) || 999) || a.nom.localeCompare(b.nom));
+    cuerpo.innerHTML = lista.map(p => {
+        const d = hoja.avance[p.id] || { eq: "", l1: "", l2: "", l3: "", l4: "", l5: "", l6: "" };
+        const total = calcularTotalFila(d);
+        let celdas = [1,2,3,4,5,6].map(n => {
+            const campo = 'l'+n; const val = d[campo] || ""; const partes = val.split(' ');
+            const nFila = partes[0] || "", frac = partes[1] || "";
+            let bg = frac==="1/4"?"#ff5252":frac==="1/2"?"#ffab40":frac==="3/4"?"#2979ff":frac==="1"?"#00e676":"#1a1e2e";
+            return `<td class="col-linea"><input type="number" class="input-tabla" value="${nFila}" onchange="verificarRango('${p.id}','${campo}',this.value,${hoja.maxLin})"><select style="background:${bg}; color:${frac===''?'white':'black'};" onchange="updFraccion('${p.id}','${campo}',this.value,'frac')"><option value="" ${frac===''?'selected':''}>-</option><option value="1/4" ${frac==='1/4'?'selected':''}>1/4</option><option value="1/2" ${frac==='1/2'?'selected':''}>1/2</option><option value="3/4" ${frac==='3/4'?'selected':''}>3/4</option><option value="1" ${frac==='1'?'selected':''}>1</option></select></td>`;
+        }).join('');
+        return `<tr class="${total>0?'active-row':''}"><td><input type="number" class="input-tabla" value="${d.eq}" onchange="actualizarEQGlobal('${p.id}',this.value)"></td><td>${p.id}</td><td class="col-nom"><b>${p.nom}</b></td>${celdas}<td class="col-total">${total.toFixed(2)}</td></tr>`;
+    }).join('');
+    document.getElementById('disp_count').innerText = Object.values(hoja.avance).filter(a => calcularTotalFila(a) > 0).length;
+}
+
+function iniciarOAgregarHoja() {
+    const cuadroSel = document.getElementById('conf_cuadro').value.trim();
+    const oriSel = document.getElementById('conf_ori').value.trim();
+    const contratista = document.getElementById('conf_contratista').value.trim();
+    if(!cuadroSel || !oriSel || !contratista) return alert("Complete los campos obligatorios");
+    const info = Libreta.cuadros.find(c => c.num == cuadroSel && c.ori == oriSel);
+    const nuevaHoja = { uid: Date.now(), cuadro: cuadroSel, ori: oriSel, act: document.getElementById('conf_act').value, contratista, cuadrilleros: [...listaCuadrillerosTemporal], jornada: document.getElementById('conf_jornada').value, maxLin: info?parseInt(info.lin):99, avance: {} };
+    Libreta.personal.forEach(p => {
+        let eqPre = ""; Libreta.hojas.forEach(h => { if(h.avance[p.id]?.eq) eqPre = h.avance[p.id].eq; });
+        if(eqPre) nuevaHoja.avance[p.id] = {eq: eqPre, l1:"", l2:"", l3:"", l4:"", l5:"", l6:"", tiempos:{}};
+    });
+    Libreta.hojas.push(nuevaHoja); Libreta.currentIdx = Libreta.hojas.length - 1; autoGuardar();
+    document.getElementById('viewSetup').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); renderLibreta();
+}
+
+function abrirConfigNuevaHoql() {
+    document.getElementById('viewMain').classList.remove('open');
+    document.getElementById('viewSetup').classList.add('open');
+    const btnCanc = document.getElementById('btnCancelarConfig');
+    if (btnCanc) { btnCanc.style.display = (Libreta.hojas.length > 0) ? 'block' : 'none'; }
+}
+
+function cancelarConfiguracion() {
+    if (Libreta.hojas.length > 0) {
+        document.getElementById('viewSetup').classList.remove('open');
+        document.getElementById('viewMain').classList.add('open');
+        renderLibreta();
+    }
+}
+
+function abrirResumen() {
+    const cuerpo = document.getElementById('resumenCuerpo'); let html = "";
+    Libreta.personal.forEach(p => {
+        let total = 0, cds = [], eq = "--";
+        Libreta.hojas.forEach(h => { if(h.avance[p.id]) { const s = calcularTotalFila(h.avance[p.id]); if(s > 0) { total += s; cds.push(h.cuadro); eq = h.avance[p.id].eq; } } });
+        if(total > 0) html += `<tr><td>${eq}</td><td>${p.id}</td><td style="text-align:left;">${p.nom}</td><td>${[...new Set(cds)].join(', ')}</td><td style="font-weight:bold;">${total.toFixed(2)}</td></tr>`;
+    });
+    cuerpo.innerHTML = html || "Sin datos registrados"; document.getElementById('modalResumen').classList.add('open');
+}
+
+function guardarBD() {
+    const pLines = document.getElementById('csv_p').value.split('\n').filter(l=>l.includes(','));
+    Libreta.personal = pLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
+    const cLines = document.getElementById('csv_c').value.split('\n').filter(l=>l.includes(','));
+    Libreta.cuadros = cLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), num:c[1].trim(), var:c[2].trim(), ori:c[3].trim(), ex:c[4].trim(), lin:c[5].trim(), plt:c[6].trim()}; });
+    const aLines = document.getElementById('csv_a').value.split('\n').filter(l=>l.includes(','));
+    Libreta.actividades = aLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
+    const jLines = document.getElementById('csv_j').value.split('\n').filter(l=>l.includes(','));
+    Libreta.jornadas = jLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
+    autoGuardar(); actualizarSelectores(); cerrarModal('modalDB'); location.reload();
+}
+
+function actualizarSelectores() {
+    document.getElementById('lista_personal').innerHTML = Libreta.personal.map(p => `<option value="${p.nom}">`).join('');
+    document.getElementById('lista_cuadros').innerHTML = [...new Set(Libreta.cuadros.map(c => c.num))].map(n => `<option value="${n}">`).join('');
+    document.getElementById('lista_actividades').innerHTML = Libreta.actividades.map(a => `<option value="${a.nom}">`).join('');
+    document.getElementById('lista_jornadas').innerHTML = Libreta.jornadas.map(j => `<option value="${j.nom}">`).join('');
+}
+
+function agregarCuadrilleroLista() { const v = document.getElementById('input_add_cuadrillero').value.toUpperCase(); if(v) { if(!listaCuadrillerosTemporal.includes(v)) { listaCuadrillerosTemporal.push(v); document.getElementById('input_add_cuadrillero').value=""; renderListaCuadrillerosSetup(); } } }
+function renderListaCuadrillerosSetup() { document.getElementById('lista_cuadrilleros_setup').innerHTML = listaCuadrillerosTemporal.map((c,i) => `<div style="padding:5px; border-bottom:1px solid #444;">${c} <span onclick="listaCuadrillerosTemporal.splice(${i},1);renderListaCuadrillerosSetup();" style="color:red; cursor:pointer; font-weight:bold;">✖</span></div>`).join(''); }
+function verificarRango(p, c, v, l) { if (parseInt(v) > l) alert("Límite: " + l); updFraccion(p, c, v, 'num'); }
+function actualizarEQGlobal(pid, val) { Libreta.hojas.forEach(h => { if(!h.avance[pid]) h.avance[pid]={eq:"",l1:"",l2:"",l3:"",l4:"",l5:"",l6:""}; h.avance[pid].eq = val; }); autoGuardar(); renderLibreta(); }
+function cambiarHoja(i) { Libreta.currentIdx = i; autoGuardar(); renderLibreta(); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+function abrirDB() { actualizarSelectores(); document.getElementById('modalDB').classList.add('open'); }
+function alEscribirCuadro() { const v = document.getElementById('conf_cuadro').value, r = Libreta.cuadros.filter(c=>c.num === v); document.getElementById('conf_ori').innerHTML = r.map(o=>`<option value="${o.ori}">${o.ori} (${o.var})</option>`).join(''); }
+function resetSistema() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
+
+window.onload = () => { actualizarSelectores(); if(Libreta.hojas.length > 0) { document.getElementById('viewSetup').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); renderLibreta(); } };
 </script>
 </body>
 </html>
-
 
