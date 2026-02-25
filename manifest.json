@@ -1,16 +1,17 @@
 {
-  "name": "AgriCactus V47",
   "short_name": "AgriCactus",
-  "start_url": "index.html",
-  "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#2e7d32",
-  "orientation": "portrait",
+  "name": "AgriCactus V86 - Gestión Agrícola",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/628/628283.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2371/2371844.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "type": "image/png"
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "start_url": "index.html",
+  "background_color": "#121420",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#00e676"
 }
