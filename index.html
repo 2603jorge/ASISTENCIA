@@ -1,2 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriCactus Pay V6 - Exportador Excel</title>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root { --main: #00e676; --dark: #121420; --card: #1e2235; --text-dim: #b0bec5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; padding: 15px; }
+        .container { max-width: 1400px; margin: auto; }
+        .header { background: var(--card); padding: 15px; border-radius: 12px; border-left: 6px solid var(--main); margin-bottom: 15px; }
+        .catalog-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .controls { display: grid; grid-template-columns: 1.2fr 0.8fr 0.5fr 0.5fr 1fr; gap: 10px; background: #2c3149; padding: 15px; border-radius: 8px; margin-bottom: 15px; align-items: end; }
+        textarea { width: 100%; background: #1a1e2e; color: #00e676; border: 1px solid #444; border-radius: 5px; padding: 8px; font-family: monospace; font-size: 10px; box-sizing: border-box; }
+        input { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #121420; color: white; width: 100%; box-sizing: border-box; }
+        input[type="number"] { color: var(--main); font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow-x: auto; font-size: 11px; }
+        th, td { padding: 8px; text-align: center; border-bottom: 1px solid #333; }
+        th { background: rgba(255,255,255,0.05); color: var(--text-dim); text-transform: uppercase; font-size: 9px; }
+        .btn-excel { background: #2e7d32; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; }
+        .total-row { background: rgba(0, 230, 118, 0.1); font-weight: bold; font-size: 13px; }
+        label { font-size: 9px; color: var(--text-dim); font-weight: bold; display: block; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>💰 AgriCactus Pay V6</h1>
+        <p>Reporte de Nómina con IDs de Gestión y Exportación Excel</p>
+    </div>
+
+    <div class="catalog-grid">
+        <div><label>Catálogo Cuadros (ID,Num...)</label><textarea id="txt_cuadros" rows="2"></textarea></div>
+        <div><label>Catálogo Personal (ID,Nom...)</label><textarea id="txt_personal" rows="2"></textarea></div>
+        <div><label>Actividades e Jornadas (ID,Nom...)</label><textarea id="txt_act_jor" rows="2" placeholder="Pega Actividades y luego Jornadas..."></textarea></div>
+    </div>
+
+    <div class="controls">
+        <div><label>Archivos JSON</label><input type="file" id="fileInput" multiple accept=".json"></div>
+        <div><label>Precio Planta ($)</label><input type="number" id="precioPlanta" value="0.00" step="0.01" oninput="renderTabla()"></div>
+        <div><label>% Cont.</label><input type="number" id="pctCont" value="10" oninput="renderTabla()"></div>
+        <div><label>% Cuad.</label><input type="number" id="pctCuad" value="5" oninput="renderTabla()"></div>
+        <button class="btn-excel" onclick="exportarExcel()">📊 GENERAR EXCEL</button>
+    </div>
+
+    <table id="tablaParaExcel">
+        <thead>
+            <tr>
+                <th>Credencial</th>
+                <th style="text-align:left;">Nombre</th>
+                <th>ID Cuadro</th>
+                <th>ID Actividad</th>
+                <th>ID Jornada</th>
+                <th>Desglose</th>
+                <th>Líneas</th>
+                <th>Plantas</th>
+                <th>Pago ($)</th>
+            </tr>
+        </thead>
+        <tbody id="tablaNomina">
+            <tr><td colspan="9" style="padding:20px;">Cargue catálogos y archivos...</td></tr>
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="7" style="text-align:right;">TOTAL A DISPERSAR:</td>
+                <td id="granTotalPlantas">0</td>
+                <td id="granTotalPago">$0.00</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<script>
+let datosConsolidados = {};
+let catCuadros = [], catPersonal = {}, catAct = {}, catJor = {};
+let infoLideres = { contratista: "", cuadrilleros: new Set() };
+
+function cargarCatalogos() {
+    catCuadros = document.getElementById('txt_cuadros').value.split('\n').filter(l => l.includes(',')).map(l => {
+        const c = l.split(','); return { id: c[0].trim(), num: c[1].trim(), ori: c[3].trim(), plt: parseFloat(c[6]) || 0 };
+    });
+    document.getElementById('txt_personal').value.split('\n').filter(l => l.includes(',')).forEach(l => {
+        const c = l.split(','); catPersonal[c[0].trim()] = c[1].trim().toUpperCase();
+        catPersonal[c[1].trim().toUpperCase()] = c[0].trim();
+    });
+    document.getElementById('txt_act_jor').value.split('\n').filter(l => l.includes(',')).forEach(l => {
+        const c = l.split(','); 
+        catAct[c[1].trim().toUpperCase()] = c[0].trim();
+        catJor[c[1].trim().toUpperCase()] = c[0].trim();
+    });
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    cargarCatalogos();
+    datosConsolidados = {};
+    infoLideres.cuadrilleros.clear();
+    let archivosLeidos = 0;
+    const files = e.target.files;
+
+    for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const data = JSON.parse(event.target.result);
+            if(data.hojas) {
+                infoLideres.contratista = data.hojas[0].contratista;
+                data.hojas.forEach(h => {
+                    h.cuadrilleros.forEach(c => infoLideres.cuadrilleros.add(c.toUpperCase()));
+                    const cInfo = catCuadros.find(cc => cc.num == h.cuadro && cc.ori == h.ori);
+                    const pxl = cInfo ? cInfo.plt : 0;
+                    const idCuad = cInfo ? cInfo.id : "S/ID";
+                    const idAct = catAct[h.act.toUpperCase()] || "S/ID";
+                    const idJor = catJor[h.jornada.toUpperCase()] || "S/ID";
+
+                    Object.keys(h.avance).forEach(pid => {
+                        const av = h.avance[pid];
+                        if(!datosConsolidados[pid]) {
+                            datosConsolidados[pid] = { nom: catPersonal[pid] || "S/N", idCuad, idAct, idJor, plt: 0, fracTotal: 0, detalle: "" };
+                        }
+                        
+                        let fH = 0; let dH = "";
+                        ['l1','l2','l3','l4','l5','l6'].forEach(lx => {
+                            if(av[lx]) {
+                                const val = av[lx].split(' ');
+                                const frStr = val[1] || "";
+                                const frNum = frStr==="1/4"?0.25 : frStr==="1/2"?0.50 : frStr==="3/4"?0.75 : frStr==="1"?1.00 : 0;
+                                if(frNum > 0) { fH += frNum; dH += `${lx.toUpperCase()}:${val[0]}(${frStr}) `; }
+                            }
+                        });
+                        datosConsolidados[pid].fracTotal += fH;
+                        datosConsolidados[pid].plt += (fH * pxl);
+                        datosConsolidados[pid].detalle += dH;
+                    });
+                });
+            }
+            archivosLeidos++;
+            if(archivosLeidos === files.length) renderTabla();
+        };
+        reader.readAsText(files[i]);
+    }
+});
+
+function renderTabla() {
+    const precio = parseFloat(document.getElementById('precioPlanta').value) || 0;
+    const pCont = (parseFloat(document.getElementById('pctCont').value) || 0) / 100;
+    const pCuad = (parseFloat(document.getElementById('pctCuad').value) || 0) / 100;
+    let html = "", sPlt = 0, sPagoOp = 0;
+
+    Object.keys(datosConsolidados).forEach(id => {
+        const p = datosConsolidados[id];
+        const pago = p.plt * precio;
+        sPlt += p.plt; sPagoOp += pago;
+        html += `<tr><td>${id}</td><td style="text-align:left;">${p.nom}</td><td>${p.idCuad}</td><td>${p.idAct}</td><td>${p.idJor}</td><td>${p.detalle}</td><td>${p.fracTotal.toFixed(2)}</td><td>${p.plt}</td><td>$${pago.toFixed(2)}</td></tr>`;
+    });
+
+    let pContT = sPagoOp * pCont; let pCuadT = sPagoOp * pCuad;
+    if(infoLideres.contratista) {
+        html += `<tr style="color:#82b1ff;"><td>${catPersonal[infoLideres.contratista.toUpperCase()] || '-'}</td><td style="text-align:left;">${infoLideres.contratista}</td><td colspan="6">CONTRATISTA (${document.getElementById('pctCont').value}%)</td><td>$${pContT.toFixed(2)}</td></tr>`;
+    }
+    infoLideres.cuadrilleros.forEach(c => {
+        html += `<tr style="color:#82b1ff;"><td>${catPersonal[c] || '-'}</td><td style="text-align:left;">${c}</td><td colspan="6">CUADRILLERO (${document.getElementById('pctCuad').value}%)</td><td>$${pCuadT.toFixed(2)}</td></tr>`;
+    });
+
+    document.getElementById('tablaNomina').innerHTML = html;
+    document.getElementById('granTotalPlantas').innerText = sPlt;
+    document.getElementById('granTotalPago').innerText = "$" + (sPagoOp + pContT + (pCuadT * infoLideres.cuadrilleros.size)).toFixed(2);
+}
+
+function exportarExcel() {
+    const table = document.getElementById("tablaParaExcel");
+    const wb = XLSX.utils.table_to_book(table, {sheet: "Nomina AgriCactus"});
+    const fecha = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, `Nomina_${fecha}.xlsx`);
+}
+</script>
+</body>
+</html>
 
 
