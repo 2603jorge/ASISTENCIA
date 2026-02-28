@@ -3,129 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgriCactus V86 - ALTA VISIBILIDAD</title><link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#121420">
+    <title>AgriCactus V86 - ALTA VISIBILIDAD</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#121420">
 
-<script>
-  // Registro del Service Worker para modo offline
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
-      .then(() => console.log("AgriCactus listo para usar sin internet"))
-      .catch(err => console.log("Error de registro", err));
-  }
-</script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log("AgriCactus listo"))
+          .catch(err => console.log("Error SW", err));
+      }
+    </script>
+    
     <style>
-    /* VARIABLES MONITOR V5.0 */
     :root { 
-        --main: #00e676;   /* Verde Neón */
-        --sec: #ffab40;    /* Naranja Alerta */
-        --dark: #121420;   /* Fondo Profundo */
-        --card: #1e2235;   /* Tarjetas Oscuras */
-        --blue: #2979ff;   /* Azul Ingeniería */
-        --danger: #ff5252; /* Rojo Crítico */
-        --active-tab: #00e676;
-        --text-dim: #b0bec5;
+        --main: #00e676; --sec: #ffab40; --dark: #121420; 
+        --card: #1e2235; --blue: #2979ff; --danger: #ff5252; 
+        --active-tab: #00e676; --text-dim: #b0bec5;
     }
-
-    body { 
-        font-family: 'Segoe UI', sans-serif; 
-        background: var(--dark); 
-        color: white; 
-        margin: 0; 
-        padding: 5px; 
-    }
-
-    /* PESTAÑAS */
+    body { font-family: 'Segoe UI', sans-serif; background: var(--dark); color: white; margin: 0; padding: 5px; }
     .hojas-container { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 5px; padding: 5px 0; border-bottom: 1px solid #444; }
-    .hoja { 
-        background: #2c3149; 
-        padding: 12px 20px; 
-        border-radius: 8px 8px 0 0; 
-        font-size: 14px; 
-        cursor: pointer; 
-        border: 1px solid #444; 
-        color: var(--text-dim); 
-        white-space: nowrap; 
-        font-weight: bold; 
-    }
+    .hoja { background: #2c3149; padding: 12px 20px; border-radius: 8px 8px 0 0; font-size: 14px; cursor: pointer; border: 1px solid #444; color: var(--text-dim); white-space: nowrap; font-weight: bold; }
     .hoja.active { background: var(--active-tab); color: black; border-bottom: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
-
-    /* BANNERS Y TARJETAS */
-    .header-banner { 
-        background: var(--card); 
-        padding: 10px; 
-        border: 1px solid rgba(255,255,255,0.1); 
-        border-left: 6px solid var(--main); 
-        margin-bottom: 8px; 
-        font-size: 13px; 
-        color: white; 
-        border-radius: 4px; 
-    }
-
-    /* TABLA */
+    .header-banner { background: var(--card); padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-left: 6px solid var(--main); margin-bottom: 8px; font-size: 13px; color: white; border-radius: 4px; }
     .table-container { overflow-x: auto; background: var(--card); border: 1px solid #333; border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; color: white; table-layout: fixed; } 
     th, td { border: 1px solid #333; padding: 2px; text-align: center; overflow: hidden; }
     th { background: rgba(255,255,255,0.05); color: var(--text-dim); font-weight: bold; text-transform: uppercase; font-size: 10px; height: 35px; }
-
-    .col-eq { width: 8%; } 
-    .col-cred { width: 10%; } 
-    .col-nom { width: 25%; text-align: left !important; padding-left: 5px; font-size: 13px; color: var(--main); }
-    .col-linea { width: 7.5%; } 
-    .col-total { width: 13%; background: rgba(0, 230, 118, 0.15); color: var(--main); font-weight: bold; }
-
-    /* ENTRADAS DE DATOS */
-    .input-tabla { 
-        width: 100%; 
-        height: 48px; 
-        border: 1px solid #444; 
-        text-align: center; 
-        font-size: 22px; 
-        font-weight: 900; 
-        color: white !important; 
-        background: #1a1e2e; 
-        box-sizing: border-box; 
-        display: block; 
-        margin: 0; 
-    }
-    select { 
-        width: 100%; 
-        height: 35px; 
-        font-size: 14px; 
-        font-weight: bold; 
-        border: 1px solid #444; 
-        background: #2c3149; 
-        color: white;
-        margin-top: 2px; 
-    }
-
+    .col-eq { width: 8%; } .col-cred { width: 10%; } .col-nom { width: 25%; text-align: left !important; padding-left: 5px; font-size: 13px; color: var(--main); }
+    .col-linea { width: 7.5%; } .col-total { width: 13%; background: rgba(0, 230, 118, 0.15); color: var(--main); font-weight: bold; }
+    .input-tabla { width: 100%; height: 48px; border: 1px solid #444; text-align: center; font-size: 22px; font-weight: 900; color: white !important; background: #1a1e2e; box-sizing: border-box; display: block; margin: 0; }
+    select { width: 100%; height: 35px; font-size: 14px; font-weight: bold; border: 1px solid #444; background: #2c3149; color: white; margin-top: 2px; }
     .active-row { background: rgba(255, 171, 64, 0.05) !important; }
-
-    /* VENTANAS MODALES */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; padding: 15px; box-sizing: border-box; display: none; overflow-y: auto; color: white; }
     .modal.open { display: block; }
-
-    #viewSetup input, #viewSetup select, textarea { 
-        width: 100%; 
-        height: 50px; 
-        padding: 10px; 
-        background: #2c3149; 
-        border: 1px solid #444; 
-        color: white; 
-        border-radius: 8px; 
-        font-size: 16px; 
-        box-sizing: border-box; 
-    }
+    #viewSetup input, #viewSetup select, textarea { width: 100%; height: 50px; padding: 10px; background: #2c3149; border: 1px solid #444; color: white; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
     textarea { height: auto !important; }
-
     label { display: block; margin-top: 12px; color: var(--text-dim); font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* BOTONES */
     .btn { width: 100%; padding: 18px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; text-transform: uppercase; font-size: 14px; transition: 0.2s; }
-    .btn-g { background: var(--main); color: black; } 
-    .btn-b { background: var(--blue); } 
-    .btn-r { background: var(--danger); } 
-    .btn-o { background: var(--sec); color: black; }
+    .btn-g { background: var(--main); color: black; } .btn-b { background: var(--blue); } .btn-r { background: var(--danger); } .btn-o { background: var(--sec); color: black; }
     .btn:active { transform: scale(0.98); }
     </style>
 </head>
@@ -156,9 +72,7 @@
 <div id="viewMain" class="modal">
     <div class="hojas-container" id="hojasTabs"></div>
     <div class="header-banner">
-        <div style="display:flex; justify-content:space-between;">
-            <b id="disp_cont" style="color:var(--main)">--</b> <b id="disp_jor">--</b>
-        </div>
+        <div style="display:flex; justify-content:space-between;"><b id="disp_cont" style="color:var(--main)">--</b> <b id="disp_jor">--</b></div>
         <div id="disp_cuad" style="font-weight: bold; font-size: 11px; margin-top:5px; color:var(--text-dim)">--</div>
         <div style="margin-top:8px; display:flex; justify-content:space-between; border-top: 1px solid #444; padding-top:8px;">
             <span><b>LOC:</b> <span id="disp_loc">--</span> | <span id="disp_act_val">--</span></span>
@@ -167,15 +81,7 @@
     </div>
     <div class="table-container">
         <table>
-            <thead>
-                <tr>
-                    <th class="col-eq" style="background:rgba(255, 213, 79, 0.2); color:#ffd54f;">EQ.</th>
-                    <th class="col-cred">CRED.</th>
-                    <th class="col-nom">NOMBRE</th>
-                    <th class="col-linea">L-1</th><th class="col-linea">L-2</th><th class="col-linea">L-3</th><th class="col-linea">L-4</th><th class="col-linea">L-5</th><th class="col-linea">L-6</th>
-                    <th class="col-total">TOTAL</th>
-                </tr>
-            </thead>
+            <thead><tr><th class="col-eq">EQ.</th><th class="col-cred">CRED.</th><th class="col-nom">NOMBRE</th><th class="col-linea">L-1</th><th class="col-linea">L-2</th><th class="col-linea">L-3</th><th class="col-linea">L-4</th><th class="col-linea">L-5</th><th class="col-linea">L-6</th><th class="col-total">TOTAL</th></tr></thead>
             <tbody id="tablaCuerpo"></tbody>
         </table>
     </div>
@@ -214,9 +120,7 @@
     <div id="resumenMesVisual" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
     <div class="table-container">
         <table>
-            <thead>
-                <tr style="background:#333;"><th>FECHA</th><th>CONTRATISTA</th><th>TOTAL</th></tr>
-            </thead>
+            <thead><tr style="background:#333;"><th>FECHA</th><th>CONTRATISTA</th><th>TOTAL</th></tr></thead>
             <tbody id="cuerpoHistorico"></tbody>
         </table>
     </div>
@@ -229,36 +133,90 @@
 <script>
 let Libreta = {
     hojas: JSON.parse(localStorage.getItem('v86_hojas')) || [], 
-    currentIdx: parseInt(localStorage.getItem('v86_idx')) >= 0 ? parseInt(localStorage.getItem('v86_idx')) : -1,
+    currentIdx: localStorage.getItem('v86_idx') !== null ? parseInt(localStorage.getItem('v86_idx')) : -1,
     personal: JSON.parse(localStorage.getItem('v86_p')) || [],
     cuadros: JSON.parse(localStorage.getItem('v86_c')) || [],
     actividades: JSON.parse(localStorage.getItem('v86_a')) || [],
     jornadas: JSON.parse(localStorage.getItem('v86_j')) || []
 };
-
 let listaCuadrillerosTemporal = [];
 
 function autoGuardar() {
-    localStorage.setItem('v86_hojas', JSON.stringify(Libreta.hojas));
-    localStorage.setItem('v86_idx', Libreta.currentIdx);
-    localStorage.setItem('v86_p', JSON.stringify(Libreta.personal));
-    localStorage.setItem('v86_c', JSON.stringify(Libreta.cuadros));
-    localStorage.setItem('v86_a', JSON.stringify(Libreta.actividades));
-    localStorage.setItem('v86_j', JSON.stringify(Libreta.jornadas));
+    try {
+        localStorage.setItem('v86_hojas', JSON.stringify(Libreta.hojas));
+        localStorage.setItem('v86_idx', Libreta.currentIdx.toString());
+        localStorage.setItem('v86_p', JSON.stringify(Libreta.personal));
+        localStorage.setItem('v86_c', JSON.stringify(Libreta.cuadros));
+        localStorage.setItem('v86_a', JSON.stringify(Libreta.actividades));
+        localStorage.setItem('v86_j', JSON.stringify(Libreta.jornadas));
+    } catch (e) { console.error("Error al guardar", e); }
 }
+function validarSumaLineaParcial(lineaNum, fraccionNueva, pidActual) {
+    const hoja = Libreta.hojas[Libreta.currentIdx];
+    
+    // Definimos el límite según la orientación
+    // Si es COMPLETA el límite es 1.00, si no, es 0.50
+    const limiteMaximo = (hoja.ori.toUpperCase() === "COMPLETA") ? 1.01 : 0.51;
 
-function updFraccion(pid, campo, val, tipo) {
+    const valorFraccion = (f) => {
+        if (f === "1/4") return 0.25;
+        if (f === "1/2") return 0.50;
+        if (f === "3/4") return 0.75;
+        if (f === "1") return 1.00;
+        return 0;
+    };
+
+    let sumaTotal = valorFraccion(fraccionNueva);
+
+    // Revisamos todos los trabajadores en esta misma hoja
+    Object.keys(hoja.avance).forEach(pid => {
+        if (pid === pidActual) return;
+        const av = hoja.avance[pid];
+        ['l1','l2','l3','l4','l5','l6'].forEach(l => {
+            const dato = av[l] || "";
+            const partes = dato.split(' ');
+            // Si el número de surco coincide, sumamos su fracción
+            if (partes[0] == lineaNum) {
+                sumaTotal += valorFraccion(partes[1]);
+            }
+        });
+    });
+
+    if (sumaTotal > limiteMaximo) {
+        const msgLimite = (hoja.ori.toUpperCase() === "COMPLETA") ? "1.00" : "0.50";
+        alert(`❌ ERROR: En la línea ${lineaNum} la suma de avance (${sumaTotal.toFixed(2)}) excede el límite de ${msgLimite} para orientación ${hoja.ori}.`);
+        return false;
+    }
+    return true;
+}function updFraccion(pid, campo, val, tipo) {
     const h = Libreta.hojas[Libreta.currentIdx];
     if(!h.avance[pid]) h.avance[pid] = {eq:"", l1:"", l2:"", l3:"", l4:"", l5:"", l6:"", tiempos: {}};
+    
     let valorGuardado = h.avance[pid][campo] || "";
     let partes = valorGuardado.split(' ');
-    let nF = partes[0] || ""; let fr = partes[1] || ""; 
-    if (tipo === 'num') { nF = val; } 
+    let nF = partes[0] || ""; 
+    let fr = partes[1] || ""; 
+
+    if (tipo === 'num') { 
+        // --- NUEVA VALIDACIÓN DE LÍMITE ---
+        const numIngresado = parseInt(val);
+        if (numIngresado > h.maxLin) {
+            alert(`❌ ERROR: El cuadro ${h.cuadro} solo tiene ${h.maxLin} surcos. No puedes ingresar el surco ${val}.`);
+            renderLibreta(); // Refrescamos para borrar el número inválido
+            return;
+        }
+        nF = val; 
+    } 
     else if (tipo === 'frac') {
-        let inputNum = document.querySelector(`input[onchange*="${pid}"][onchange*="${campo}"]`);
-        if(inputNum) nF = inputNum.value;
+        if (val !== "" && nF !== "") {
+            if (!validarSumaLineaParcial(nF, val, pid)) {
+                renderLibreta(); 
+                return; 
+            }
+        }
         fr = val;
     }
+
     const ahora = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     if(tipo === 'num' && val !== "") {
         const campos = ['l1','l2','l3','l4','l5','l6'];
@@ -266,8 +224,10 @@ function updFraccion(pid, campo, val, tipo) {
         campos.forEach(c => { if(h.avance[pid].tiempos[c] && !h.avance[pid].tiempos[c].fin) h.avance[pid].tiempos[c].fin = ahora; });
         h.avance[pid].tiempos[campo] = { inicio: ahora, fin: null };
     }
+    
     h.avance[pid][campo] = (nF + " " + fr).trim();
-    autoGuardar(); renderLibreta();
+    autoGuardar(); 
+    renderLibreta();
 }
 
 function descargarReporte() {
@@ -275,32 +235,26 @@ function descargarReporte() {
     const ahoraCierre = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     Libreta.hojas.forEach(hoja => {
         Object.keys(hoja.avance).forEach(pid => {
-            const trabajador = hoja.avance[pid];
-            if(trabajador.tiempos) {
-                ['l1','l2','l3','l4','l5', 'l6'].forEach(l => { if(trabajador.tiempos[l] && !trabajador.tiempos[l].fin) trabajador.tiempos[l].fin = ahoraCierre; });
+            if(hoja.avance[pid].tiempos) {
+                ['l1','l2','l3','l4','l5', 'l6'].forEach(l => { 
+                    if(hoja.avance[pid].tiempos[l] && !hoja.avance[pid].tiempos[l].fin) hoja.avance[pid].tiempos[l].fin = ahoraCierre; 
+                });
             }
         });
     });
-
-    let o_reporte = prompt("Observaciones del día:", "Ninguna") || "Sin observaciones";
+    let o_reporte = prompt("Observaciones:", "Ninguna") || "Sin observaciones";
     const hoy = new Date();
-    const fechaStr = `${hoy.getFullYear()}-${(hoy.getMonth()+1).toString().padStart(2,'0')}-${hoy.getDate().toString().padStart(2,'0')}`;
-    const nombreArchivo = (Libreta.hojas[0].contratista || "Reporte").replace(/\s+/g, '_');
-
     const dataFinal = { 
-        tipo: "FINAL", contratista: Libreta.hojas[0].contratista, fecha: hoy.toLocaleString(), 
-        hojas: Libreta.hojas, pendientes: "0", observaciones: o_reporte 
+        tipo: "FINAL", contratista: Libreta.hojas[0].contratista, fecha: hoy.toLocaleString('es-MX'), 
+        hojas: JSON.parse(JSON.stringify(Libreta.hojas)), observaciones: o_reporte 
     };
-
     let historial = JSON.parse(localStorage.getItem('v86_historico')) || [];
     historial.push(dataFinal);
     localStorage.setItem('v86_historico', JSON.stringify(historial));
-
     const blob = new Blob([JSON.stringify(dataFinal, null, 2)], {type: "application/json"});
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); 
-    a.download = `${nombreArchivo}_${fechaStr}.json`; a.click();
-
-    if(confirm("✅ Reporte guardado. ¿Limpiar pantalla?")) { 
+    a.download = `REPORTE_${hoy.toISOString().split('T')[0]}.json`; a.click();
+    if(confirm("✅ Guardado. ¿Limpiar pantalla?")) { 
         Libreta.hojas = []; Libreta.currentIdx = -1; autoGuardar(); location.reload(); 
     }
 }
@@ -310,35 +264,21 @@ function abrirHistorico() {
     const cuerpo = document.getElementById('cuerpoHistorico');
     const resumenDiv = document.getElementById('resumenMesVisual');
     let totalAcumulado = 0; let tablaHtml = "";
-
     historial.forEach(rep => {
         let totalDia = 0;
-        rep.hojas.forEach(hoja => {
-            Object.values(hoja.avance).forEach(av => { totalDia += calcularTotalFila(av); });
-        });
+        rep.hojas.forEach(hoja => { Object.values(hoja.avance).forEach(av => { totalDia += calcularTotalFila(av); }); });
         totalAcumulado += totalDia;
-        tablaHtml += `<tr><td>${rep.fecha.split(',')[0]}</td><td>${rep.contratista}</td><td style="font-weight:bold;">${totalDia.toFixed(2)}</td></tr>`;
+        tablaHtml += `<tr><td>${rep.fecha.split(',')[0]}</td><td>${rep.contratista}</td><td>${totalDia.toFixed(2)}</td></tr>`;
     });
-
-    resumenDiv.innerHTML = `
-        <div style="background:var(--card); padding:10px; border:1px solid #444; text-align:center; border-radius:8px;">
-            <label>ACUMULADO</label><br><b style="color:var(--main); font-size:18px;">${totalAcumulado.toFixed(2)}</b>
-        </div>
-        <div style="background:var(--card); padding:10px; border:1px solid #444; text-align:center; border-radius:8px;">
-            <label>REPORTES</label><br><b style="color:var(--blue); font-size:18px;">${historial.length}</b>
-        </div>`;
-
+    resumenDiv.innerHTML = `<div style="background:var(--card);padding:10px;border-radius:8px;"><label>ACUMULADO</label><br><b>${totalAcumulado.toFixed(2)}</b></div><div style="background:var(--card);padding:10px;border-radius:8px;"><label>REPORTES</label><br><b>${historial.length}</b></div>`;
     cuerpo.innerHTML = tablaHtml || "<tr><td colspan='3'>Sin datos</td></tr>";
     document.getElementById('modalHistorico').classList.add('open');
 }
 
 function calcularTotalFila(d) {
     const fn = (v) => { 
-        if(!v) return 0; 
-        let partes = v.toString().split(' ');
-        let fraccion = partes[1] || "";
-        if(fraccion === "1/4") return 0.25; if(fraccion === "1/2") return 0.50; 
-        if(fraccion === "3/4") return 0.75; if(fraccion === "1") return 1.00; 
+        if(!v) return 0; let partes = v.toString().split(' '); let fr = partes[1] || "";
+        if(fr === "1/4") return 0.25; if(fr === "1/2") return 0.50; if(fr === "3/4") return 0.75; if(fr === "1") return 1.00; 
         return 0; 
     };
     return fn(d.l1) + fn(d.l2) + fn(d.l3) + fn(d.l4) + fn(d.l5) + fn(d.l6);
@@ -352,71 +292,72 @@ function renderLibreta() {
     document.getElementById('disp_cuad').innerText = "CUADRILLEROS: " + hoja.cuadrilleros.join(', ');
     document.getElementById('disp_loc').innerText = `${hoja.cuadro} (${hoja.ori}) | SURCOS: ${hoja.maxLin}`;
     document.getElementById('disp_act_val').innerText = hoja.act;
-    const cuerpo = document.getElementById('tablaCuerpo');
-    const lista = [...Libreta.personal].sort((a,b) => (parseInt(hoja.avance[a.id]?.eq) || 999) - (parseInt(hoja.avance[b.id]?.eq) || 999) || a.nom.localeCompare(b.nom));
-    cuerpo.innerHTML = lista.map(p => {
-        const d = hoja.avance[p.id] || { eq: "", l1: "", l2: "", l3: "", l4: "", l5: "", l6: "" };
+
+    const lista = [...Libreta.personal].sort((a,b) => (parseInt(a.orden) || 999) - (parseInt(b.orden) || 999));
+
+    document.getElementById('tablaCuerpo').innerHTML = lista.map(p => {
+        const d = hoja.avance[p.id] || { eq: p.orden, l1: "", l2: "", l3: "", l4: "", l5: "", l6: "" };
         const total = calcularTotalFila(d);
         let celdas = [1,2,3,4,5,6].map(n => {
             const campo = 'l'+n; const val = d[campo] || ""; const partes = val.split(' ');
             const nFila = partes[0] || "", frac = partes[1] || "";
-            let bg = frac==="1/4"?"#ff5252":frac==="1/2"?"#ffab40":frac==="3/4"?"#2979ff":frac==="1"?"#00e676":"#1a1e2e";
-            return `<td class="col-linea"><input type="number" class="input-tabla" value="${nFila}" onchange="verificarRango('${p.id}','${campo}',this.value,${hoja.maxLin})"><select style="background:${bg}; color:${frac===''?'white':'black'};" onchange="updFraccion('${p.id}','${campo}',this.value,'frac')"><option value="" ${frac===''?'selected':''}>-</option><option value="1/4" ${frac==='1/4'?'selected':''}>1/4</option><option value="1/2" ${frac==='1/2'?'selected':''}>1/2</option><option value="3/4" ${frac==='3/4'?'selected':''}>3/4</option><option value="1" ${frac==='1'?'selected':''}>1</option></select></td>`;
+           let bg = frac==="1/4"?"#ff5252":frac==="1/2"?"#ffab40":frac==="3/4"?"#2979ff":frac==="1"?"#00e676":"#1a1e2e";
+return `<td><input type="number" class="input-tabla" value="${nFila}" onchange="updFraccion('${p.id}','${campo}',this.value,'num')">
+<select style="background:${bg}; color:${frac===''?'white':'black'};" onchange="updFraccion('${p.id}','${campo}',this.value,'frac')">
+    <option value="" ${frac===''?'selected':''}>-</option>
+    <option value="1/4" ${frac==='1/4'?'selected':''}>1/4</option>
+    <option value="1/2" ${frac==='1/2'?'selected':''}>1/2</option>
+    <option value="3/4" ${frac==='3/4'?'selected':''}>3/4</option>
+    <option value="1" ${frac==='1'?'selected':''}>1</option>
+</select></td>`;
         }).join('');
-        return `<tr class="${total>0?'active-row':''}"><td><input type="number" class="input-tabla" value="${d.eq}" onchange="actualizarEQGlobal('${p.id}',this.value)"></td><td>${p.id}</td><td class="col-nom"><b>${p.nom}</b></td>${celdas}<td class="col-total">${total.toFixed(2)}</td></tr>`;
+        return `<tr class="${total>0?'active-row':''}"><td><input type="number" class="input-tabla" value="${d.eq || p.orden}" onchange="actualizarEQGlobal('${p.id}',this.value)"></td><td>${p.id}</td><td class="col-nom"><b>${p.nom}</b></td>${celdas}<td class="col-total">${total.toFixed(2)}</td></tr>`;
     }).join('');
     document.getElementById('disp_count').innerText = Object.values(hoja.avance).filter(a => calcularTotalFila(a) > 0).length;
-}
-
-function iniciarOAgregarHoja() {
+}function iniciarOAgregarHoja() {
     const cuadroSel = document.getElementById('conf_cuadro').value.trim();
     const oriSel = document.getElementById('conf_ori').value.trim();
     const contratista = document.getElementById('conf_contratista').value.trim();
-    if(!cuadroSel || !oriSel || !contratista) return alert("Complete los campos obligatorios");
+    if(!cuadroSel || !oriSel || !contratista) return alert("Complete los campos");
     const info = Libreta.cuadros.find(c => c.num == cuadroSel && c.ori == oriSel);
     const nuevaHoja = { uid: Date.now(), cuadro: cuadroSel, ori: oriSel, act: document.getElementById('conf_act').value, contratista, cuadrilleros: [...listaCuadrillerosTemporal], jornada: document.getElementById('conf_jornada').value, maxLin: info?parseInt(info.lin):99, avance: {} };
     Libreta.personal.forEach(p => {
-        let eqPre = ""; Libreta.hojas.forEach(h => { if(h.avance[p.id]?.eq) eqPre = h.avance[p.id].eq; });
-        if(eqPre) nuevaHoja.avance[p.id] = {eq: eqPre, l1:"", l2:"", l3:"", l4:"", l5:"", l6:"", tiempos:{}};
+    let eqPre = p.orden; // Valor por defecto: su número de orden
+    Libreta.hojas.forEach(h => { 
+        if(h.avance[p.id]?.eq) eqPre = h.avance[p.id].eq; 
     });
+    nuevaHoja.avance[p.id] = {eq: eqPre, l1:"", l2:"", l3:"", l4:"", l5:"", l6:"", tiempos:{}};
+});
+    
     Libreta.hojas.push(nuevaHoja); Libreta.currentIdx = Libreta.hojas.length - 1; autoGuardar();
     document.getElementById('viewSetup').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); renderLibreta();
 }
 
-function abrirConfigNuevaHoql() {
-    document.getElementById('viewMain').classList.remove('open');
-    document.getElementById('viewSetup').classList.add('open');
-    const btnCanc = document.getElementById('btnCancelarConfig');
-    if (btnCanc) { btnCanc.style.display = (Libreta.hojas.length > 0) ? 'block' : 'none'; }
-}
-
-function cancelarConfiguracion() {
-    if (Libreta.hojas.length > 0) {
-        document.getElementById('viewSetup').classList.remove('open');
-        document.getElementById('viewMain').classList.add('open');
-        renderLibreta();
-    }
-}
-
+function abrirConfigNuevaHoql() { document.getElementById('viewMain').classList.remove('open'); document.getElementById('viewSetup').classList.add('open'); document.getElementById('btnCancelarConfig').style.display = 'block'; }
+function cancelarConfiguracion() { document.getElementById('viewSetup').classList.remove('open'); document.getElementById('viewMain').classList.add('open'); renderLibreta(); }
 function abrirResumen() {
-    const cuerpo = document.getElementById('resumenCuerpo'); let html = "";
+    let html = "";
     Libreta.personal.forEach(p => {
         let total = 0, cds = [], eq = "--";
         Libreta.hojas.forEach(h => { if(h.avance[p.id]) { const s = calcularTotalFila(h.avance[p.id]); if(s > 0) { total += s; cds.push(h.cuadro); eq = h.avance[p.id].eq; } } });
         if(total > 0) html += `<tr><td>${eq}</td><td>${p.id}</td><td style="text-align:left;">${p.nom}</td><td>${[...new Set(cds)].join(', ')}</td><td style="font-weight:bold;">${total.toFixed(2)}</td></tr>`;
     });
-    cuerpo.innerHTML = html || "Sin datos registrados"; document.getElementById('modalResumen').classList.add('open');
+    document.getElementById('resumenCuerpo').innerHTML = html || "Sin datos"; document.getElementById('modalResumen').classList.add('open');
 }
 
 function guardarBD() {
-    const pLines = document.getElementById('csv_p').value.split('\n').filter(l=>l.includes(','));
-    Libreta.personal = pLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
-    const cLines = document.getElementById('csv_c').value.split('\n').filter(l=>l.includes(','));
-    Libreta.cuadros = cLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), num:c[1].trim(), var:c[2].trim(), ori:c[3].trim(), ex:c[4].trim(), lin:c[5].trim(), plt:c[6].trim()}; });
-    const aLines = document.getElementById('csv_a').value.split('\n').filter(l=>l.includes(','));
-    Libreta.actividades = aLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
-    const jLines = document.getElementById('csv_j').value.split('\n').filter(l=>l.includes(','));
-    Libreta.jornadas = jLines.map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
+    const fn = (id) => document.getElementById(id).value.split('\n').filter(l=>l.includes(','));
+   Libreta.personal = fn('csv_p').map(l=>{ 
+    const c=l.split(','); 
+    return {
+        orden: c[0].trim(), // <--- Nuevo: Captura el primer número
+        id: c[1].trim(), 
+        nom: c[2].trim().toUpperCase()
+    }; 
+});
+    Libreta.cuadros = fn('csv_c').map(l=>{ const c=l.split(','); return {id:c[0].trim(), num:c[1].trim(), var:c[2].trim(), ori:c[3].trim(), ex:c[4].trim(), lin:c[5].trim(), plt:c[6].trim()}; });
+    Libreta.actividades = fn('csv_a').map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
+    Libreta.jornadas = fn('csv_j').map(l=>{ const c=l.split(','); return {id:c[0].trim(), nom:c[1].trim().toUpperCase()}; });
     autoGuardar(); actualizarSelectores(); cerrarModal('modalDB'); location.reload();
 }
 
@@ -427,13 +368,21 @@ function actualizarSelectores() {
     document.getElementById('lista_jornadas').innerHTML = Libreta.jornadas.map(j => `<option value="${j.nom}">`).join('');
 }
 
-function agregarCuadrilleroLista() { const v = document.getElementById('input_add_cuadrillero').value.toUpperCase(); if(v) { if(!listaCuadrillerosTemporal.includes(v)) { listaCuadrillerosTemporal.push(v); document.getElementById('input_add_cuadrillero').value=""; renderListaCuadrillerosSetup(); } } }
-function renderListaCuadrillerosSetup() { document.getElementById('lista_cuadrilleros_setup').innerHTML = listaCuadrillerosTemporal.map((c,i) => `<div style="padding:5px; border-bottom:1px solid #444;">${c} <span onclick="listaCuadrillerosTemporal.splice(${i},1);renderListaCuadrillerosSetup();" style="color:red; cursor:pointer; font-weight:bold;">✖</span></div>`).join(''); }
+function abrirDB() { 
+    actualizarSelectores(); 
+   document.getElementById('csv_p').value = Libreta.personal.map(p => `${p.orden},${p.id},${p.nom}`).join('\n');
+    document.getElementById('csv_c').value = Libreta.cuadros.map(c => `${c.id},${c.num},${c.var},${c.ori},${c.ex},${c.lin},${c.plt}`).join('\n');
+    document.getElementById('csv_a').value = Libreta.actividades.map(a => `${a.id},${a.nom}`).join('\n');
+    document.getElementById('csv_j').value = Libreta.jornadas.map(j => `${j.id},${j.nom}`).join('\n');
+    document.getElementById('modalDB').classList.add('open'); 
+}
+
+function agregarCuadrilleroLista() { const v = document.getElementById('input_add_cuadrillero').value.toUpperCase(); if(v && !listaCuadrillerosTemporal.includes(v)) { listaCuadrillerosTemporal.push(v); document.getElementById('input_add_cuadrillero').value=""; renderListaCuadrillerosSetup(); } }
+function renderListaCuadrillerosSetup() { document.getElementById('lista_cuadrilleros_setup').innerHTML = listaCuadrillerosTemporal.map((c,i) => `<div style="padding:5px; border-bottom:1px solid #444;">${c} <span onclick="listaCuadrillerosTemporal.splice(${i},1);renderListaCuadrillerosSetup();" style="color:red; cursor:pointer;">✖</span></div>`).join(''); }
 function verificarRango(p, c, v, l) { if (parseInt(v) > l) alert("Límite: " + l); updFraccion(p, c, v, 'num'); }
 function actualizarEQGlobal(pid, val) { Libreta.hojas.forEach(h => { if(!h.avance[pid]) h.avance[pid]={eq:"",l1:"",l2:"",l3:"",l4:"",l5:"",l6:""}; h.avance[pid].eq = val; }); autoGuardar(); renderLibreta(); }
 function cambiarHoja(i) { Libreta.currentIdx = i; autoGuardar(); renderLibreta(); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
-function abrirDB() { actualizarSelectores(); document.getElementById('modalDB').classList.add('open'); }
 function alEscribirCuadro() { const v = document.getElementById('conf_cuadro').value, r = Libreta.cuadros.filter(c=>c.num === v); document.getElementById('conf_ori').innerHTML = r.map(o=>`<option value="${o.ori}">${o.ori} (${o.var})</option>`).join(''); }
 function resetSistema() { if(confirm("¿Borrar todo?")) { localStorage.clear(); location.reload(); } }
 
@@ -441,4 +390,3 @@ window.onload = () => { actualizarSelectores(); if(Libreta.hojas.length > 0) { d
 </script>
 </body>
 </html>
-
