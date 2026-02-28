@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agricactus-v86-cache';
+const CACHE_NAME = 'agricactus-v89-cache';
 const ASSETS = [
   './',
   './index.html',
@@ -34,3 +34,4 @@ self.addEventListener('activate', (event) => {
     })
   );
 });
+
