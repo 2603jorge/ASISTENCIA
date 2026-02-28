@@ -233,32 +233,52 @@ function validarSumaLineaParcial(lineaNum, fraccionNueva, pidActual) {
 function descargarReporte() {
     if (Libreta.hojas.length === 0) return alert("No hay datos");
     const ahoraCierre = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    
     Libreta.hojas.forEach(hoja => {
         Object.keys(hoja.avance).forEach(pid => {
             if(hoja.avance[pid].tiempos) {
                 ['l1','l2','l3','l4','l5', 'l6'].forEach(l => { 
-                    if(hoja.avance[pid].tiempos[l] && !hoja.avance[pid].tiempos[l].fin) hoja.avance[pid].tiempos[l].fin = ahoraCierre; 
+                    if(hoja.avance[pid].tiempos[l] && !hoja.avance[pid].tiempos[l].fin) 
+                        hoja.avance[pid].tiempos[l].fin = ahoraCierre; 
                 });
             }
         });
     });
+
     let o_reporte = prompt("Observaciones:", "Ninguna") || "Sin observaciones";
     const hoy = new Date();
+    
     const dataFinal = { 
-        tipo: "FINAL", contratista: Libreta.hojas[0].contratista, fecha: hoy.toLocaleString('es-MX'), 
-        hojas: JSON.parse(JSON.stringify(Libreta.hojas)), observaciones: o_reporte 
+        tipo: "FINAL", 
+        contratista: Libreta.hojas[0].contratista, 
+        fecha: hoy.toLocaleString('es-MX'), 
+        hojas: JSON.parse(JSON.stringify(Libreta.hojas)), 
+        observaciones: o_reporte 
     };
+
     let historial = JSON.parse(localStorage.getItem('v86_historico')) || [];
     historial.push(dataFinal);
     localStorage.setItem('v86_historico', JSON.stringify(historial));
+
     const blob = new Blob([JSON.stringify(dataFinal, null, 2)], {type: "application/json"});
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); 
-    a.download = `REPORTE_${hoy.toISOString().split('T')[0]}.json`; a.click();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); 
+
+    // --- CAMBIO AQUÍ: Nombre con Contratista + Fecha ---
+    const nomContratista = Libreta.hojas[0].contratista.replace(/\s+/g, '_').toUpperCase();
+    const soloFecha = hoy.toISOString().split('T')[0];
+    a.download = `REPORTE_${nomContratista}_${soloFecha}.json`; 
+    // --------------------------------------------------
+
+    a.click();
+
     if(confirm("✅ Guardado. ¿Limpiar pantalla?")) { 
-        Libreta.hojas = []; Libreta.currentIdx = -1; autoGuardar(); location.reload(); 
+        Libreta.hojas = []; 
+        Libreta.currentIdx = -1; 
+        autoGuardar(); 
+        location.reload(); 
     }
 }
-
 function abrirHistorico() {
     const historial = JSON.parse(localStorage.getItem('v86_historico')) || [];
     const cuerpo = document.getElementById('cuerpoHistorico');
